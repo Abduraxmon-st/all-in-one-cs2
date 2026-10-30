@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DailyGamesPage from "./features/minigames/DailyGamesPage";
+import LoadoutPage from "./features/loadouts/LoadoutPage";
 
 type IconName =
   | "bolt"
@@ -55,7 +56,7 @@ const pageTitles: Record<string, [string, string]> = {
   "Match analyzer": ["DEMO INTELLIGENCE", "Match analyzer"],
   "Strat board": ["LIVE TEAM SESSION", "Strat board"],
   "Daily games": ["DAILY CHALLENGE", "Guess the Elo"],
-  "Loadout lab": ["MARKET PRICES UPDATED 4M AGO", "Loadout lab"],
+  "Loadout lab": ["CATALOG & COMMUNITY", "Loadout lab"],
 };
 
 function PageIntro({ kicker, title, copy, action, onAction }: { kicker: string; title: string; copy: string; action: string; onAction: () => void }) {
@@ -146,29 +147,6 @@ function StratBoardPage({ notify }: { notify: (message: string) => void }) {
           <div className="saved-strats"><p>SAVED STRATS</p><button>A execute v3 <span>12 items</span></button><button>Pistol split B <span>8 items</span></button></div>
         </aside>
       </div>
-    </div>
-  );
-}
-
-function LoadoutPage({ budget, setBudget, notify }: { budget: number; setBudget: (value: number) => void; notify: (message: string) => void }) {
-  const skins = [["AK-47", "Neon Rider", "47.82", "purple"], ["M4A1-S", "Player Two", "38.14", "red"], ["AWP", "Atheris", "12.40", "green"], ["USP-S", "Cortex", "8.72", "pink"], ["GLOCK-18", "Water Elemental", "9.26", "blue"], ["DESERT EAGLE", "Light Rail", "4.18", "gold"]];
-  return (
-    <div className="feature-page">
-      <PageIntro kicker="BUILD A FULL INVENTORY" title="Great taste. Smarter budget." copy="Choose a color and set your ceiling. We’ll assemble a complete T and CT inventory using live market pricing." action="View saved builds" onAction={() => notify("Saved builds opened")} />
-      <section className="loadout-builder">
-        <aside className="filter-panel">
-          <div className="filter-block"><label>TOTAL BUDGET <strong>${budget}</strong></label><input className="range" type="range" min="50" max="500" value={budget} onChange={(e)=>setBudget(Number(e.target.value))}/><div><span>$50</span><span>$500</span></div></div>
-          <div className="filter-block"><label>COLOR THEME</label><div className="swatches">{["purple","pink","blue","green","orange","mono"].map((color,i)=><button aria-label={color} key={color} className={`${color} ${i===0?"active":""}`} />)}</div></div>
-          <div className="filter-block"><label>WEAR RANGE</label><div className="segmented"><button className="active">ANY</button><button>FN</button><button>MW</button><button>FT</button></div></div>
-          <div className="filter-block"><label>LOADOUT SIDE</label><div className="segmented"><button className="active">BOTH</button><button>T</button><button>CT</button></div></div>
-          <button className="generate" onClick={() => notify(`New $${budget} loadout generated`)}><Icon name="spark" /> GENERATE LOADOUT</button>
-        </aside>
-        <div className="inventory">
-          <div className="inventory-head"><div><span>NEON NIGHTS</span><small>10 ITEMS · FIELD-TESTED OR BETTER</small></div><strong>$120.52 <small>EST. TOTAL</small></strong></div>
-          <div className="skin-grid">{skins.map((skin,index)=><button className={`skin-card skin-${skin[3]}`} key={skin[1]} onClick={()=>notify(`${skin[1]} selected`)}><div className="mini-weapon"><i/><i/><i/></div><span>{skin[0]}</span><strong>{skin[1]}</strong><small>${skin[2]}</small>{index===0&&<b>BEST VALUE</b>}</button>)}</div>
-          <div className="loadout-summary"><span><i /> $129.48 remaining</span><button onClick={()=>notify("Loadout saved")}>SAVE BUILD <Icon name="arrow" size={14}/></button></div>
-        </div>
-      </section>
     </div>
   );
 }
@@ -315,7 +293,7 @@ export default function App() {
           <article className="tool-card loadout-card">
             <div className="card-top">
               <div className="tool-icon purple"><Icon name="layers" /></div>
-              <span className="tag">MARKET LIVE</span>
+              <span className="tag">LOADOUT BUILDER</span>
             </div>
             <h3>Loadout Lab</h3>
             <p>Build a color-matched inventory that looks expensive—even when it isn’t.</p>
@@ -324,11 +302,11 @@ export default function App() {
                 <div className="barrel" /><div className="body" /><div className="mag" /><div className="stock" />
               </div>
               <span className="skin-name">NEON RIDER</span>
-              <span className="skin-price">$47.82</span>
+              <span className="skin-price">COLOR-MATCHED</span>
             </div>
             <div className="budget-line"><span>BUDGET</span><strong>${budget}</strong></div>
             <input className="range" type="range" min="50" max="500" value={budget} onChange={(event) => setBudget(Number(event.target.value))} aria-label="Loadout budget" />
-            <div className="card-footer"><span>8 skins · 2 gloves</span><button onClick={() => notify(`Building a $${budget} loadout`)}>Build loadout <Icon name="arrow" size={15} /></button></div>
+            <div className="card-footer"><span>No login to generate</span><button onClick={() => setActiveNav("Loadout lab")}>Build loadout <Icon name="arrow" size={15} /></button></div>
           </article>
         </section>
 
