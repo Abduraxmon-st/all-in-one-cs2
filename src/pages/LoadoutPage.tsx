@@ -9,7 +9,7 @@ import {
   getSkins,
   getStickers,
   toggleUpvote,
-} from "./api"
+} from "../features/loadouts/api"
 import {
   COLORS,
   type Category,
@@ -22,7 +22,7 @@ import {
   type Sticker,
   type StickerPlacement,
   type TeamSide,
-} from "./types"
+} from "../features/loadouts/types"
 import "./LoadoutPage.css"
 
 type Props = {

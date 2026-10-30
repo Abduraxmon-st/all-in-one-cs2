@@ -5,7 +5,7 @@ import {
   getMyClips,
   submitClip,
   submitGuess,
-} from "./api"
+} from "../features/minigames/api"
 import type {
   ChallengeRound,
   ClipSubmission,
@@ -13,7 +13,7 @@ import type {
   GuessResult,
   Leaderboard,
   SubmittedClip,
-} from "./types"
+} from "../features/minigames/types"
 
 type Props = { notify: (message: string) => void }
 

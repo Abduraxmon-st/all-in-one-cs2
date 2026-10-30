@@ -14,6 +14,21 @@ The daily Guess the Elo game uses the Minigames API for challenges, guesses, lea
 
 Identity and Stratboard have initial feature folders with contract types and endpoint paths. Their API calls and UI integration are the next implementation step.
 
+## Pages and routes
+
+Routes are defined in `src/routes.ts`. Every page component lives in `src/pages/`:
+
+| URL | Page |
+| --- | --- |
+| `/` | `CommandCenterPage.tsx` |
+| `/match-analyzer` | `MatchAnalyzerPage.tsx` |
+| `/strat-board` | `StratBoardPage.tsx` |
+| `/daily-games` | `DailyGamesPage.tsx` |
+| `/loadout-lab` | `LoadoutPage.tsx` |
+
+`src/App.tsx` holds the shared layout. API clients and data types remain in `src/features/`.
+Deployment hosting must serve `index.html` for deep links to these routes.
+
 ## Run locally
 
 ```bash
