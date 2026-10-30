@@ -12,6 +12,8 @@ A Counter-Strike 2 community platform prototype built with React, Vite, TypeScri
 Match parsing, Steam sign-in, and live collaboration are still prototypes. The Minigames and Loadouts screens require a configured backend API.
 The daily Guess the Elo game uses the Minigames API for challenges, guesses, leaderboards, and clip submissions. Loadout Lab uses the Loadouts API for catalog search, budget generation, and community loadouts. Match analysis and strategy planning remain prototypes.
 
+Identity and Stratboard have initial feature folders with contract types and endpoint paths. Their API calls and UI integration are the next implementation step.
+
 ## Run locally
 
 ```bash
