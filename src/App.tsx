@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DailyGamesPage from "./features/minigames/DailyGamesPage";
 
 type IconName =
   | "bolt"
@@ -53,7 +54,7 @@ const pageTitles: Record<string, [string, string]> = {
   "Command center": ["GOOD EVENING, PLAYER", "Ready to lock in?"],
   "Match analyzer": ["DEMO INTELLIGENCE", "Match analyzer"],
   "Strat board": ["LIVE TEAM SESSION", "Strat board"],
-  "Daily games": ["DAILY CHALLENGE #184", "Guess the Elo"],
+  "Daily games": ["DAILY CHALLENGE", "Guess the Elo"],
   "Loadout lab": ["MARKET PRICES UPDATED 4M AGO", "Loadout lab"],
 };
 
@@ -149,35 +150,6 @@ function StratBoardPage({ notify }: { notify: (message: string) => void }) {
   );
 }
 
-function DailyGamesPage({ guess, setGuess, notify }: { guess: number | null; setGuess: (value: number) => void; notify: (message: string) => void }) {
-  return (
-    <div className="feature-page">
-      <PageIntro kicker="3,902 PLAYERS TODAY" title="How sharp is your game sense?" copy="Watch the clip, read the movement, and guess the player’s Premier rating. No replays. No excuses." action="Share challenge" onAction={() => notify("Daily challenge link copied")} />
-      <section className="game-layout">
-        <div className="daily-stage">
-          <div className="game-progress"><span className="done">01</span><i /><span>02</span><i /><span>03</span></div>
-          <div className="big-clip">
-            <div className="scene"><div className="scene-wall" /><div className="scene-box" /><div className="scene-crosshair">+</div></div>
-            <div className="video-top"><span>CLIP 01 / MIRAGE</span><b><i /> PLAYING</b></div>
-            <button className="big-play" onClick={() => notify("Clip replayed")}><Icon name="play" size={28} /></button>
-            <div className="video-bottom"><button onClick={() => notify("Clip muted")}>SOUND ON</button><span>0:06 / 0:12</span></div>
-          </div>
-          <div className="elo-picker">
-            <p>WHAT’S THEIR PREMIER RATING?</p>
-            <div>{[5000, 9000, 13000, 17000, 21000, 25000].map((value) => <button key={value} className={guess === value ? "selected" : ""} onClick={() => setGuess(value)}><small>{value < 10000 ? "0" : ""}{value.toLocaleString()}</small><span>{value < 10000 ? "SILVER" : value < 17000 ? "PURPLE" : "RED"}</span></button>)}</div>
-            <button className="lock-guess" onClick={() => notify(guess ? `Locked: ${guess.toLocaleString()}` : "Pick a rating first")}>LOCK IN GUESS <Icon name="arrow" size={16} /></button>
-          </div>
-        </div>
-        <aside className="daily-side">
-          <div className="daily-stat"><span>YOUR STREAK</span><strong>7 <small>DAYS</small></strong><div className="week">{["M","T","W","T","F","S","S"].map((d,i)=><i className={i < 6 ? "hit" : ""} key={i}>{d}</i>)}</div></div>
-          <div className="leaderboard"><div className="panel-title"><span>TODAY’S TOP 5</span><b>GLOBAL</b></div>{["s1mplefan", "midOrFeed", "KIRA", "rushB", "you"].map((name,i)=><div key={name}><em>{i+1}</em><span>{name}</span><strong>{i === 4 ? "—" : `${300-i*20} pts`}</strong></div>)}</div>
-          <button className="submit-clip" onClick={() => notify("Clip submission opened")}><Icon name="upload" /> SUBMIT YOUR CLIP</button>
-        </aside>
-      </section>
-    </div>
-  );
-}
-
 function LoadoutPage({ budget, setBudget, notify }: { budget: number; setBudget: (value: number) => void; notify: (message: string) => void }) {
   const skins = [["AK-47", "Neon Rider", "47.82", "purple"], ["M4A1-S", "Player Two", "38.14", "red"], ["AWP", "Atheris", "12.40", "green"], ["USP-S", "Cortex", "8.72", "pink"], ["GLOCK-18", "Water Elemental", "9.26", "blue"], ["DESERT EAGLE", "Light Rail", "4.18", "gold"]];
   return (
@@ -204,7 +176,6 @@ function LoadoutPage({ budget, setBudget, notify }: { budget: number; setBudget:
 export default function App() {
   const [activeNav, setActiveNav] = useState("Command center");
   const [code, setCode] = useState("");
-  const [guess, setGuess] = useState<number | null>(null);
   const [budget, setBudget] = useState(250);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [toast, setToast] = useState("");
@@ -304,7 +275,7 @@ export default function App() {
         ) : activeNav === "Strat board" ? (
           <StratBoardPage notify={notify} />
         ) : activeNav === "Daily games" ? (
-          <DailyGamesPage guess={guess} setGuess={setGuess} notify={notify} />
+          <DailyGamesPage notify={notify} />
         ) : (
           <LoadoutPage budget={budget} setBudget={setBudget} notify={notify} />
         )}
@@ -329,18 +300,16 @@ export default function App() {
           <article className="tool-card daily-card">
             <div className="card-top">
               <div className="tool-icon orange"><Icon name="game" /></div>
-              <span className="tag">DAILY #184</span>
+              <span className="tag">DAILY GAME</span>
             </div>
             <h3>Guess the Elo</h3>
             <p>Three clips. Three ranks. One chance to prove your game sense is better than your aim.</p>
             <div className="clip">
               <div className="clip-noise" />
-              <button className="play" onClick={() => notify("Clip playing")} aria-label="Play clip"><Icon name="play" size={24} /></button>
+              <button className="play" onClick={() => setActiveNav("Daily games")} aria-label="Open daily game"><Icon name="play" size={24} /></button>
               <span>CLIP 01 / 03</span><time>0:08</time>
             </div>
-            <div className="guess-row">
-              {[9000, 15000, 22000].map((value) => <button key={value} className={guess === value ? "selected" : ""} onClick={() => setGuess(value)}>{value / 1000}K</button>)}
-            </div>
+            <div className="guess-row daily-open-row"><button onClick={() => setActiveNav("Daily games")}>OPEN TODAY'S CHALLENGE</button></div>
           </article>
 
           <article className="tool-card loadout-card">
