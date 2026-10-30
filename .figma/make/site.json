@@ -1,0 +1,10 @@
+{
+  "description": "A Counter-Strike 2 hub for match highlights, collaborative strategy planning, daily skill games, and budget-friendly loadout building.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
