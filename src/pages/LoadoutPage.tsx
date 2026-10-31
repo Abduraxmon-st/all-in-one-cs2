@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { useAuth } from "../features/identity/AuthProvider"
+import { navigate } from "../routes"
 import {
   createCommunityLoadout,
   deleteCommunityLoadout,
@@ -7,6 +8,7 @@ import {
   getCommunity,
   getCommunityDetail,
   getSkin,
+  getSticker,
   getSkins,
   getStickers,
   toggleUpvote,
@@ -117,6 +119,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const [catalogBusy, setCatalogBusy] = useState(false)
   const [catalogError, setCatalogError] = useState("")
   const [selectedSkin, setSelectedSkin] = useState<Skin | null>(null)
+  const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null)
 
   const [communityColor, setCommunityColor] = useState<Color | "">("")
   const [communityBudget, setCommunityBudget] = useState("")
@@ -299,6 +302,14 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
       setSelectedSkin(await getSkin(id))
     } catch (cause) {
       notify(cause instanceof Error ? cause.message : "Could not load skin")
+    }
+  }
+
+  async function openSticker(id: string) {
+    try {
+      setSelectedSticker(await getSticker(id))
+    } catch (cause) {
+      notify(cause instanceof Error ? cause.message : "Could not load sticker")
     }
   }
 
@@ -623,6 +634,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                   setCatalogKind("skins")
                   setCatalogPage(0)
                   setSelectedSkin(null)
+                  setSelectedSticker(null)
                 }}
               >
                 SKINS
@@ -633,6 +645,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                   setCatalogKind("stickers")
                   setCatalogPage(0)
                   setSelectedSkin(null)
+                  setSelectedSticker(null)
                 }}
               >
                 STICKERS
@@ -733,6 +746,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                     key={item.id}
                     onClick={() => {
                       if (catalogKind === "skins") openSkin(item.id)
+                      else openSticker(item.id)
                     }}
                   >
                     <div className="lo-catalog-image">
@@ -785,6 +799,14 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+          {selectedSticker && (
+            <div className="lo-detail">
+              <button className="lo-close" onClick={() => setSelectedSticker(null)}>CLOSE ×</button>
+              <h4>{selectedSticker.name}</h4>
+              <p>{selectedSticker.primaryColor} · {selectedSticker.rarity}</p>
+              <div className="lo-prices"><span>{money(selectedSticker.priceUsd)}</span></div>
             </div>
           )}
         </section>
@@ -906,6 +928,9 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                 ))}
               </div>
               <div className="lo-detail-actions">
+                <button onClick={() => navigate(`/users/${communityDetail.author.userId}`)}>
+                  VIEW AUTHOR PROFILE
+                </button>
                 <button onClick={handleUpvote}>
                   {communityDetail.upvotedByCurrentUser
                     ? "REMOVE UPVOTE"

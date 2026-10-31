@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { devLogin, getCurrentUser, getSteamLoginUrl, updateCurrentUser } from "./api";
+import { devLogin, getCurrentUser, getSteamLoginUrl, IdentityApiError, updateCurrentUser } from "./api";
 import type { DevLoginRequest, UpdateProfileRequest, UserProfile } from "./types";
 import { routeHref } from "../../routes";
 
@@ -43,9 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!controller.signal.aborted) { setUser(profile); setError(""); }
     }).catch((cause: unknown) => {
       if (!controller.signal.aborted) {
-        sessionStorage.removeItem(TOKEN_KEY);
-        setToken("");
-        setUser(null);
+        if (cause instanceof IdentityApiError && (cause.status === 401 || cause.status === 403)) {
+          sessionStorage.removeItem(TOKEN_KEY);
+          setToken("");
+          setUser(null);
+        }
         setError(cause instanceof Error ? cause.message : "Sign-in failed.");
       }
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });

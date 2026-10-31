@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import Icon from "../components/Icon";
+import { getRecentMatches } from "../features/matches/api";
 
 type Props = {
   code: string;
@@ -10,6 +12,12 @@ type Props = {
 };
 
 export default function CommandCenterPage({ code, setCode, budget, setBudget, notify, navigate }: Props) {
+  const [matchCount, setMatchCount] = useState<number | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    getRecentMatches(0, 1, controller.signal).then((data) => setMatchCount(data.totalElements)).catch(() => {});
+    return () => controller.abort();
+  }, []);
   return <>
 <section className="hero-grid">
           <div className="analyzer">
@@ -18,20 +26,20 @@ export default function CommandCenterPage({ code, setCode, budget, setBudget, no
             <p>Drop a CS2 share code. We’ll dissect every round, find the moments your teammates won’t let you forget, and turn them into shareable awards.</p>
             <div className="code-form">
               <div className="code-input">
-                <span>steam://rungame/730/...</span>
+                <span>CS2 PREMIER SHARE CODE</span>
                 <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="Paste match share code" aria-label="Match share code" />
               </div>
               <button onClick={() => code ? navigate("/match-analyzer") : notify("Paste a share code first")}>Analyze match <Icon name="arrow" size={17} /></button>
             </div>
             <div className="trust-row">
               <div className="facepile"><span>R</span><span>M</span><span>K</span><span>+</span></div>
-              <p><strong>12,480</strong> matches roasted this week</p>
+              <p>{matchCount === null ? "Browse match reports" : <><strong>{matchCount.toLocaleString()}</strong> analyzed matches</>}</p>
             </div>
           </div>
 
           <div className="award-wrap">
             <div className="award-card">
-              <div className="award-head"><span>POST-MATCH AWARD</span><b>INFERNO · 13—10</b></div>
+              <div className="award-head"><span>EXAMPLE AWARD</span><b>INFERNO · 13—10</b></div>
               <div className="award-art">
                 <div className="flash flash-one" />
                 <div className="flash flash-two" />
@@ -45,7 +53,7 @@ export default function CommandCenterPage({ code, setCode, budget, setBudget, no
               </div>
               <div className="award-foot"><span>CLUTCH LABS</span><span>@AK47Enjoyer</span></div>
             </div>
-            <button className="share-button" onClick={() => notify("Award copied to clipboard")}>Share award <Icon name="arrow" size={16} /></button>
+            <button className="share-button" onClick={() => navigate("/match-analyzer")}>See match reports <Icon name="arrow" size={16} /></button>
           </div>
         </section>
 
@@ -67,7 +75,7 @@ export default function CommandCenterPage({ code, setCode, budget, setBudget, no
               <span className="pin pin-a">A</span><span className="pin pin-b">B</span>
               <div className="cursor cursor-one">NIKO</div><div className="cursor cursor-two">YOU</div>
             </div>
-            <div className="card-footer"><span><Icon name="users" size={15} /> 4 players in room</span><button onClick={() => navigate("/strat-board")}>Create room <Icon name="arrow" size={15} /></button></div>
+            <div className="card-footer"><span><Icon name="users" size={15} /> Invite your squad</span><button onClick={() => navigate("/strat-board")}>Create room <Icon name="arrow" size={15} /></button></div>
           </article>
 
           <article className="tool-card daily-card">

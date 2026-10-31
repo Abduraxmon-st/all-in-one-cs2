@@ -185,7 +185,12 @@ export default function DailyGamesPage({ notify }: Props) {
               item.clipId === data.clipId
                 ? {
                     ...item,
-                    userGuess: data.guessedPremierRating,
+                    userGuess: {
+                      guessedPremierRating: data.guessedPremierRating,
+                      pointsAwarded: data.pointsAwarded,
+                      tierEmoji: data.tierEmoji,
+                      difference: data.difference,
+                    },
                     actualPremierRating: data.actualPremierRating,
                     actualFaceitLevel: data.actualFaceitLevel,
                   }
@@ -328,7 +333,7 @@ export default function DailyGamesPage({ notify }: Props) {
               {guessed ? (
                 <div className="minigame-result">
                   <span>
-                    {result?.tierEmoji ?? "✓"}{" "}
+                    {result?.tierEmoji ?? round.userGuess?.tierEmoji ?? "✓"}{" "}
                     {result
                       ? `+${result.pointsAwarded} POINTS`
                       : "GUESS SUBMITTED"}
@@ -338,7 +343,7 @@ export default function DailyGamesPage({ notify }: Props) {
                     {round.actualPremierRating?.toLocaleString() ?? "—"}
                   </strong>
                   <p>
-                    Your guess: {round.userGuess?.toLocaleString()}
+                    Your guess: {round.userGuess?.guessedPremierRating.toLocaleString()}
                     {result
                       ? ` · Difference: ${result.difference.toLocaleString()}`
                       : ""}

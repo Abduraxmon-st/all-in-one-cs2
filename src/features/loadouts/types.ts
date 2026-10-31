@@ -148,7 +148,7 @@ export interface CommunityItem {
   stickers: StickerPlacement[]
 }
 
-export interface CommunityDetail extends CommunityLoadout {
+export interface CommunityDetail extends Omit<CommunityLoadout, "itemsCount"> {
   items: CommunityItem[]
 }
 
@@ -177,4 +177,10 @@ export interface UpvoteResult {
   loadoutId: string
   upvotes: number
   upvoted: boolean
+}
+
+export interface SeedSummary {
+  skinsCount: number
+  stickersCount: number
+  message: string
 }

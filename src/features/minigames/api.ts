@@ -104,3 +104,18 @@ export function submitClip(clip: ClipSubmission, token: string) {
 export function getMyClips(token: string) {
   return request<SubmittedClip[]>("/api/v1/minigames/clips/my", {}, token)
 }
+
+export function getClipsForReview(status: SubmittedClip["status"], token: string, signal?: AbortSignal) {
+  return request<SubmittedClip[]>(`/api/v1/minigames/admin/clips?${new URLSearchParams({ status })}`, { signal }, token)
+}
+
+export function reviewClip(clipId: string, status: "APPROVED" | "REJECTED", token: string, overridePremierRating?: number) {
+  return request<SubmittedClip>(`/api/v1/minigames/admin/clips/${encodeURIComponent(clipId)}/review`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, ...(overridePremierRating === undefined ? {} : { overridePremierRating }) }),
+  }, token)
+}
+
+export function generateDailyChallenge(seedIfEmpty: boolean, token: string) {
+  return request<DailyChallenge>(`/api/v1/minigames/admin/daily/generate?${new URLSearchParams({ seedIfEmpty: String(seedIfEmpty) })}`, { method: "POST" }, token)
+}

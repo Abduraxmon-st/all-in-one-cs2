@@ -6,6 +6,8 @@ import StratBoardPage from "./pages/StratBoardPage";
 import DailyGamesPage from "./pages/DailyGamesPage";
 import LoadoutPage from "./pages/LoadoutPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import AdminPage from "./pages/AdminPage";
+import ProfilePage from "./pages/ProfilePage";
 import { navigate, routeHref, routes, usePathname } from "./routes";
 import AuthPanel from "./features/identity/AuthPanel";
 import { useAuth } from "./features/identity/AuthProvider";
@@ -19,7 +21,7 @@ function handleRouteClick(event: MouseEvent<HTMLAnchorElement>, path: string) {
 export default function App() {
   const { user, loading: authLoading } = useAuth();
   const pathname = usePathname();
-  const activeRoute = routes.find((route) => route.path === pathname) ?? (pathname.startsWith("/m/") ? routes[1] : pathname.startsWith("/strat-board/") ? routes[2] : undefined);
+  const activeRoute = routes.find((route) => route.path === pathname) ?? (pathname.startsWith("/m/") ? routes[1] : pathname.startsWith("/strat-board/") ? routes[2] : pathname.startsWith("/users/") ? routes.find((route) => route.path === "/profile") : undefined);
   const [code, setCode] = useState("");
   const [budget, setBudget] = useState(250);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -48,8 +50,14 @@ export default function App() {
     case "/loadout-lab":
       page = <LoadoutPage budget={budget} setBudget={setBudget} notify={notify} />;
       break;
+    case "/admin":
+      page = <AdminPage />;
+      break;
+    case "/profile":
+      page = <ProfilePage />;
+      break;
     default:
-      page = pathname.startsWith("/m/") ? <MatchAnalyzerPage code={code} setCode={setCode} notify={notify} shareSlug={pathname.slice(3)} /> : pathname.startsWith("/strat-board/") ? <StratBoardPage notify={notify} roomCodeFromRoute={pathname.slice("/strat-board/".length)} /> : <NotFoundPage />;
+      page = pathname.startsWith("/m/") ? <MatchAnalyzerPage code={code} setCode={setCode} notify={notify} shareSlug={pathname.slice(3)} /> : pathname.startsWith("/strat-board/") ? <StratBoardPage notify={notify} roomCodeFromRoute={pathname.slice("/strat-board/".length)} /> : pathname.startsWith("/users/") ? <ProfilePage userId={pathname.slice("/users/".length)} /> : <NotFoundPage />;
   }
 
   return (
@@ -61,7 +69,7 @@ export default function App() {
         </a>
         <nav className="nav" aria-label="Main navigation">
           <p className="eyebrow">PLAYGROUND</p>
-          {routes.map((route) => (
+          {routes.filter((route) => (route.path !== "/admin" || user?.role === "ADMIN") && (route.path !== "/profile" || !!user)).map((route) => (
             <a
               className={pathname === route.path ? "nav-item active" : "nav-item"}
               href={routeHref(route.path)}
@@ -76,7 +84,7 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="live-pill"><span /> 2,841 online</div>
+          <div className="live-pill"><span /> CS2 community</div>
           <button className="player" onClick={() => setAuthOpen(true)}>
             <div className="avatar">AK</div>
             <div><strong>{user?.username ?? "Anonymous"}</strong><span>{user ? user.role : "Sign in with Steam"}</span></div>
@@ -93,7 +101,6 @@ export default function App() {
             <h1>{activeRoute?.title ?? "Page not found"}</h1>
           </div>
           <div className="top-actions">
-            <div className="streak"><Icon name="bolt" size={15} /><strong>7</strong><span>day streak</span></div>
             <button className="steam-button" onClick={() => setAuthOpen(true)}>{authLoading ? "Loading…" : user ? user.username : "Connect Steam"} <Icon name="arrow" size={16} /></button>
           </div>
         </header>

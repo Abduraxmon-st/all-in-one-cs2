@@ -13,7 +13,12 @@ export interface ChallengeRound {
   mapName: string
   actualPremierRating: number | null
   actualFaceitLevel: number | null
-  userGuess: number | null
+  userGuess: {
+    guessedPremierRating: number
+    pointsAwarded: number
+    tierEmoji: string
+    difference: number
+  } | null
 }
 
 export interface DailyChallenge {
@@ -66,4 +71,7 @@ export interface SubmittedClip extends ClipSubmission {
   id?: string
   clipId?: string
   status: "PENDING" | "APPROVED" | "REJECTED" | "USED"
+  submittedBy?: { userId: string; username: string; avatarUrl: string | null }
+  videoProvider?: string
+  createdAt?: string
 }

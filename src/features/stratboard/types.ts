@@ -36,6 +36,7 @@ export interface TacticSummary {
 
 export interface TacticDetail extends TacticSummary {
   canvasStateJson: string;
+  author?: { userId: string; steamId: string; username: string; avatarUrl: string | null };
 }
 
 export interface Page<T> { content: T[]; totalElements: number; totalPages: number; }

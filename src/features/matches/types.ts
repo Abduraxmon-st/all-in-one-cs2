@@ -1,16 +1,17 @@
 export type MatchStatus = "QUEUED" | "PARSING" | "COMPLETED" | "FAILED";
 
 export interface Award {
-  badge: string;
-  displayName: string;
-  category: "FLEX" | "TROLL" | "UTILITY" | "NEUTRAL";
-  emoji: string;
+  badgeCode: string;
+  badgeTitle: string;
+  badgeCategory: "FLEX" | "TROLL" | "UTILITY" | "NEUTRAL";
+  badgeIcon: string;
   description: string;
 }
 
 export interface PlayerStats {
   id: string;
   steamId: string;
+  userId: string | null;
   playerName: string;
   teamSide: "TEAM_A" | "TEAM_B";
   kills: number;
@@ -20,53 +21,82 @@ export interface PlayerStats {
   headshotPct: number;
   kastPct: number;
   impactRating: number;
+  headlineTitle: string | null;
+  headlineRoast: string | null;
   awards: Award[];
 }
 
 export interface MatchDetail {
   id: string;
   shareCode: string | null;
-  shareSlug: string;
-  mapName: string | null;
+  demoUrl: string | null;
+  submittedByUserId: string | null;
   status: MatchStatus;
+  mapName: string | null;
   teamAScore: number;
   teamBScore: number;
+  totalRounds: number;
   durationSeconds: number;
-  players?: PlayerStats[];
+  errorMessage: string | null;
+  shareSlug: string;
+  teamAPlayers: PlayerStats[];
+  teamBPlayers: PlayerStats[];
   createdAt: string;
-  failureReason?: string | null;
+  completedAt: string | null;
+}
+
+export interface MatchSummary {
+  id: string;
+  shareCode: string | null;
+  status: MatchStatus;
+  mapName: string | null;
+  teamAScore: number;
+  teamBScore: number;
+  totalRounds: number;
+  durationSeconds: number;
+  shareSlug: string;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
 }
 
 export interface RoastCard {
   matchId: string;
-  steamId: string;
   playerName: string;
-  teamSide: string;
+  steamId: string;
   mapName: string;
+  scoreLine: string;
+  won: boolean;
   kills: number;
   deaths: number;
+  assists: number;
   adr: number;
   headshotPct: number;
-  kastPct: number;
   impactRating: number;
-  primaryBadge: Award;
-  allAwards: Award[];
-  roastQuote: string;
+  headlineTitle: string;
+  headlineRoast: string;
+  shareSlug: string;
   shareUrl: string;
+  badges: Award[];
 }
 
 export interface MatchHistoryEntry {
   matchId: string;
   shareSlug: string;
   mapName: string;
-  teamSide: string;
-  teamAScore: number;
-  teamBScore: number;
+  scoreLine: string;
   won: boolean;
   kills: number;
   deaths: number;
   adr: number;
   impactRating: number;
-  primaryBadge: Award | null;
-  playedAt: string;
+  headlineTitle: string;
+  headlineRoast: string;
+  badges: Award[];
+  matchDate: string;
 }

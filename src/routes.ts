@@ -7,6 +7,8 @@ export const routes: { path: string; label: string; icon: IconName; kicker: stri
   { path: "/strat-board", label: "Strat board", icon: "map", kicker: "LIVE TEAM SESSION", title: "Strat board" },
   { path: "/daily-games", label: "Daily games", icon: "game", kicker: "DAILY CHALLENGE", title: "Guess the Elo" },
   { path: "/loadout-lab", label: "Loadout lab", icon: "layers", kicker: "CATALOG & COMMUNITY", title: "Loadout lab" },
+  { path: "/profile", label: "My profile", icon: "users", kicker: "PLAYER PROFILE", title: "My profile" },
+  { path: "/admin", label: "Admin console", icon: "users", kicker: "PLATFORM OPERATIONS", title: "Admin console" },
 ];
 
 const basePath = new URL(import.meta.env.BASE_URL, "http://localhost").pathname.replace(/\/$/, "");

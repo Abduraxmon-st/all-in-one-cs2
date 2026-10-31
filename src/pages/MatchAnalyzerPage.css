@@ -19,4 +19,5 @@
 .match-roast small{color:var(--muted)}
 .match-history{margin-top:16px;padding:18px}
 .match-history button{grid-template-columns:1.2fr repeat(3,1fr)}
+.match-pager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;color:var(--muted);font-size:10px}.match-pager button{display:inline-block;width:auto;padding:9px 14px;border:1px solid var(--line);background:#242826}.match-pager button:disabled{opacity:.45}
 @media(max-width:760px){.match-scoreboard button{grid-template-columns:20px 1fr 1fr}.match-scoreboard button small:nth-of-type(n+2),.match-scoreboard em{display:none}.match-history button{grid-template-columns:1fr 1fr}.match-history button span:nth-last-child(-n+2){display:none}}

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "./AuthProvider";
 import type { UserRole } from "./types";
+import { navigate } from "../../routes";
 import "./AuthPanel.css";
 
 export default function AuthPanel({ onClose }: { onClose: () => void }) {
@@ -51,6 +52,7 @@ export default function AuthPanel({ onClose }: { onClose: () => void }) {
           <button disabled={busy}>SAVE PROFILE</button>
         </form>
         <button className="auth-secondary" onClick={() => { signOut(); onClose(); }}>SIGN OUT</button>
+        <button className="auth-secondary" onClick={() => { navigate("/profile"); onClose(); }}>VIEW PROFILE</button>
       </> : <>
         <button className="auth-steam" disabled={busy} onClick={() => void run(signInWithSteam)}>SIGN IN WITH STEAM</button>
         {import.meta.env.DEV && <form onSubmit={submitDev}>

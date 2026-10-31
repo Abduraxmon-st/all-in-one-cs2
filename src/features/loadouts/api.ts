@@ -9,6 +9,7 @@ import type {
   Page,
   Skin,
   SkinFilters,
+  SeedSummary,
   Sticker,
   StickerFilters,
   UpvoteResult,
@@ -64,6 +65,8 @@ export const getStickers = (
   filters: StickerFilters = {},
   signal?: AbortSignal,
 ) => request<Page<Sticker>>(`/catalog/stickers${query(filters)}`, { signal })
+export const getSticker = (stickerId: string, signal?: AbortSignal) =>
+  request<Sticker>(`/catalog/stickers/${encodeURIComponent(stickerId)}`, { signal })
 export const generateLoadout = (body: GenerateRequest) =>
   request<GeneratedLoadout>("/generate", {
     method: "POST",
@@ -89,6 +92,8 @@ export const getCommunityDetail = (
     { signal },
     token,
   )
+export const getMyLoadouts = (token: string, signal?: AbortSignal) =>
+  request<CommunityLoadout[]>("/community/my", { signal }, token)
 export const createCommunityLoadout = (
   body: CreateCommunityLoadout,
   token: string,
@@ -111,6 +116,6 @@ export const deleteCommunityLoadout = (id: string, token: string) =>
     token,
   )
 export const seedCatalog = (token: string) =>
-  request<unknown>("/admin/seed", { method: "POST" }, token)
+  request<SeedSummary>("/admin/seed", { method: "POST" }, token)
 export const syncCatalog = (token: string) =>
-  request<unknown>("/admin/sync", { method: "POST" }, token)
+  request<SeedSummary>("/admin/sync", { method: "POST" }, token)
