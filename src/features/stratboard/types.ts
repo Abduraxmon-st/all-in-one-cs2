@@ -38,6 +38,29 @@ export interface TacticDetail extends TacticSummary {
   canvasStateJson: string;
 }
 
+export interface Page<T> { content: T[]; totalElements: number; totalPages: number; }
+
+export type CreateLineupRequest = Pick<UtilityLineup, "mapName" | "utilityType" | "teamSide" | "title" | "throwType" | "standX" | "standY" | "landX" | "landY" | "videoUrl" | "description">;
+
+export interface CreateTacticRequest {
+  title: string;
+  mapName: string;
+  teamSide: TeamSide;
+  description: string;
+  canvasStateJson: string;
+  isPublic: boolean;
+}
+
+export interface CreateRoomRequest {
+  mapName: string;
+  teamSide: TeamSide;
+  hostDisplayName: string;
+  hostColorHex: string;
+  initialTacticIdOrShareCode?: string;
+}
+
+export interface SaveRoomRequest { title: string; description: string; isPublic: boolean; }
+
 export interface CanvasElement {
   elementId: string;
   elementType: ElementType;

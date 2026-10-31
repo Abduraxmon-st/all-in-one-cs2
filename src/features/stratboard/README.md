@@ -1,8 +1,8 @@
-# Stratboard module scaffold
+# Stratboard module
 
 - `types.ts`: lineup, tactic, room, canvas, and WebSocket event contracts.
-- `api.ts`: REST endpoint paths.
-- `realtime.ts`: STOMP endpoint and destinations.
+- `api.ts`: REST endpoint paths and requests.
+- `realtime.ts`: STOMP connection, events, and destinations.
 - `index.ts`: public module exports.
 
-Next integration step: add REST requests, room state, STOMP connection lifecycle, and an interactive board. No WebSocket dependency is installed yet.
+The interactive page is `src/pages/StratBoardPage.tsx`. Guest rooms work without login; saving tactics and submitting lineups require sign-in.

@@ -1,0 +1,33 @@
+.strat-api-page{padding-bottom:30px}
+.strat-tabs,.strat-filters,.strat-room-bar,.strat-room-meta,.strat-tools,.strat-save,.strat-code{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.strat-api-page button{cursor:pointer}
+.strat-api-page input,.strat-api-page select,.strat-api-page textarea{background:#101312;border:1px solid var(--line);color:var(--paper);padding:10px;min-width:0}
+.strat-api-page input[type="checkbox"]{accent-color:var(--lime)}
+.strat-tabs button,.strat-filters button,.strat-room-bar button,.strat-room-meta button,.strat-tools button,.strat-save button,.strat-list button{background:#242826;border:1px solid var(--line);color:var(--paper);padding:10px 12px;font-size:9px;font-weight:700;letter-spacing:.06em}
+.strat-tabs button.active,.strat-tools button.active,.strat-room-bar button,.strat-save button{background:var(--lime);color:#111;border-color:var(--lime)}
+.strat-api-page button:disabled{opacity:.5;cursor:not-allowed}
+.strat-error{background:#2a1a1a;border:1px solid #603737;color:#ff8d8d;padding:12px;font-size:11px}
+.strat-room-bar input{flex:1;min-width:120px}
+.strat-room-meta{border:1px solid var(--line);background:var(--panel);padding:10px 14px;font-size:10px}
+.strat-room-meta span{color:var(--lime);margin-left:auto}
+.strat-workspace{display:grid;grid-template-columns:1fr 220px;gap:14px}
+.strat-canvas{position:relative;min-height:480px;overflow:hidden;cursor:crosshair;background-color:#19221d;background-image:linear-gradient(#2b3b30 1px,transparent 1px),linear-gradient(90deg,#2b3b30 1px,transparent 1px);background-size:30px 30px;border:1px solid #395040}
+.strat-site{position:absolute;font:800 48px "Barlow Condensed";color:#6c8a71;opacity:.65}.strat-site.a{right:20%;top:15%}.strat-site.b{left:20%;bottom:15%}
+.strat-arrow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.strat-pin{position:absolute;transform:translate(-50%,-50%);background:var(--lime);border:2px solid #121;color:#111;border-radius:50%;min-width:30px;height:30px;font-size:8px;font-weight:800}
+.strat-pin.selected{outline:2px solid var(--orange)}
+.strat-pending,.strat-cursor{position:absolute;transform:translate(-50%,-100%);color:var(--orange);font-size:8px;font-weight:700;pointer-events:none}
+.strat-cursor{color:var(--lime)}
+.strat-people{border:1px solid var(--line);background:var(--panel);padding:15px}
+.strat-people p{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px}.strat-people i{display:inline-block;width:8px;height:8px;border-radius:50%}
+.strat-save{border:1px solid var(--line);background:var(--panel);padding:12px}.strat-save input:not([type="checkbox"]){flex:1;min-width:120px}.strat-save label{font-size:10px;color:var(--muted)}
+.strat-list{background:var(--panel);border:1px solid var(--line);padding:18px}
+.strat-list article{border-bottom:1px solid var(--line);padding:15px 0}.strat-list article strong{font:700 20px "Barlow Condensed"}.strat-list article p{color:var(--muted);font-size:11px}.strat-list article a{color:var(--lime);font-size:10px;margin-right:12px}
+.strat-list article button{margin:5px}
+.strat-lineup-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;border-top:1px solid var(--line);padding-top:18px}
+.strat-lineup-form label{color:var(--muted);font-size:10px}.strat-lineup-form label input{display:block;width:100%;margin-top:5px}.strat-lineup-form textarea{min-height:70px}
+.strat-code input{flex:1}
+.strat-tactic-row{display:flex;align-items:center;gap:16px;width:100%;text-align:left}.strat-tactic-row strong{flex:1}.strat-tactic-row span{color:var(--muted)}
+.strat-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;color:var(--muted);font-size:10px}
+.strat-tactic-detail{border:1px solid #4b5a22;padding:16px;margin-top:18px}.strat-tactic-detail h3{font:700 25px "Barlow Condensed"}.strat-tactic-detail p{font-size:11px;color:var(--muted)}.strat-tactic-detail input,.strat-tactic-detail textarea{display:block;width:100%;margin:8px 0}
+@media(max-width:760px){.strat-workspace{grid-template-columns:1fr}.strat-canvas{min-height:360px}.strat-lineup-form{grid-template-columns:1fr}}

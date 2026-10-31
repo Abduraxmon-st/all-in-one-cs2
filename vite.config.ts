@@ -39,6 +39,7 @@ react(),
       strictPort: true,
       proxy: env.VITE_API_PROXY_TARGET ? {
         '/api': { target: env.VITE_API_PROXY_TARGET, changeOrigin: true },
+        '/ws/stratboard': { target: env.VITE_API_PROXY_TARGET, changeOrigin: true, ws: true },
       } : undefined,
       watch: {
         ignored: [

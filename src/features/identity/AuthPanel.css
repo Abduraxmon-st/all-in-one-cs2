@@ -1,0 +1,13 @@
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;display:grid;place-items:center;padding:16px}
+.auth-panel{position:relative;width:min(420px,100%);max-height:90vh;overflow:auto;background:var(--panel);border:1px solid var(--line);padding:28px;color:var(--paper)}
+.auth-panel h2{font:700 38px "Barlow Condensed";text-transform:uppercase;margin:8px 0 18px}
+.auth-panel p{font-size:11px;color:var(--muted)}
+.auth-panel .auth-error{color:#ff8d8d}
+.auth-close{position:absolute;right:14px;top:12px;background:transparent;border:0;color:var(--paper);font-size:24px}
+.auth-panel form{display:flex;flex-direction:column;gap:12px;margin:16px 0}
+.auth-panel label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:10px}
+.auth-panel input,.auth-panel select{background:#101312;border:1px solid var(--line);padding:10px;color:var(--paper)}
+.auth-panel form button,.auth-steam{border:0;background:var(--lime);color:#111;padding:12px;font-size:10px;font-weight:800;letter-spacing:.08em}
+.auth-steam{width:100%}
+.auth-panel .auth-dev-label{border-top:1px solid var(--line);padding-top:18px;margin:10px 0 0}
+.auth-panel .auth-secondary{background:transparent;border:1px solid var(--line);color:var(--paper);padding:10px;font-size:10px}

@@ -1,7 +1,9 @@
-# Identity module scaffold
+# Identity module
 
 - `types.ts`: login and user profile data contracts.
-- `api.ts`: endpoint paths.
+- `api.ts`: Steam/dev login and profile requests.
+- `AuthProvider.tsx`: shared session state and callback handling.
+- `AuthPanel.tsx`: sign-in and profile UI.
 - `index.ts`: public module exports.
 
-Next integration step: implement HTTP calls, session state, the Steam callback, and profile UI. The development login endpoint must only be used with a development backend.
+Development login is shown only in Vite development mode and requires the backend's dev mode. The backend's `FRONTEND_AUTH_REDIRECT` must point to this frontend's `/auth/callback` route.

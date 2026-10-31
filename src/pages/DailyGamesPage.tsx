@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react"
+import { useAuth } from "../features/identity/AuthProvider"
 import {
   getDailyChallenge,
   getLeaderboard,
@@ -95,6 +96,7 @@ const emptyClip: ClipSubmission = {
 }
 
 export default function DailyGamesPage({ notify }: Props) {
+  const { token, user } = useAuth()
   const [challenge, setChallenge] = useState<DailyChallenge | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -106,8 +108,6 @@ export default function DailyGamesPage({ notify }: Props) {
   const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null)
   const [leaderboardError, setLeaderboardError] = useState("")
   const [showSubmission, setShowSubmission] = useState(false)
-  const [tokenInput, setTokenInput] = useState("")
-  const [token, setToken] = useState("")
   const [clip, setClip] = useState<ClipSubmission>(emptyClip)
   const [clipBusy, setClipBusy] = useState(false)
   const [clipError, setClipError] = useState("")
@@ -218,7 +218,7 @@ export default function DailyGamesPage({ notify }: Props) {
   async function handleClipSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!token) {
-      setClipError("Connect your sign-in JWT above to submit a clip.")
+      setClipError("Sign in to submit a clip.")
       return
     }
     setClipBusy(true)
@@ -243,7 +243,7 @@ export default function DailyGamesPage({ notify }: Props) {
 
   async function handleLoadMyClips() {
     if (!token) {
-      setClipError("Connect your sign-in JWT above to view submissions.")
+      setClipError("Sign in to view submissions.")
       return
     }
     setClipBusy(true)
@@ -275,30 +275,7 @@ export default function DailyGamesPage({ notify }: Props) {
           <button onClick={handleShare}>Share results ↗</button>
         )}
       </div>
-      <div className="minigame-auth">
-        <span>{token ? "SIGNED-IN PLAY" : "PLAYING AS GUEST"}</span>
-        <input
-          type="password"
-          autoComplete="off"
-          aria-label="Sign-in JWT"
-          placeholder="Sign-in JWT (optional)"
-          value={tokenInput}
-          onChange={(event) => setTokenInput(event.target.value)}
-        />
-        <button onClick={() => setToken(tokenInput.trim())}>
-          {token ? "UPDATE TOKEN" : "USE TOKEN"}
-        </button>
-        {token && (
-          <button
-            onClick={() => {
-              setToken("")
-              setTokenInput("")
-            }}
-          >
-            PLAY AS GUEST
-          </button>
-        )}
-      </div>
+      <div className="minigame-auth"><span>{user ? `SIGNED IN AS ${user.username}` : "PLAYING AS GUEST"}</span></div>
 
       <section className="game-layout">
         <div className="daily-stage">
@@ -475,7 +452,7 @@ export default function DailyGamesPage({ notify }: Props) {
           <h3>Submit a community clip</h3>
           <p>
             Clips are reviewed before they appear in a daily challenge. Connect
-            a sign-in JWT above before submitting.
+            Sign in with Steam before submitting.
           </p>
           <form onSubmit={handleClipSubmit}>
             <label>

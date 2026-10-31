@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react"
+import { useAuth } from "../features/identity/AuthProvider"
 import {
   createCommunityLoadout,
   deleteCommunityLoadout,
@@ -88,6 +89,7 @@ function Pager({
 }
 
 export default function LoadoutPage({ budget, setBudget, notify }: Props) {
+  const { token, user } = useAuth()
   const [tab, setTab] = useState<Tab>("builder")
   const [color, setColor] = useState<Color>("PURPLE")
   const [ctRifle, setCtRifle] = useState("weapon_m4a1_silencer")
@@ -100,8 +102,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const [title, setTitle] = useState("")
   const [isPublic, setIsPublic] = useState(true)
   const [publishing, setPublishing] = useState(false)
-  const [tokenDraft, setTokenDraft] = useState("")
-  const [token, setToken] = useState("")
 
   const [catalogKind, setCatalogKind] = useState<CatalogKind>("skins")
   const [catalogSearch, setCatalogSearch] = useState("")
@@ -260,7 +260,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     event.preventDefault()
     if (!generated) return
     if (!token) {
-      setGeneratorError("Connect a sign-in JWT to save this loadout.")
+      setGeneratorError("Sign in to save this loadout.")
       return
     }
     setPublishing(true)
@@ -315,7 +315,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   async function handleUpvote() {
     if (!communityDetail) return
     if (!token) {
-      setCommunityError("Connect a sign-in JWT to upvote.")
+      setCommunityError("Sign in to upvote.")
       return
     }
     try {
@@ -361,26 +361,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         </div>
       </div>
       <div className="lo-auth">
-        <span>{token ? "SIGNED IN FOR COMMUNITY ACTIONS" : "GUEST MODE"}</span>
-        <input
-          type="password"
-          autoComplete="off"
-          aria-label="Sign-in JWT"
-          placeholder="Sign-in JWT (optional)"
-          value={tokenDraft}
-          onChange={(event) => setTokenDraft(event.target.value)}
-        />
-        <button onClick={() => setToken(tokenDraft.trim())}>USE TOKEN</button>
-        {token && (
-          <button
-            onClick={() => {
-              setToken("")
-              setTokenDraft("")
-            }}
-          >
-            CLEAR
-          </button>
-        )}
+        <span>{user ? `SIGNED IN AS ${user.username}` : "GUEST MODE"}</span>
       </div>
       <div className="lo-tabs" role="tablist" aria-label="Loadout sections">
         {(["builder", "catalog", "community"] as Tab[]).map((item) => (

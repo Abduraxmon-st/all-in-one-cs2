@@ -1,0 +1,22 @@
+.match-api-page .match-submit{display:flex;flex-direction:column;gap:13px;padding:24px}
+.match-submit label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.match-submit input{background:#101312;border:1px solid var(--line);color:var(--paper);padding:12px;font-size:12px}
+.match-submit>span{color:var(--muted);font-size:9px}
+.match-submit p,.match-status p,.match-history p{color:var(--muted);font-size:11px;line-height:1.6}
+.match-submit button,.match-status button{border:0;background:var(--lime);color:#111;padding:12px;font-size:10px;font-weight:800}
+.match-status{padding:20px}
+.match-status>strong{display:block;margin-top:30px;font:700 34px "Barlow Condensed"}
+.match-status button{margin-top:20px}
+.match-error{padding:12px;color:#ff8d8d;border:1px solid #603737;background:#2a1a1a;font-size:11px}
+.match-results,.match-roast{border:1px solid var(--line);background:var(--panel);margin-top:16px;padding:18px}
+.match-scoreboard{margin-top:12px}
+.match-scoreboard button,.match-history button{display:grid;grid-template-columns:25px 1.4fr repeat(3,1fr) 1.5fr;gap:10px;align-items:center;width:100%;padding:12px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--paper);text-align:left;font-size:10px}
+.match-scoreboard button:hover,.match-history button:hover{background:#202524}
+.match-scoreboard em{font-style:normal;color:var(--lime)}
+.match-roast>button{float:right;background:transparent;border:0;color:var(--muted)}
+.match-roast h3{font:700 28px "Barlow Condensed";margin:8px 0}
+.match-roast blockquote{margin:10px 0;color:var(--paper);font-size:15px}
+.match-roast small{color:var(--muted)}
+.match-history{margin-top:16px;padding:18px}
+.match-history button{grid-template-columns:1.2fr repeat(3,1fr)}
+@media(max-width:760px){.match-scoreboard button{grid-template-columns:20px 1fr 1fr}.match-scoreboard button small:nth-of-type(n+2),.match-scoreboard em{display:none}.match-history button{grid-template-columns:1fr 1fr}.match-history button span:nth-last-child(-n+2){display:none}}

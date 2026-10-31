@@ -7,6 +7,8 @@ import DailyGamesPage from "./pages/DailyGamesPage";
 import LoadoutPage from "./pages/LoadoutPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import { navigate, routeHref, routes, usePathname } from "./routes";
+import AuthPanel from "./features/identity/AuthPanel";
+import { useAuth } from "./features/identity/AuthProvider";
 
 function handleRouteClick(event: MouseEvent<HTMLAnchorElement>, path: string) {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -15,12 +17,14 @@ function handleRouteClick(event: MouseEvent<HTMLAnchorElement>, path: string) {
 }
 
 export default function App() {
+  const { user, loading: authLoading } = useAuth();
   const pathname = usePathname();
-  const activeRoute = routes.find((route) => route.path === pathname);
+  const activeRoute = routes.find((route) => route.path === pathname) ?? (pathname.startsWith("/m/") ? routes[1] : pathname.startsWith("/strat-board/") ? routes[2] : undefined);
   const [code, setCode] = useState("");
   const [budget, setBudget] = useState(250);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const [authOpen, setAuthOpen] = useState(false);
 
   const notify = (message: string) => {
     setToast(message);
@@ -45,7 +49,7 @@ export default function App() {
       page = <LoadoutPage budget={budget} setBudget={setBudget} notify={notify} />;
       break;
     default:
-      page = <NotFoundPage />;
+      page = pathname.startsWith("/m/") ? <MatchAnalyzerPage code={code} setCode={setCode} notify={notify} shareSlug={pathname.slice(3)} /> : pathname.startsWith("/strat-board/") ? <StratBoardPage notify={notify} roomCodeFromRoute={pathname.slice("/strat-board/".length)} /> : <NotFoundPage />;
   }
 
   return (
@@ -73,11 +77,11 @@ export default function App() {
         </nav>
         <div className="sidebar-bottom">
           <div className="live-pill"><span /> 2,841 online</div>
-          <div className="player">
+          <button className="player" onClick={() => setAuthOpen(true)}>
             <div className="avatar">AK</div>
-            <div><strong>Anonymous</strong><span>Sign in with Steam</span></div>
+            <div><strong>{user?.username ?? "Anonymous"}</strong><span>{user ? user.role : "Sign in with Steam"}</span></div>
             <Icon name="chevron" size={16} />
-          </div>
+          </button>
         </div>
       </aside>
 
@@ -90,7 +94,7 @@ export default function App() {
           </div>
           <div className="top-actions">
             <div className="streak"><Icon name="bolt" size={15} /><strong>7</strong><span>day streak</span></div>
-            <button className="steam-button" onClick={() => notify("Steam sign-in opened")}>Connect Steam <Icon name="arrow" size={16} /></button>
+            <button className="steam-button" onClick={() => setAuthOpen(true)}>{authLoading ? "Loading…" : user ? user.username : "Connect Steam"} <Icon name="arrow" size={16} /></button>
           </div>
         </header>
 
@@ -104,6 +108,7 @@ export default function App() {
       </main>
 
       {toast && <div className="toast"><span /><p>{toast}</p></div>}
+      {authOpen && <AuthPanel onClose={() => setAuthOpen(false)} />}
     </div>
   );
 }
