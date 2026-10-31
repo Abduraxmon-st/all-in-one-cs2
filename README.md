@@ -32,6 +32,7 @@ Routes are defined in `src/routes.ts`. Every page component lives in `src/pages/
 
 `src/App.tsx` holds the shared layout. API clients and data types remain in `src/features/`.
 Deployment hosting must serve `index.html` for deep links to these routes.
+Vercel's SPA rewrite is configured in `vercel.json` so `/auth/callback`, shared matches, rooms, and profiles load the React app directly.
 
 ## Run locally
 
@@ -45,6 +46,8 @@ Open <http://localhost:8443/>. Run `pnpm build` to create a production build.
 ## API setup
 
 The frontend defaults to `https://panda-cs.onrender.com` for API requests. Copy `.env.example` to `.env` only when overriding the API origin. For a local Vite proxy, set `VITE_API_BASE_URL` to an empty value and `VITE_API_PROXY_TARGET` to the backend origin.
+
+For production Steam login, set **the backend service's** `FRONTEND_AUTH_REDIRECT` environment variable on Render to `https://all-in-one-cs2.vercel.app/auth/callback`, then deploy that backend service. `VITE_API_BASE_URL` controls API requests and does not control the post-login redirect.
 
 Guests receive a stable browser session ID and can play without signing in. Steam sign-in supplies a shared JWT for leaderboard eligibility, community clip submissions, loadout actions, and saving tactics. The token is kept in tab session storage and removed from the callback URL immediately.
 
