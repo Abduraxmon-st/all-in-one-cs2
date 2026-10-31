@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api"
 import type {
   CommunityDetail,
   CommunityFilters,
@@ -18,7 +19,6 @@ type Envelope<T,> = {
   message: string
   data: T
 }
-const BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "")
 const PREFIX = "/api/v1/loadouts"
 
 function query(params: object): string {
@@ -38,7 +38,7 @@ async function request<T>(
   const headers = new Headers(options.headers)
   if (options.body) headers.set("Content-Type", "application/json")
   if (token) headers.set("Authorization", `Bearer ${token}`)
-  const response = await fetch(`${BASE}${PREFIX}${path}`, {
+  const response = await fetch(`${API_BASE_URL}${PREFIX}${path}`, {
     ...options,
     headers,
   })

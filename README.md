@@ -40,7 +40,7 @@ Open <http://localhost:8443/>. Run `pnpm build` to create a production build.
 
 ## API setup
 
-Copy `.env.example` to `.env`. Set `VITE_API_PROXY_TARGET` to the backend origin for local development. Vite will forward `/api` requests. For a deployed frontend on a separate origin, set `VITE_API_BASE_URL` to the API origin and allow that origin in the backend CORS settings.
+The frontend defaults to `https://panda-cs.onrender.com` for API requests. Copy `.env.example` to `.env` only when overriding the API origin. For a local Vite proxy, set `VITE_API_BASE_URL` to an empty value and `VITE_API_PROXY_TARGET` to the backend origin.
 
 Guests receive a stable browser session ID and can play without signing in. Leaderboard eligibility and community clip submissions require a JWT. Until a Steam sign-in flow is added, the daily game accepts a temporary JWT in memory and does not save it.
 
