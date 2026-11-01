@@ -31,3 +31,370 @@
 .strat-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;color:var(--muted);font-size:10px}
 .strat-tactic-detail{border:1px solid #4b5a22;padding:16px;margin-top:18px}.strat-tactic-detail h3{font:700 25px "Barlow Condensed"}.strat-tactic-detail p{font-size:11px;color:var(--muted)}.strat-tactic-detail input,.strat-tactic-detail textarea{display:block;width:100%;margin:8px 0}
 @media(max-width:760px){.strat-workspace{grid-template-columns:1fr}.strat-canvas{min-height:360px}.strat-lineup-form{grid-template-columns:1fr}}
+
+
+/* Tactical Radar Map & In-App Video Modal Suite */
+.strat-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.strat-radar-toggle-btn {
+  background: #1e2621 !important;
+  color: var(--lime) !important;
+  border-color: #3b5042 !important;
+}
+.strat-radar-toggle-btn:hover {
+  background: #25332b !important;
+  border-color: var(--lime) !important;
+}
+
+.strat-radar-container {
+  margin: 14px 0 20px;
+  background: #111513;
+  border: 1px solid #334438;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.strat-radar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 1px solid #232d27;
+  padding-bottom: 10px;
+}
+.strat-radar-header strong {
+  font: 700 16px "Barlow Condensed";
+  letter-spacing: .08em;
+  display: block;
+}
+.strat-radar-header span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.strat-radar-legend {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  color: var(--paper);
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+.legend-item i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.strat-radar-map-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 280px;
+  max-height: 480px;
+  background-color: #141b18;
+  background-image:
+    linear-gradient(#253329 1px, transparent 1px),
+    linear-gradient(90deg, #253329 1px, transparent 1px);
+  background-size: 24px 24px;
+  border: 1px solid #36483c;
+  overflow: hidden;
+}
+.strat-radar-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.strat-radar-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 8px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.strat-radar-pin:hover {
+  transform: translate(-50%, -50%) scale(1.25);
+  box-shadow: 0 0 10px rgba(200, 241, 53, 0.4);
+}
+.strat-radar-pin.selected {
+  transform: translate(-50%, -50%) scale(1.35);
+  box-shadow: 0 0 14px var(--lime);
+  outline: 2px solid #fff;
+}
+
+.strat-radar-selected-shelf {
+  background: #171f1a;
+  border: 1px solid #3c5243;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.strat-radar-selected-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.strat-radar-selected-info strong {
+  font: 700 16px "Barlow Condensed";
+  color: var(--paper);
+}
+.strat-radar-selected-info small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.strat-radar-selected-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.strat-radar-close-btn {
+  background: transparent !important;
+  border-color: #4a5a50 !important;
+  color: var(--muted) !important;
+}
+
+.strat-lineups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.strat-lineup-card {
+  background: #161a18;
+  border: 1px solid var(--line);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.strat-lineup-card:hover {
+  border-color: #4a5c50;
+  transform: translateY(-2px);
+}
+.strat-lineup-card.highlighted {
+  border-color: var(--lime);
+  background: #1b231e;
+  box-shadow: 0 0 12px rgba(200, 241, 53, 0.15);
+}
+.strat-lineup-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.strat-badge {
+  border: 1px solid var(--line);
+  font-size: 8px;
+  font-weight: 800;
+  padding: 2px 6px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.strat-badge.map {
+  color: var(--lime);
+  border-color: #3b5030;
+}
+.strat-badge.team {
+  color: var(--orange);
+  border-color: #553522;
+}
+.strat-badge.throw {
+  color: #a78bfa;
+  border-color: #4c3773;
+}
+.strat-lineup-throw {
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-right: auto;
+}
+.strat-badge-verified {
+  color: var(--lime);
+  font-size: 8px;
+  font-weight: 700;
+}
+.strat-badge-pending {
+  color: var(--orange);
+  font-size: 8px;
+}
+.strat-lineup-desc {
+  font-size: 11px;
+  color: #a3aca7;
+  line-height: 1.4;
+  margin: 0;
+}
+.strat-lineup-coords {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--muted);
+  background: #101312;
+  padding: 6px 8px;
+  border: 1px solid #232b26;
+}
+.strat-lineup-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+.strat-video-action-btn {
+  background: #252838 !important;
+  border-color: #474f75 !important;
+  color: #8da4ff !important;
+  font-weight: 800 !important;
+}
+.strat-video-action-btn:hover {
+  background: #313650 !important;
+  border-color: #7284d6 !important;
+}
+.strat-delete-btn {
+  background: #291818 !important;
+  border-color: #5c3232 !important;
+  color: #ff9191 !important;
+}
+
+/* Modal Dialog */
+.strat-video-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 9, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.strat-video-modal-dialog {
+  background: #141716;
+  border: 1px solid #36483c;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+  max-width: 820px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: stratModalFadeIn .2s ease-out;
+}
+@keyframes stratModalFadeIn {
+  from { opacity: 0; transform: scale(.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.strat-video-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 20px;
+  border-bottom: 1px solid #28362d;
+  background: #171c19;
+}
+.strat-badge-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.strat-video-modal-header h3 {
+  margin: 0;
+  font: 700 24px "Barlow Condensed";
+  color: var(--paper);
+}
+.strat-modal-close-btn {
+  background: transparent !important;
+  border: 1px solid #3d4a41 !important;
+  color: var(--muted) !important;
+  width: 32px;
+  height: 32px;
+  font-size: 14px !important;
+  padding: 0 !important;
+}
+.strat-modal-close-btn:hover {
+  color: var(--paper) !important;
+  border-color: var(--lime) !important;
+}
+.strat-video-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.strat-modal-player-wrap {
+  width: 100%;
+  border: 1px solid #2c3a31;
+  background: #0d100f;
+}
+.strat-modal-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.strat-coords-chips {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--muted);
+  background: #0f1211;
+  padding: 8px 12px;
+  border: 1px solid #232b26;
+}
+.strat-coords-chips strong {
+  color: var(--lime);
+}
+.strat-modal-desc {
+  font-size: 12px;
+  color: #b5beb9;
+  line-height: 1.5;
+  margin: 0;
+}
+.strat-video-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid #28362d;
+  background: #171c19;
+}
+.strat-modal-place-btn {
+  background: var(--lime) !important;
+  color: #111 !important;
+  font-weight: 800 !important;
+}
+.strat-modal-ext-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  color: var(--lime);
+  text-decoration: none;
+  font-weight: 700;
+  padding: 0 10px;
+}
+.strat-modal-cancel-btn {
+  background: #252b28 !important;
+  color: var(--paper) !important;
+}
