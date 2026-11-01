@@ -389,3 +389,24 @@ footer p { text-transform: none; letter-spacing: 0; font-size: 10px; }
   height: 280px !important;
 }
 
+
+
+.topbar-signout-btn {
+  background: transparent;
+  border: 1px solid #4a3030;
+  color: #ff9d9d;
+  padding: 0 14px;
+  height: 38px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  transition: all .2s ease;
+  cursor: pointer;
+}
+.topbar-signout-btn:hover {
+  background: #3a1c1c;
+  border-color: #ff6d6d;
+  color: #fff;
+  transform: translateY(-2px);
+}

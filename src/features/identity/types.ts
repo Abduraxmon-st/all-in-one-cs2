@@ -31,6 +31,17 @@ export interface DevLoginRequest {
   role: UserRole;
 }
 
+export interface RegisterRequest {
+  username: string;
+  email?: string;
+  password: string;
+}
+
+export interface PasswordLoginRequest {
+  usernameOrEmail: string;
+  password: string;
+}
+
 export interface UpdateProfileRequest {
   username?: string;
   avatarUrl?: string;

@@ -1,6 +1,20 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { devLogin, getCurrentUser, getSteamLoginUrl, IdentityApiError, updateCurrentUser } from "./api";
-import type { DevLoginRequest, UpdateProfileRequest, UserProfile } from "./types";
+import {
+  devLogin,
+  getCurrentUser,
+  getSteamLoginUrl,
+  IdentityApiError,
+  loginWithPassword,
+  registerWithPassword as apiRegisterWithPassword,
+  updateCurrentUser,
+} from "./api";
+import type {
+  DevLoginRequest,
+  PasswordLoginRequest,
+  RegisterRequest,
+  UpdateProfileRequest,
+  UserProfile,
+} from "./types";
 import { routeHref } from "../../routes";
 
 const TOKEN_KEY = "clutch-labs-access-token";
@@ -12,23 +26,32 @@ type AuthContextValue = {
   error: string;
   signInWithSteam: () => Promise<void>;
   signInForDevelopment: (body: DevLoginRequest) => Promise<void>;
+  signInWithPassword: (body: PasswordLoginRequest) => Promise<void>;
+  registerWithPassword: (body: RegisterRequest) => Promise<void>;
   updateProfile: (body: UpdateProfileRequest) => Promise<UserProfile>;
   updateUserProfile: (body: UpdateProfileRequest) => Promise<UserProfile>;
   refreshUser: () => Promise<UserProfile | null>;
+  logout: () => void;
   signOut: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function initialToken(): string {
-  const url = new URL(window.location.href);
-  const callbackToken = url.pathname.endsWith("/auth/callback") ? url.searchParams.get("token") : null;
-  if (callbackToken) {
-    sessionStorage.setItem(TOKEN_KEY, callbackToken);
-    window.history.replaceState({}, "", routeHref("/"));
-    return callbackToken;
+  try {
+    const url = new URL(window.location.href);
+    const callbackToken = url.pathname.endsWith("/auth/callback")
+      ? url.searchParams.get("token")
+      : null;
+    if (callbackToken) {
+      localStorage.setItem(TOKEN_KEY, callbackToken);
+      window.history.replaceState({}, "", routeHref("/"));
+      return callbackToken;
+    }
+    return localStorage.getItem(TOKEN_KEY) ?? "";
+  } catch {
+    return "";
   }
-  return sessionStorage.getItem(TOKEN_KEY) ?? "";
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -38,21 +61,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!token) { setUser(null); setLoading(false); return; }
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     const controller = new AbortController();
     setLoading(true);
-    getCurrentUser(token).then((profile) => {
-      if (!controller.signal.aborted) { setUser(profile); setError(""); }
-    }).catch((cause: unknown) => {
-      if (!controller.signal.aborted) {
-        if (cause instanceof IdentityApiError && (cause.status === 401 || cause.status === 403)) {
-          sessionStorage.removeItem(TOKEN_KEY);
-          setToken("");
-          setUser(null);
+    getCurrentUser(token)
+      .then((profile) => {
+        if (!controller.signal.aborted) {
+          setUser(profile);
+          setError("");
         }
-        setError(cause instanceof Error ? cause.message : "Sign-in failed.");
-      }
-    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+      })
+      .catch((cause: unknown) => {
+        if (!controller.signal.aborted) {
+          if (
+            cause instanceof IdentityApiError &&
+            (cause.status === 401 || cause.status === 403)
+          ) {
+            localStorage.removeItem(TOKEN_KEY);
+            setToken("");
+            setUser(null);
+          }
+          setError(cause instanceof Error ? cause.message : "Sign-in session expired.");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
     return () => controller.abort();
   }, [token]);
 
@@ -62,13 +100,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInForDevelopment(body: DevLoginRequest) {
-    const isDevAuthAllowed = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_AUTH !== "false";
-    if (!isDevAuthAllowed) throw new Error("Development login is disabled in this environment.");
+    const isDevAuthAllowed =
+      import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_AUTH !== "false";
+    if (!isDevAuthAllowed)
+      throw new Error("Development login is disabled in this environment.");
     setError("");
     const result = await devLogin(body);
-    sessionStorage.setItem(TOKEN_KEY, result.accessToken);
-    setToken(result.accessToken);
+    const accessToken = result.accessToken || (result as unknown as { token?: string }).token || "";
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    setToken(accessToken);
     setUser(result.user);
+  }
+
+  async function signInWithPassword(body: PasswordLoginRequest) {
+    setError("");
+    const result = await loginWithPassword(body);
+    const accessToken = result.accessToken || (result as unknown as { token?: string }).token || "";
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    setToken(accessToken);
+    if (result.user) {
+      setUser(result.user);
+    } else {
+      const profile = await getCurrentUser(accessToken);
+      setUser(profile);
+    }
+  }
+
+  async function registerWithPassword(body: RegisterRequest) {
+    setError("");
+    const result = await apiRegisterWithPassword(body);
+    const accessToken = result.accessToken || (result as unknown as { token?: string }).token || "";
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    setToken(accessToken);
+    if (result.user) {
+      setUser(result.user);
+    } else {
+      const profile = await getCurrentUser(accessToken);
+      setUser(profile);
+    }
   }
 
   async function updateProfile(body: UpdateProfileRequest): Promise<UserProfile> {
@@ -85,8 +154,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return profile;
   }
 
-  function signOut() {
-    sessionStorage.removeItem(TOKEN_KEY);
+  function logout() {
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+    } catch {}
     setToken("");
     setUser(null);
     setError("");
@@ -101,10 +172,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         signInWithSteam,
         signInForDevelopment,
+        signInWithPassword,
+        registerWithPassword,
         updateProfile,
         updateUserProfile: updateProfile,
         refreshUser,
-        signOut,
+        logout,
+        signOut: logout,
       }}
     >
       {children}

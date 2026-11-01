@@ -510,3 +510,24 @@
   border: 1px solid #603737;
   color: #ff8d8d !important;
 }
+
+
+.profile-signout-btn {
+  background: #2a1616;
+  border: 1px solid #5a2e2e;
+  color: #ff8d8d;
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+  margin-left: 8px;
+}
+.profile-signout-btn:hover {
+  background: #3e1b1b;
+  border-color: #ff6060;
+  color: #fff;
+}

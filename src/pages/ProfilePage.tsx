@@ -15,7 +15,7 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ userId, notify }: ProfilePageProps) {
-  const { user, token, loading, updateProfile } = useAuth();
+  const { user, token, loading, updateProfile, logout } = useAuth();
   const isMine = !!user && (!userId || userId === user.id);
 
   const [profile, setProfile] = useState<PublicUserSummary | null>(null);
@@ -269,14 +269,27 @@ export default function ProfilePage({ userId, notify }: ProfilePageProps) {
             </div>
           </div>
 
-          {isMine && user?.role === "ADMIN" && (
+          {isMine && (
             <div className="profile-admin-shortcut">
+              {user?.role === "ADMIN" && (
+                <button
+                  type="button"
+                  className="profile-admin-cta"
+                  onClick={() => navigate("/admin")}
+                >
+                  Open Admin Console →
+                </button>
+              )}
               <button
                 type="button"
-                className="profile-admin-cta"
-                onClick={() => navigate("/admin")}
+                className="profile-signout-btn"
+                onClick={() => {
+                  logout();
+                  notify?.("Signed out of your account.");
+                  navigate("/");
+                }}
               >
-                Open Admin Console →
+                Sign Out
               </button>
             </div>
           )}
