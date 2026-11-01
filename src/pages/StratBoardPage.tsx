@@ -4,14 +4,27 @@ import { createRoom, deleteLineup, deleteTactic, getLineups, getMyTactics, getRo
 import { connectRoom } from "../features/stratboard/realtime";
 import type { BoardEvent, CanvasElement, CreateLineupRequest, RoomParticipant, RoomSnapshot, TacticDetail, TacticSummary, TeamSide, UtilityLineup, UtilityType } from "../features/stratboard/types";
 import ClipPlayer from "../components/ClipPlayer";
+import Icon, { type IconName } from "../components/Icon";
 import { navigate, routeHref } from "../routes";
 import "./StratBoardPage.css";
 
 type Props = { notify: (message: string) => void; roomCodeFromRoute?: string };
 type Tab = "board" | "lineups" | "tactics";
-type Tool = "SELECT" | "ARROW" | "SMOKE" | "FLASH" | "MOLOTOV" | "PLAYER";
-const maps = ["de_mirage", "de_inferno", "de_dust2", "de_nuke", "de_ancient", "de_anubis", "de_train", "de_vertigo"];
+type Tool = "SELECT" | "ARROW" | "SMOKE" | "FLASH" | "MOLOTOV" | "HE" | "PLAYER";
+const maps = ["de_dust2", "de_mirage", "de_inferno", "de_nuke", "de_ancient", "de_anubis", "de_train", "de_vertigo", "de_overpass"];
 const initialLineup: CreateLineupRequest = { mapName: "de_inferno", utilityType: "SMOKE", teamSide: "T", title: "", throwType: "STANDING", standX: 50, standY: 50, landX: 50, landY: 50, videoUrl: "", description: "" };
+
+const mapRadarUrls: Record<string, string> = {
+  de_dust2: "/maps/de_dust2.png",
+  de_mirage: "/maps/de_mirage.png",
+  de_inferno: "/maps/de_inferno.png",
+  de_nuke: "/maps/de_nuke.png",
+  de_ancient: "/maps/de_ancient.png",
+  de_anubis: "/maps/de_anubis.png",
+  de_train: "/maps/de_train.png",
+  de_vertigo: "/maps/de_vertigo.png",
+  de_overpass: "/maps/de_overpass.png",
+};
 
 const utilityColors: Record<UtilityType, string> = {
   SMOKE: "#94a3b8",
@@ -157,7 +170,33 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
     const y = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
     if (tool === "SELECT") return;
     if (tool === "ARROW" && !arrowStart) { setArrowStart({ x, y }); return; }
-    const element: CanvasElement = tool === "ARROW" ? { elementId: crypto.randomUUID(), elementType: "ARROW", x: arrowStart!.x, y: arrowStart!.y, endX: x, endY: y, colorHex: "#FF7A28", createdByParticipantId: participant.participantId } : { elementId: crypto.randomUUID(), elementType: tool === "PLAYER" ? "PLAYER_TOKEN" : "UTILITY_PIN", x, y, label: tool, colorHex: "#C8F135", createdByParticipantId: participant.participantId };
+    const element: CanvasElement =
+      tool === "ARROW"
+        ? {
+            elementId: crypto.randomUUID(),
+            elementType: "ARROW",
+            x: arrowStart!.x,
+            y: arrowStart!.y,
+            endX: x,
+            endY: y,
+            colorHex: "#FF7A28",
+            createdByParticipantId: participant.participantId,
+          }
+        : {
+            elementId: crypto.randomUUID(),
+            elementType: tool === "PLAYER" ? "PLAYER_TOKEN" : "UTILITY_PIN",
+            x,
+            y,
+            label: tool === "PLAYER" ? teamSide : tool,
+            text: tool === "PLAYER" ? `${teamSide} Operator` : undefined,
+            colorHex:
+              tool === "PLAYER"
+                ? teamSide === "CT"
+                  ? "#38bdf8"
+                  : "#fbbf24"
+                : utilityColors[tool as UtilityType] ?? "#C8F135",
+            createdByParticipantId: participant.participantId,
+          };
     publish({ eventType: "ELEMENT_UPSERT", participantId: participant.participantId, element });
     setArrowStart(null);
   }
@@ -280,8 +319,248 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
     {tab === "board" && <>
       <div className="strat-room-bar"><input aria-label="Display name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Your name" /><button disabled={busy} onClick={create}>CREATE ROOM</button><input aria-label="Room code" value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="Room code" /><button disabled={busy} onClick={join}>JOIN ROOM</button></div>
       {room && <div className="strat-room-meta"><strong>ROOM {room.roomCode}</strong><span>{connection.toUpperCase()}</span><button onClick={() => navigator.clipboard.writeText(`${window.location.origin}${routeHref(`/strat-board/${room.roomCode}`)}`).then(() => notify("Invite link copied")).catch(() => notify("Could not copy invite"))}>COPY INVITE LINK</button><button onClick={() => { setRoom(null); setParticipant(null); setCursors({}); navigate("/strat-board"); }}>LEAVE ROOM</button></div>}
-      <div className="strat-tools">{(["SELECT", "ARROW", "SMOKE", "FLASH", "MOLOTOV", "PLAYER"] as Tool[]).map((item) => <button className={tool === item ? "active" : ""} key={item} onClick={() => { setTool(item); setArrowStart(null); }}>{item}</button>)}<button onClick={() => { const last = room?.canvasElements.at(-1); if (last && participant) publish({ eventType: "ELEMENT_DELETE", participantId: participant.participantId, elementId: last.elementId }); }}>UNDO</button><button onClick={() => { if (participant) publish({ eventType: "BOARD_CLEAR", participantId: participant.participantId }); }}>CLEAR</button></div>
-      <div className="strat-workspace"><div className="strat-canvas" onClick={point} onMouseMove={moveCursor} role="presentation"><span className="strat-site a">A</span><span className="strat-site b">B</span>{room?.canvasElements.map((element) => element.elementType === "ARROW" && element.endX !== undefined && element.endY !== undefined ? <svg className="strat-arrow" key={element.elementId} viewBox="0 0 100 100" preserveAspectRatio="none"><line x1={element.x} y1={element.y} x2={element.endX} y2={element.endY} stroke={element.colorHex ?? "#ff7a28"} strokeWidth=".7" markerEnd="url(#arrowhead)" /><defs><marker id="arrowhead" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#ff7a28" /></marker></defs></svg> : <button key={element.elementId} className={`strat-pin ${selectedElement === element.elementId ? "selected" : ""}`} style={{ left: `${element.x}%`, top: `${element.y}%` }} onClick={(event) => { event.stopPropagation(); setSelectedElement(element.elementId); }} title={element.text ?? element.label}>{element.label ?? "P"}</button>)}{arrowStart && <span className="strat-pending" style={{ left: `${arrowStart.x}%`, top: `${arrowStart.y}%` }}>START</span>}{Object.entries(cursors).filter(([id]) => id !== participant?.participantId).map(([id, cursor]) => <span className="strat-cursor" key={id} style={{ left: `${cursor.x}%`, top: `${cursor.y}%` }}>{room?.participants.find((p) => p.participantId === id)?.displayName ?? "PLAYER"}</span>)}</div><aside className="strat-people"><div className="panel-title"><span>TEAM / {room?.participants.length ?? 0}</span></div>{room?.participants.map((person) => <p key={person.participantId}><i style={{ background: person.colorHex }} />{person.displayName}{person.isHost ? " · HOST" : ""}</p>)}{!room && <p>Create or join a room to draw.</p>}{selectedElement && participant && <button onClick={() => { publish({ eventType: "ELEMENT_DELETE", participantId: participant.participantId, elementId: selectedElement }); setSelectedElement(""); }}>DELETE SELECTED</button>}</aside></div>
+      <div className="strat-tools">
+        <button
+          className={tool === "SELECT" ? "active" : ""}
+          onClick={() => {
+            setTool("SELECT");
+            setArrowStart(null);
+          }}
+          title="Select / Move Token"
+        >
+          <Icon name="select" size={14} /> SELECT
+        </button>
+        <button
+          className={tool === "ARROW" ? "active" : ""}
+          onClick={() => {
+            setTool("ARROW");
+            setArrowStart(null);
+          }}
+          title="Draw Strategy Arrow"
+        >
+          <Icon name="arrow" size={14} /> ARROW
+        </button>
+        <button
+          className={tool === "SMOKE" ? "active" : ""}
+          onClick={() => {
+            setTool("SMOKE");
+            setArrowStart(null);
+          }}
+          title="Place Smoke Grenade"
+        >
+          <Icon name="smoke" size={14} /> SMOKE
+        </button>
+        <button
+          className={tool === "FLASH" ? "active" : ""}
+          onClick={() => {
+            setTool("FLASH");
+            setArrowStart(null);
+          }}
+          title="Place Flashbang"
+        >
+          <Icon name="flash" size={14} /> FLASH
+        </button>
+        <button
+          className={tool === "MOLOTOV" ? "active" : ""}
+          onClick={() => {
+            setTool("MOLOTOV");
+            setArrowStart(null);
+          }}
+          title="Place Molotov / Incendiary"
+        >
+          <Icon name="molotov" size={14} /> MOLOTOV
+        </button>
+        <button
+          className={tool === "HE" ? "active" : ""}
+          onClick={() => {
+            setTool("HE");
+            setArrowStart(null);
+          }}
+          title="Place HE Frag Grenade"
+        >
+          <Icon name="he" size={14} /> HE
+        </button>
+        <button
+          className={tool === "PLAYER" ? "active" : ""}
+          onClick={() => {
+            setTool("PLAYER");
+            setArrowStart(null);
+          }}
+          title={`Place ${teamSide} Operator Token`}
+        >
+          <Icon name={teamSide === "CT" ? "ct" : "t"} size={14} /> {teamSide} PLAYER
+        </button>
+        <button
+          onClick={() => {
+            const last = room?.canvasElements.at(-1);
+            if (last && participant)
+              publish({
+                eventType: "ELEMENT_DELETE",
+                participantId: participant.participantId,
+                elementId: last.elementId,
+              });
+          }}
+          title="Undo last element"
+        >
+          <Icon name="undo" size={14} /> UNDO
+        </button>
+        <button
+          onClick={() => {
+            if (participant && window.confirm("Clear all tactical elements on the whiteboard?"))
+              publish({
+                eventType: "BOARD_CLEAR",
+                participantId: participant.participantId,
+              });
+          }}
+          title="Clear Board Canvas"
+        >
+          <Icon name="trash" size={14} /> CLEAR
+        </button>
+      </div>
+
+      <div className="strat-workspace">
+        <div
+          className="strat-canvas"
+          onClick={point}
+          onMouseMove={moveCursor}
+          role="presentation"
+          style={{
+            backgroundImage: `url(${mapRadarUrls[mapName] || `/maps/${mapName}.png`})`,
+          }}
+        >
+          <div className="strat-radar-grid-overlay" />
+          <span className="strat-site a">A</span>
+          <span className="strat-site b">B</span>
+          {room?.canvasElements.map((element) => {
+            if (
+              element.elementType === "ARROW" &&
+              element.endX !== undefined &&
+              element.endY !== undefined
+            ) {
+              return (
+                <svg
+                  className="strat-arrow"
+                  key={element.elementId}
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                >
+                  <line
+                    x1={element.x}
+                    y1={element.y}
+                    x2={element.endX}
+                    y2={element.endY}
+                    stroke={element.colorHex ?? "#ff7a28"}
+                    strokeWidth=".8"
+                    markerEnd="url(#arrowhead)"
+                  />
+                  <defs>
+                    <marker
+                      id="arrowhead"
+                      markerWidth="6"
+                      markerHeight="6"
+                      refX="3.5"
+                      refY="3"
+                      orient="auto"
+                    >
+                      <path d="M0,0 L6,3 L0,6 Z" fill={element.colorHex ?? "#ff7a28"} />
+                    </marker>
+                  </defs>
+                </svg>
+              );
+            }
+
+            const isSelected = selectedElement === element.elementId;
+            const isPlayer =
+              element.elementType === "PLAYER_TOKEN" ||
+              element.label === "CT" ||
+              element.label === "T" ||
+              element.label === "PLAYER";
+            const pinType = element.label?.toUpperCase() ?? "SMOKE";
+            const iconName: IconName = isPlayer
+              ? element.label === "CT"
+                ? "ct"
+                : "t"
+              : pinType === "SMOKE"
+                ? "smoke"
+                : pinType === "FLASH"
+                  ? "flash"
+                  : pinType === "MOLOTOV"
+                    ? "molotov"
+                    : pinType === "HE"
+                      ? "he"
+                      : "target";
+
+            return (
+              <button
+                key={element.elementId}
+                className={`strat-tactical-token ${isSelected ? "selected" : ""} ${
+                  isPlayer ? "player" : "utility"
+                } type-${pinType.toLowerCase()}`}
+                style={{ left: `${element.x}%`, top: `${element.y}%` }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setSelectedElement(element.elementId);
+                }}
+                title={element.text ? `${element.text} (${element.label})` : element.label}
+              >
+                <div className="strat-token-icon-wrap">
+                  <Icon name={iconName} size={15} />
+                </div>
+                {element.text && (
+                  <span className="strat-token-label-chip">{element.text}</span>
+                )}
+              </button>
+            );
+          })}
+          {arrowStart && (
+            <span
+              className="strat-pending"
+              style={{ left: `${arrowStart.x}%`, top: `${arrowStart.y}%` }}
+            >
+              START
+            </span>
+          )}
+          {Object.entries(cursors)
+            .filter(([id]) => id !== participant?.participantId)
+            .map(([id, cursor]) => (
+              <span
+                className="strat-cursor"
+                key={id}
+                style={{ left: `${cursor.x}%`, top: `${cursor.y}%` }}
+              >
+                {room?.participants.find((p) => p.participantId === id)?.displayName ??
+                  "PLAYER"}
+              </span>
+            ))}
+        </div>
+        <aside className="strat-people">
+          <div className="panel-title">
+            <span>TEAM / {room?.participants.length ?? 0}</span>
+          </div>
+          {room?.participants.map((person) => (
+            <p key={person.participantId}>
+              <i style={{ background: person.colorHex }} />
+              {person.displayName}
+              {person.isHost ? " · HOST" : ""}
+            </p>
+          ))}
+          {!room && <p>Create or join a room to draw.</p>}
+          {selectedElement && participant && (
+            <button
+              onClick={() => {
+                publish({
+                  eventType: "ELEMENT_DELETE",
+                  participantId: participant.participantId,
+                  elementId: selectedElement,
+                });
+                setSelectedElement("");
+              }}
+            >
+              DELETE SELECTED
+            </button>
+          )}
+        </aside>
+      </div>
       <form className="strat-save" onSubmit={saveRoom}><input value={saveTitle} onChange={(event) => setSaveTitle(event.target.value)} placeholder="Tactic title" required /><input value={saveDescription} onChange={(event) => setSaveDescription(event.target.value)} placeholder="Description" /><label><input type="checkbox" checked={isPublic} onChange={(event) => setIsPublic(event.target.checked)} /> Public</label><button disabled={busy || !room || !token}>SAVE ROOM AS TACTIC</button></form>
     </>}
     {tab === "lineups" && <section className="strat-list">
@@ -321,7 +600,13 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
             </div>
           </div>
 
-          <div className="strat-radar-map-box">
+          <div
+            className="strat-radar-map-box"
+            style={{
+              backgroundImage: `url(${mapRadarUrls[mapName] || `/maps/${mapName}.png`})`,
+            }}
+          >
+            <div className="strat-radar-grid-overlay" />
             <span className="strat-site a">A</span>
             <span className="strat-site b">B</span>
 
@@ -364,22 +649,29 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
             {lineups.map((l) => {
               const isSelected = selectedRadarLineupId === l.id;
               const color = utilityColors[l.utilityType] ?? "#c8f135";
-              const label = l.utilityType === "SMOKE" ? "SMK" : l.utilityType === "FLASH" ? "FLS" : l.utilityType === "MOLOTOV" ? "MOL" : "HE";
+              const iconName: IconName =
+                l.utilityType === "SMOKE"
+                  ? "smoke"
+                  : l.utilityType === "FLASH"
+                    ? "flash"
+                    : l.utilityType === "MOLOTOV"
+                      ? "molotov"
+                      : "he";
               return (
                 <button
                   key={l.id}
-                  className={`strat-radar-pin ${isSelected ? "selected" : ""}`}
+                  className={`strat-radar-pin ${isSelected ? "selected" : ""} type-${l.utilityType.toLowerCase()}`}
                   style={{
                     left: `${l.landX}%`,
                     top: `${l.landY}%`,
                     borderColor: color,
                     color: isSelected ? "#111" : color,
-                    backgroundColor: isSelected ? color : "#131917",
+                    backgroundColor: isSelected ? color : "rgba(19, 25, 23, 0.85)",
                   }}
                   onClick={() => setSelectedRadarLineupId(isSelected ? null : l.id)}
                   title={`${l.title} (${l.utilityType})`}
                 >
-                  {label}
+                  <Icon name={iconName} size={14} />
                 </button>
               );
             })}
