@@ -100,7 +100,8 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const [generatorBusy, setGeneratorBusy] = useState(false)
   const [generatorError, setGeneratorError] = useState("")
   const [stickerOptions, setStickerOptions] = useState<Sticker[]>([])
-  const [crafts, setCrafts] = useState<Record<string, StickerPlacement>>({})
+  const [crafts, setCrafts] = useState<Record<string, StickerPlacement[]>>({})
+  const [activeSlot, setActiveSlot] = useState<Record<string, number>>({})
   const [title, setTitle] = useState("")
   const [isPublic, setIsPublic] = useState(true)
   const [publishing, setPublishing] = useState(false)
@@ -251,12 +252,70 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     }
   }
 
-  function updateCraft(slot: string, patch: Partial<StickerPlacement>) {
-    setCrafts((current) =>
-      current[slot]
-        ? { ...current, [slot]: { ...current[slot], ...patch } }
-        : current,
-    )
+  function setSlotSticker(weaponSlot: string, slotIndex: number, stickerId: string) {
+    setCrafts((current) => {
+      const existing = current[weaponSlot] ?? []
+      if (!stickerId) {
+        return {
+          ...current,
+          [weaponSlot]: existing.filter((p) => p.slotIndex !== slotIndex),
+        }
+      }
+      const filtered = existing.filter((p) => p.slotIndex !== slotIndex)
+      const placement: StickerPlacement = {
+        stickerId,
+        slotIndex,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        scale: 1,
+        wear: 0,
+      }
+      return {
+        ...current,
+        [weaponSlot]: [...filtered, placement].sort((a, b) => a.slotIndex - b.slotIndex),
+      }
+    })
+  }
+
+  function updateSlotPlacement(
+    weaponSlot: string,
+    slotIndex: number,
+    patch: Partial<StickerPlacement>,
+  ) {
+    setCrafts((current) => {
+      const existing = current[weaponSlot] ?? []
+      return {
+        ...current,
+        [weaponSlot]: existing.map((p) =>
+          p.slotIndex === slotIndex ? { ...p, ...patch } : p,
+        ),
+      }
+    })
+  }
+
+  function applyStickerToAllSlots(weaponSlot: string, stickerId: string) {
+    if (!stickerId) return
+    setCrafts((current) => {
+      const allFive: StickerPlacement[] = [0, 1, 2, 3, 4].map((i) => ({
+        stickerId,
+        slotIndex: i,
+        offsetX: 0,
+        offsetY: 0,
+        rotation: 0,
+        scale: 1,
+        wear: 0,
+      }))
+      return { ...current, [weaponSlot]: allFive }
+    })
+  }
+
+  function clearAllStickers(weaponSlot: string) {
+    setCrafts((current) => {
+      const next = { ...current }
+      delete next[weaponSlot]
+      return next
+    })
   }
 
   async function handlePublish(event: FormEvent<HTMLFormElement>) {
@@ -279,7 +338,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
             weaponSlot: item.slot,
             skinId: item.skinId,
             wearCondition: item.wearCondition,
-            stickers: crafts[item.slot] ? [crafts[item.slot]] : [],
+            stickers: (crafts[item.slot] ?? []).sort((a, b) => a.slotIndex - b.slotIndex),
           })),
         },
         token,
@@ -482,106 +541,170 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                       </span>
                       <strong>{item.skinName}</strong>
                       <small>{money(item.priceUsd)}</small>
-                      <label>
-                        Sticker craft
-                        <select
-                          value={crafts[item.slot]?.stickerId ?? ""}
-                          onChange={(event) =>
-                            setCrafts((current) => {
-                              const next = { ...current }
-                              if (event.target.value)
-                                next[item.slot] = {
-                                  stickerId: event.target.value,
-                                  slotIndex: 0,
-                                  offsetX: 0,
-                                  offsetY: 0,
-                                  rotation: 0,
-                                  scale: 1,
-                                }
-                              else delete next[item.slot]
-                              return next
-                            })
-                          }
-                        >
-                          <option value="">No sticker</option>
-                          {stickerOptions.map((sticker) => (
-                            <option key={sticker.id} value={sticker.id}>
-                              {sticker.name} · {money(sticker.priceUsd)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      {crafts[item.slot] && (
-                        <div className="lo-craft-fields">
-                          <label>
-                            Slot
-                            <input
-                              type="number"
-                              min="0"
-                              step="1"
-                              value={crafts[item.slot].slotIndex}
-                              onChange={(event) =>
-                                updateCraft(item.slot, {
-                                  slotIndex: Number(event.target.value),
-                                })
-                              }
-                            />
-                          </label>
-                          <label>
-                            X
-                            <input
-                              type="number"
-                              step="any"
-                              value={crafts[item.slot].offsetX}
-                              onChange={(event) =>
-                                updateCraft(item.slot, {
-                                  offsetX: Number(event.target.value),
-                                })
-                              }
-                            />
-                          </label>
-                          <label>
-                            Y
-                            <input
-                              type="number"
-                              step="any"
-                              value={crafts[item.slot].offsetY}
-                              onChange={(event) =>
-                                updateCraft(item.slot, {
-                                  offsetY: Number(event.target.value),
-                                })
-                              }
-                            />
-                          </label>
-                          <label>
-                            Rotation
-                            <input
-                              type="number"
-                              step="any"
-                              value={crafts[item.slot].rotation}
-                              onChange={(event) =>
-                                updateCraft(item.slot, {
-                                  rotation: Number(event.target.value),
-                                })
-                              }
-                            />
-                          </label>
-                          <label>
-                            Scale
-                            <input
-                              type="number"
-                              min="0.01"
-                              step="any"
-                              value={crafts[item.slot].scale}
-                              onChange={(event) =>
-                                updateCraft(item.slot, {
-                                  scale: Number(event.target.value),
-                                })
-                              }
-                            />
-                          </label>
-                        </div>
-                      )}
+                      {/* 5-Slot Crafting Strip */}
+                      {(() => {
+                        const itemCrafts = crafts[item.slot] ?? []
+                        const curSlot = activeSlot[item.slot] ?? 0
+                        const currentPlacement = itemCrafts.find((p) => p.slotIndex === curSlot)
+                        const weaponStickersCost = itemCrafts.reduce((sum, p) => {
+                          const st = stickerOptions.find((s) => s.id === p.stickerId)
+                          return sum + (st?.priceUsd ?? 0)
+                        }, 0)
+
+                        return (
+                          <div className="lo-craft-container">
+                            <div className="lo-craft-summary">
+                              <span className="lo-craft-count-tag">
+                                {itemCrafts.length}/5 STICKERS {weaponStickersCost > 0 ? `(+${money(weaponStickersCost)})` : ""}
+                              </span>
+                              <div className="lo-craft-batch-btns">
+                                {currentPlacement && (
+                                  <button
+                                    type="button"
+                                    className="lo-craft-mini-btn"
+                                    onClick={() => applyStickerToAllSlots(item.slot, currentPlacement.stickerId)}
+                                    title="Duplicate current sticker across all 5 slots"
+                                  >
+                                    5× ALL
+                                  </button>
+                                )}
+                                {itemCrafts.length > 0 && (
+                                  <button
+                                    type="button"
+                                    className="lo-craft-mini-btn danger"
+                                    onClick={() => clearAllStickers(item.slot)}
+                                    title="Remove all stickers from this weapon"
+                                  >
+                                    CLEAR
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* 5 Slot Selection Pills */}
+                            <div className="lo-slot-pills-row" role="tablist" aria-label="Sticker slot selector">
+                              {[0, 1, 2, 3, 4].map((sIdx) => {
+                                const p = itemCrafts.find((craft) => craft.slotIndex === sIdx)
+                                const isSelected = curSlot === sIdx
+                                return (
+                                  <button
+                                    key={sIdx}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={isSelected}
+                                    className={`lo-slot-pill ${isSelected ? "selected" : ""} ${p ? "occupied" : ""}`}
+                                    onClick={() => setActiveSlot((curr) => ({ ...curr, [item.slot]: sIdx }))}
+                                  >
+                                    <span className="lo-slot-pill-idx">{sIdx + 1}</span>
+                                    <span className="lo-slot-pill-state">{p ? "★" : "+"}</span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+
+                            {/* Active Slot Configuration */}
+                            <div className="lo-active-slot-panel">
+                              <label>
+                                Slot {curSlot + 1} Sticker
+                                <select
+                                  value={currentPlacement?.stickerId ?? ""}
+                                  onChange={(event) => setSlotSticker(item.slot, curSlot, event.target.value)}
+                                >
+                                  <option value="">No Sticker (Empty Slot)</option>
+                                  {stickerOptions.map((st) => (
+                                    <option key={st.id} value={st.id}>
+                                      {st.name} · {money(st.priceUsd)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+
+                              {currentPlacement && (
+                                <div className="lo-craft-fields">
+                                  <label>
+                                    Position X ({currentPlacement.offsetX}px)
+                                    <input
+                                      type="number"
+                                      step="any"
+                                      value={currentPlacement.offsetX}
+                                      onChange={(event) =>
+                                        updateSlotPlacement(item.slot, curSlot, {
+                                          offsetX: Number(event.target.value),
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                  <label>
+                                    Position Y ({currentPlacement.offsetY}px)
+                                    <input
+                                      type="number"
+                                      step="any"
+                                      value={currentPlacement.offsetY}
+                                      onChange={(event) =>
+                                        updateSlotPlacement(item.slot, curSlot, {
+                                          offsetY: Number(event.target.value),
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                  <label>
+                                    Rotation ({currentPlacement.rotation}°)
+                                    <input
+                                      type="number"
+                                      min="-180"
+                                      max="180"
+                                      step="any"
+                                      value={currentPlacement.rotation}
+                                      onChange={(event) =>
+                                        updateSlotPlacement(item.slot, curSlot, {
+                                          rotation: Number(event.target.value),
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                  <label>
+                                    Scale ({currentPlacement.scale}x)
+                                    <input
+                                      type="number"
+                                      min="0.1"
+                                      max="2"
+                                      step="0.05"
+                                      value={currentPlacement.scale}
+                                      onChange={(event) =>
+                                        updateSlotPlacement(item.slot, curSlot, {
+                                          scale: Number(event.target.value),
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                  <label className="lo-scrape-field">
+                                    Wear Scrape ({Math.round((currentPlacement.wear ?? 0) * 100)}%)
+                                    <input
+                                      type="range"
+                                      min="0"
+                                      max="1"
+                                      step="0.05"
+                                      value={currentPlacement.wear ?? 0}
+                                      onChange={(event) =>
+                                        updateSlotPlacement(item.slot, curSlot, {
+                                          wear: Number(event.target.value),
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                  <button
+                                    type="button"
+                                    className="lo-slot-remove-btn"
+                                    onClick={() => setSlotSticker(item.slot, curSlot, "")}
+                                  >
+                                    Remove Slot {curSlot + 1}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })()}
                     </article>
                   ))}
                 </div>
@@ -591,10 +714,11 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                     Remaining: {money(generated.remainingBudgetUsd)}
                   </strong>
                 </div>
-                {Object.keys(crafts).length > 0 && (
+                {Object.values(crafts).some((arr) => arr.length > 0) && (
                   <p className="lo-craft-note">
-                    Sticker prices are separate from the generator's budget
-                    estimate.
+                    🎨 {Object.values(crafts).reduce((sum, arr) => sum + arr.length, 0)} custom sticker craft
+                    {Object.values(crafts).reduce((sum, arr) => sum + arr.length, 0) > 1 ? "s" : ""} configured across weapons.
+                    Sticker prices are separate from the generator&apos;s budget estimate.
                   </p>
                 )}
                 <form className="lo-publish" onSubmit={handlePublish}>
@@ -918,11 +1042,20 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                       {item.weaponSlot} · {item.wearCondition} ·{" "}
                       {money(item.selectedPriceUsd)}
                     </small>
-                    {item.stickers.length > 0 && (
-                      <small>
-                        {item.stickers.length} sticker craft
-                        {item.stickers.length > 1 ? "s" : ""}
-                      </small>
+                    {item.stickers && item.stickers.length > 0 && (
+                      <div className="lo-detail-craft-box">
+                        <small className="lo-detail-craft-title">
+                          🎯 {item.stickers.length} {item.stickers.length === 1 ? "Sticker Craft" : "Sticker Crafts"}
+                        </small>
+                        <div className="lo-detail-stickers-list">
+                          {item.stickers.map((stk, i) => (
+                            <span key={i} className="lo-detail-sticker-pill">
+                              Slot {stk.slotIndex + 1}
+                              {stk.wear !== undefined && stk.wear > 0 ? ` (${Math.round(stk.wear * 100)}% wear)` : ""}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 ))}

@@ -133,6 +133,7 @@ export interface StickerPlacement {
   offsetY: number
   rotation: number
   scale: number
+  wear?: number
 }
 
 export interface CommunityItem {
