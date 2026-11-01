@@ -19,7 +19,7 @@ function handleRouteClick(event: MouseEvent<HTMLAnchorElement>, path: string) {
 }
 
 export default function App() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const pathname = usePathname();
   const activeRoute = routes.find((route) => route.path === pathname) ?? (pathname.startsWith("/m/") ? routes[1] : pathname.startsWith("/strat-board/") ? routes[2] : pathname.startsWith("/users/") ? routes.find((route) => route.path === "/profile") : undefined);
   const [code, setCode] = useState("");
@@ -101,7 +101,19 @@ export default function App() {
             <h1>{activeRoute?.title ?? "Page not found"}</h1>
           </div>
           <div className="top-actions">
-            <button className="steam-button" onClick={() => setAuthOpen(true)}>{authLoading ? "Loading…" : user ? user.username : "Connect Steam"} <Icon name="arrow" size={16} /></button>
+            <button className="steam-button" onClick={() => setAuthOpen(true)}>{authLoading ? "Loading…" : user ? user.username : "Sign In / Connect"} <Icon name="arrow" size={16} /></button>
+            {user && (
+              <button
+                className="topbar-signout-btn"
+                onClick={() => {
+                  logout();
+                  notify("Signed out successfully");
+                }}
+                title="Sign out of account"
+              >
+                Sign Out
+              </button>
+            )}
           </div>
         </header>
 
@@ -115,7 +127,7 @@ export default function App() {
       </main>
 
       {toast && <div className="toast"><span /><p>{toast}</p></div>}
-      {authOpen && <AuthPanel onClose={() => setAuthOpen(false)} />}
+      {authOpen && <AuthPanel onClose={() => setAuthOpen(false)} notify={notify} />}
     </div>
   );
 }
