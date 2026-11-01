@@ -33,5 +33,6 @@ export interface DevLoginRequest {
 
 export interface UpdateProfileRequest {
   username?: string;
+  avatarUrl?: string;
   tradeUrl?: string;
 }

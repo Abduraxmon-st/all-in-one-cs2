@@ -12,7 +12,9 @@ type AuthContextValue = {
   error: string;
   signInWithSteam: () => Promise<void>;
   signInForDevelopment: (body: DevLoginRequest) => Promise<void>;
-  updateProfile: (body: UpdateProfileRequest) => Promise<void>;
+  updateProfile: (body: UpdateProfileRequest) => Promise<UserProfile>;
+  updateUserProfile: (body: UpdateProfileRequest) => Promise<UserProfile>;
+  refreshUser: () => Promise<UserProfile | null>;
   signOut: () => void;
 };
 
@@ -60,7 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInForDevelopment(body: DevLoginRequest) {
-    if (!import.meta.env.DEV) throw new Error("Development login is unavailable in production.");
+    const isDevAuthAllowed = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_AUTH !== "false";
+    if (!isDevAuthAllowed) throw new Error("Development login is disabled in this environment.");
     setError("");
     const result = await devLogin(body);
     sessionStorage.setItem(TOKEN_KEY, result.accessToken);
@@ -68,10 +71,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   }
 
-  async function updateProfile(body: UpdateProfileRequest) {
+  async function updateProfile(body: UpdateProfileRequest): Promise<UserProfile> {
     if (!token) throw new Error("Sign in first.");
     const profile = await updateCurrentUser(body, token);
     setUser(profile);
+    return profile;
+  }
+
+  async function refreshUser(): Promise<UserProfile | null> {
+    if (!token) return null;
+    const profile = await getCurrentUser(token);
+    setUser(profile);
+    return profile;
   }
 
   function signOut() {
@@ -81,7 +92,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError("");
   }
 
-  return <AuthContext.Provider value={{ token, user, loading, error, signInWithSteam, signInForDevelopment, updateProfile, signOut }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        token,
+        user,
+        loading,
+        error,
+        signInWithSteam,
+        signInForDevelopment,
+        updateProfile,
+        updateUserProfile: updateProfile,
+        refreshUser,
+        signOut,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

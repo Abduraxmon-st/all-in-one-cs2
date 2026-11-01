@@ -54,10 +54,10 @@ export default function App() {
       page = <AdminPage />;
       break;
     case "/profile":
-      page = <ProfilePage />;
+      page = <ProfilePage notify={notify} />;
       break;
     default:
-      page = pathname.startsWith("/m/") ? <MatchAnalyzerPage code={code} setCode={setCode} notify={notify} shareSlug={pathname.slice(3)} /> : pathname.startsWith("/strat-board/") ? <StratBoardPage notify={notify} roomCodeFromRoute={pathname.slice("/strat-board/".length)} /> : pathname.startsWith("/users/") ? <ProfilePage userId={pathname.slice("/users/".length)} /> : <NotFoundPage />;
+      page = pathname.startsWith("/m/") ? <MatchAnalyzerPage code={code} setCode={setCode} notify={notify} shareSlug={pathname.slice(3)} /> : pathname.startsWith("/strat-board/") ? <StratBoardPage notify={notify} roomCodeFromRoute={pathname.slice("/strat-board/".length)} /> : pathname.startsWith("/users/") ? <ProfilePage userId={pathname.slice("/users/".length)} notify={notify} /> : <NotFoundPage />;
   }
 
   return (

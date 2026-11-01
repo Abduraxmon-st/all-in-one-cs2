@@ -6,6 +6,7 @@ export const identityPaths = {
   steamLogin: "/api/v1/auth/steam/login",
   steamCallback: "/api/v1/auth/steam/callback",
   currentUser: "/api/v1/users/me",
+  currentUserProfile: "/api/v1/users/me/profile",
   publicUser: (userId: string) => `/api/v1/users/${encodeURIComponent(userId)}`,
 } as const;
 
@@ -37,6 +38,15 @@ export const getSteamLoginUrl = async () => {
 };
 
 export const getCurrentUser = (token: string) => request<UserProfile>(identityPaths.currentUser, {}, token);
-export const updateCurrentUser = (body: UpdateProfileRequest, token: string) =>
-  request<UserProfile>(identityPaths.currentUser, { method: "PATCH", body: JSON.stringify(body) }, token);
+export const updateCurrentUser = async (body: UpdateProfileRequest, token: string): Promise<UserProfile> => {
+  try {
+    return await request<UserProfile>(identityPaths.currentUserProfile, { method: "PATCH", body: JSON.stringify(body) }, token);
+  } catch (error) {
+    if (error instanceof IdentityApiError && (error.status === 404 || error.status === 405)) {
+      return await request<UserProfile>(identityPaths.currentUser, { method: "PATCH", body: JSON.stringify(body) }, token);
+    }
+    throw error;
+  }
+};
+export const updateProfile = updateCurrentUser;
 export const getPublicUser = (userId: string, signal?: AbortSignal) => request<PublicUserSummary>(identityPaths.publicUser(userId), { signal });
