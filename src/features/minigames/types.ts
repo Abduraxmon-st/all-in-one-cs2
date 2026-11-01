@@ -65,6 +65,7 @@ export interface ClipSubmission {
   mapName: string
   actualPremierRating: number
   actualFaceitLevel: number
+  videoProvider?: string
 }
 
 export interface SubmittedClip extends ClipSubmission {

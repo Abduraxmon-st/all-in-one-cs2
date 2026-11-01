@@ -323,3 +323,69 @@ footer p { text-transform: none; letter-spacing: 0; font-size: 10px; }
 .minigame-my-clips h4 { font: 700 18px "Barlow Condensed"; }
 @media (max-width: 760px) { .clip-submission-panel form { grid-template-columns: 1fr; } }
 @media (max-width: 440px) { .minigame-round-heading { flex-wrap: wrap; } .minigame-page .elo-picker .minigame-guess-control { flex-direction: column; } .minigame-guess-control input[type="range"] { width: 100%; } }
+
+/* Minigame Admin & Clip Preview Additions */
+.minigame-action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.admin-quick-btn {
+  background: var(--orange) !important;
+  color: #111 !important;
+  font-weight: 800 !important;
+  border: 0 !important;
+  padding: 10px 16px !important;
+  font-size: 11px !important;
+  cursor: pointer;
+}
+.admin-quick-btn:hover:not(:disabled) {
+  background: #ff8e47 !important;
+}
+.admin-quick-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.admin-nav-btn {
+  background: #202524 !important;
+  color: var(--paper) !important;
+  border: 1px solid var(--line) !important;
+  padding: 10px 16px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+}
+.admin-nav-btn:hover {
+  background: #2b3230 !important;
+  border-color: var(--lime) !important;
+}
+.admin-empty-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.submission-preview-box {
+  grid-column: 1 / -1;
+  background: #0d100f;
+  border: 1px solid var(--line);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.submission-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+}
+.submission-preview-header strong {
+  color: var(--lime);
+}
+.submission-preview-player {
+  height: 280px !important;
+}
+

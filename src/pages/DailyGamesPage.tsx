@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { useAuth } from "../features/identity/AuthProvider"
 import {
+  generateDailyChallenge,
   getDailyChallenge,
   getLeaderboard,
   getMyClips,
@@ -15,77 +16,10 @@ import type {
   Leaderboard,
   SubmittedClip,
 } from "../features/minigames/types"
+import ClipPlayer, { detectPlatform } from "../components/ClipPlayer"
+import { navigate } from "../routes"
 
 type Props = { notify: (message: string) => void }
-
-function videoEmbedUrl(round: ChallengeRound): string | null {
-  if (round.videoProvider.toUpperCase() !== "YOUTUBE") return null
-  try {
-    const url = new URL(round.videoUrl)
-    const host = url.hostname.toLowerCase()
-    let id: string | null = null
-    if (host === "youtu.be") id = url.pathname.slice(1)
-    if (
-      host === "youtube.com" ||
-      host === "www.youtube.com" ||
-      host === "m.youtube.com"
-    ) {
-      id =
-        url.searchParams.get("v") ??
-        url.pathname.match(/^\/(?:shorts|embed)\/([^/]+)/)?.[1] ??
-        null
-    }
-    return id && /^[\w-]{11}$/.test(id)
-      ? `https://www.youtube-nocookie.com/embed/${id}`
-      : null
-  } catch {
-    return null
-  }
-}
-
-function ClipPlayer({ round }: { round: ChallengeRound }) {
-  const embedUrl = videoEmbedUrl(round)
-  const safeUrl = (() => {
-    try {
-      const url = new URL(round.videoUrl)
-      return ["http:", "https:"].includes(url.protocol) ? url.href : null
-    } catch {
-      return null
-    }
-  })()
-  const directVideo = safeUrl && /\.(mp4|webm|ogg)(\?|$)/i.test(safeUrl)
-  return (
-    <div className="big-clip minigame-video">
-      {embedUrl ? (
-        <iframe
-          key={round.clipId}
-          src={embedUrl}
-          title={round.title}
-          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      ) : directVideo ? (
-        <video
-          key={round.clipId}
-          src={safeUrl ?? undefined}
-          controls
-          playsInline
-        />
-      ) : (
-        <div className="minigame-video-link">
-          <p>{round.title}</p>
-          {safeUrl ? (
-            <a href={safeUrl} target="_blank" rel="noopener noreferrer">
-              Open gameplay clip ↗
-            </a>
-          ) : (
-            <span>Video unavailable</span>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 const emptyClip: ClipSubmission = {
   title: "",
@@ -112,6 +46,28 @@ export default function DailyGamesPage({ notify }: Props) {
   const [clipBusy, setClipBusy] = useState(false)
   const [clipError, setClipError] = useState("")
   const [myClips, setMyClips] = useState<SubmittedClip[]>([])
+  const [generatingChallenge, setGeneratingChallenge] = useState(false)
+
+  async function handleAdminGenerateToday() {
+    if (!token) return
+    setGeneratingChallenge(true)
+    try {
+      const daily = await generateDailyChallenge(true, token)
+      setChallenge(daily)
+      const pendingIndex = daily.rounds.findIndex(
+        (item) => item.userGuess === null,
+      )
+      setRoundIndex(
+        pendingIndex < 0 ? Math.max(0, daily.rounds.length - 1) : pendingIndex,
+      )
+      setError("")
+      notify(`Today's challenge generated (${daily.challengeDate})`)
+    } catch (cause) {
+      notify(cause instanceof Error ? cause.message : "Failed to generate challenge")
+    } finally {
+      setGeneratingChallenge(false)
+    }
+  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -229,7 +185,11 @@ export default function DailyGamesPage({ notify }: Props) {
     setClipBusy(true)
     setClipError("")
     try {
-      await submitClip(clip, token)
+      const payload: ClipSubmission = {
+        ...clip,
+        videoProvider: detectPlatform(clip.videoUrl),
+      }
+      await submitClip(payload, token)
       setClip(emptyClip)
       notify("Clip submitted for review")
       try {
@@ -290,14 +250,44 @@ export default function DailyGamesPage({ notify }: Props) {
           {!loading && error && (
             <div className="minigame-message error">
               <p>{error}</p>
-              <p>The game is unavailable until its backend is connected.</p>
-              <button onClick={() => window.location.reload()}>Retry</button>
+              <p>The game challenge could not be loaded from the backend.</p>
+              <div className="minigame-action-row">
+                <button onClick={() => window.location.reload()}>Retry</button>
+                {user?.role === "ADMIN" && token && (
+                  <button
+                    onClick={handleAdminGenerateToday}
+                    disabled={generatingChallenge}
+                    className="admin-quick-btn"
+                  >
+                    {generatingChallenge ? "Generating Challenge…" : "★ Generate Today's Challenge (Admin)"}
+                  </button>
+                )}
+              </div>
             </div>
           )}
           {!loading && !error && !round && (
-            <p className="minigame-message">
-              No clips are available for today's challenge yet.
-            </p>
+            <div className="minigame-message empty">
+              <p>No clips are available for today's challenge yet.</p>
+              {user?.role === "ADMIN" && token ? (
+                <div className="admin-empty-actions">
+                  <p>As an administrator, you can generate today's challenge right now:</p>
+                  <div className="minigame-action-row">
+                    <button
+                      onClick={handleAdminGenerateToday}
+                      disabled={generatingChallenge}
+                      className="admin-quick-btn"
+                    >
+                      {generatingChallenge ? "Generating Challenge…" : "★ Generate Today's Challenge (Admin)"}
+                    </button>
+                    <button onClick={() => navigate("/admin")} className="admin-nav-btn">
+                      Open Admin Console →
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p>Check back later or submit your own clip below!</p>
+              )}
+            </div>
           )}
           {round && (
             <>
@@ -479,9 +469,26 @@ export default function DailyGamesPage({ notify }: Props) {
                 onChange={(event) =>
                   setClip({ ...clip, videoUrl: event.target.value })
                 }
+                placeholder="YouTube, Twitch clip/VOD, Medal.tv, or direct .mp4 link"
                 required
               />
             </label>
+            {clip.videoUrl.trim() && (
+              <div className="submission-preview-box">
+                <div className="submission-preview-header">
+                  <span>
+                    DETECTED PLATFORM: <strong>{detectPlatform(clip.videoUrl)}</strong>
+                  </span>
+                  <small>Live Video Player Preview</small>
+                </div>
+                <ClipPlayer
+                  videoUrl={clip.videoUrl}
+                  title={clip.title || "Clip Preview"}
+                  mapName={clip.mapName}
+                  className="submission-preview-player"
+                />
+              </div>
+            )}
             <label>
               Map name
               <input
