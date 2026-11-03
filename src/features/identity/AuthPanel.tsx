@@ -53,7 +53,7 @@ export default function AuthPanel({ onClose, notify }: AuthPanelProps) {
     setUsername(user?.username ?? "");
     setTradeUrl(user?.tradeUrl ?? "");
     if (user) {
-      setSteamId(user.steamId);
+      setSteamId(user.steamId ?? "76561198000000001");
       setDevUsername(user.username);
     }
   }, [user]);

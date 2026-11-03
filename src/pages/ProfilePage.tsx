@@ -194,7 +194,7 @@ export default function ProfilePage({ userId, notify }: ProfilePageProps) {
           <h2>{profile?.username ?? user?.username ?? "Player Profile"}</h2>
           <p>
             {profile
-              ? `Steam ID ${profile.steamId}`
+              ? (profile.steamId ? `Steam ID ${profile.steamId}` : "Password Account")
               : userId
                 ? "Loading profile…"
                 : "Sign in with Steam to customize your profile, loadouts, and trade settings."}
@@ -243,18 +243,26 @@ export default function ProfilePage({ userId, notify }: ProfilePageProps) {
             </div>
 
             <div className="profile-steam-meta">
-              <span className="profile-steam-id">
-                Steam64: <code>{profile.steamId}</code>
-              </span>
-              {isMine && (
-                <button
-                  type="button"
-                  className="profile-copy-btn"
-                  onClick={handleCopySteamId}
-                  title="Copy Steam64 ID"
-                >
-                  {copiedSteamId ? "✓ Copied!" : "Copy Steam ID"}
-                </button>
+              {profile.steamId ? (
+                <>
+                  <span className="profile-steam-id">
+                    Steam64: <code>{profile.steamId}</code>
+                  </span>
+                  {isMine && (
+                    <button
+                      type="button"
+                      className="profile-copy-btn"
+                      onClick={handleCopySteamId}
+                      title="Copy Steam64 ID"
+                    >
+                      {copiedSteamId ? "✓ Copied!" : "Copy Steam ID"}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <span className="profile-steam-id">
+                  Auth: <code>Native Account</code>
+                </span>
               )}
               {user?.profileUrl && (
                 <a

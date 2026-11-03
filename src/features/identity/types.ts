@@ -2,7 +2,7 @@ export type UserRole = "USER" | "MODERATOR" | "ADMIN";
 
 export interface UserProfile {
   id: string;
-  steamId: string;
+  steamId: string | null;
   username: string;
   avatarUrl: string | null;
   profileUrl: string | null;
@@ -13,7 +13,7 @@ export interface UserProfile {
 
 export interface PublicUserSummary {
   userId: string;
-  steamId: string;
+  steamId: string | null;
   username: string;
   avatarUrl: string | null;
 }
