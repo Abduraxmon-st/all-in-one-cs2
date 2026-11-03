@@ -67,8 +67,9 @@ export default function AdminPage() {
   }
 
   function moderate(clip: SubmittedClip, nextStatus: "APPROVED" | "REJECTED") {
-    if (!token || !clip.id) return;
-    const raw = overrides[clip.id]?.trim();
+    const clipId = clip.id ?? clip.clipId;
+    if (!token || !clipId) return;
+    const raw = overrides[clipId]?.trim();
     const rating = raw ? Number(raw) : undefined;
     if (
       rating !== undefined &&
@@ -78,9 +79,9 @@ export default function AdminPage() {
       return;
     }
     void run(async () => {
-      await reviewClip(clip.id!, nextStatus, token, rating);
-      setClips((current) => current.filter((item) => item.id !== clip.id));
-      if (previewClipId === clip.id) setPreviewClipId(null);
+      await reviewClip(clipId, nextStatus, token, rating);
+      setClips((current) => current.filter((item) => (item.id ?? item.clipId) !== clipId));
+      if (previewClipId === clipId) setPreviewClipId(null);
       return `Clip ${nextStatus.toLowerCase()}.`;
     });
   }
@@ -119,11 +120,12 @@ export default function AdminPage() {
               {health.application} · {health.status} · {health.version}
             </p>
             <div className="admin-components">
-              {Object.entries(health.components).map(([name, state]) => (
-                <span key={name}>
-                  {name}: {state}
-                </span>
-              ))}
+              {health?.components &&
+                Object.entries(health.components).map(([name, state]) => (
+                  <span key={name}>
+                    {name}: {state}
+                  </span>
+                ))}
             </div>
           </>
         ) : (
@@ -146,7 +148,8 @@ export default function AdminPage() {
         </label>
         <div className="admin-clips">
           {clips.map((clip) => {
-            const clipKey = clip.id ?? clip.clipId ?? "";
+            const clipId = clip.id ?? clip.clipId;
+            const clipKey = clipId ?? "";
             const isPreviewOpen = previewClipId === clipKey;
             return (
               <article key={clipKey} className="admin-clip-card">
@@ -196,11 +199,11 @@ export default function AdminPage() {
                     type="number"
                     min="1000"
                     max="35000"
-                    value={overrides[clip.id ?? ""] ?? ""}
+                    value={overrides[clipId ?? ""] ?? ""}
                     onChange={(event) =>
                       setOverrides((current) => ({
                         ...current,
-                        [clip.id ?? ""]: event.target.value,
+                        [clipId ?? ""]: event.target.value,
                       }))
                     }
                     placeholder="Rating override"

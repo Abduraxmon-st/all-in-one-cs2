@@ -111,7 +111,8 @@ export function generateRoastCardCanvas(roast: RoastCard): HTMLCanvasElement {
   ctx.fillText(`STEAM64: ${roast.steamId}`, 50, 168);
 
   // 6. Headline Award Pill
-  const primaryBadge = roast.badges[0];
+  const badges = Array.isArray(roast?.badges) ? roast.badges : [];
+  const primaryBadge = badges[0];
   const awardTitle = roast.headlineTitle || primaryBadge?.badgeTitle || "Match Performer";
   const awardIcon = primaryBadge?.badgeIcon || (isWon ? "👑" : "💀");
 
@@ -201,7 +202,7 @@ export function generateRoastCardCanvas(roast: RoastCard): HTMLCanvasElement {
   let currentBadgeX = 50;
   ctx.font = "700 12px 'DM Sans', sans-serif";
 
-  roast.badges.slice(0, 4).forEach((badge) => {
+  badges.slice(0, 4).forEach((badge) => {
     const isFlex = badge.badgeCategory === "FLEX";
     const badgeText = `${badge.badgeIcon} ${badge.badgeTitle}`;
     const badgeWidth = ctx.measureText(badgeText).width + 24;
@@ -277,7 +278,8 @@ export default function RoastCardView({ roast, onClose, notify }: RoastCardViewP
   const [copyingImage, setCopyingImage] = useState(false);
 
   const isWon = roast.won;
-  const primaryBadge = roast.badges[0];
+  const badges = Array.isArray(roast?.badges) ? roast.badges : [];
+  const primaryBadge = badges[0];
   const awardTitle = roast.headlineTitle || primaryBadge?.badgeTitle || "Match Performance";
   const awardIcon = primaryBadge?.badgeIcon || (isWon ? "🏆" : "💀");
 
@@ -420,7 +422,7 @@ export default function RoastCardView({ roast, onClose, notify }: RoastCardViewP
           {/* Badges Tray & Footer */}
           <div className="roast-card-footer">
             <div className="roast-badges-strip">
-              {roast.badges.map((badge: Award) => (
+              {badges.map((badge: Award) => (
                 <span
                   key={badge.badgeCode}
                   className={`roast-badge-tag ${badge.badgeCategory.toLowerCase()}`}

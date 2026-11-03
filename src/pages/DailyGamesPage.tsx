@@ -54,11 +54,11 @@ export default function DailyGamesPage({ notify }: Props) {
     try {
       const daily = await generateDailyChallenge(true, token)
       setChallenge(daily)
-      const pendingIndex = daily.rounds.findIndex(
+      const pendingIndex = (daily?.rounds || []).findIndex(
         (item) => item.userGuess === null,
       )
       setRoundIndex(
-        pendingIndex < 0 ? Math.max(0, daily.rounds.length - 1) : pendingIndex,
+        pendingIndex < 0 ? Math.max(0, (daily?.rounds || []).length - 1) : pendingIndex,
       )
       setError("")
       notify(`Today's challenge generated (${daily.challengeDate})`)
@@ -77,11 +77,11 @@ export default function DailyGamesPage({ notify }: Props) {
     getDailyChallenge(controller.signal, token || undefined)
       .then((data) => {
         setChallenge(data)
-        const pendingIndex = data.rounds.findIndex(
+        const pendingIndex = (data?.rounds || []).findIndex(
           (round) => round.userGuess === null,
         )
         setRoundIndex(
-          pendingIndex < 0 ? Math.max(0, data.rounds.length - 1) : pendingIndex,
+          pendingIndex < 0 ? Math.max(0, (data?.rounds || []).length - 1) : pendingIndex,
         )
         setError("")
       })
