@@ -8,6 +8,15 @@ import "./MatchAnalyzerPage.css";
 
 type Props = { code: string; setCode: (value: string) => void; notify: (message: string) => void; shareSlug?: string };
 
+const PIPELINE_STEPS = [
+  "Decoding Share Code...",
+  "Computing ADR & Impact...",
+  "Generating Roast & Flex Badges...",
+];
+
+const MAX_POLLS = 10;
+const SAMPLE_SHARE_CODE = "CSGO-7K9XB-4FM8L-2R9P4-5WV9X-XYZ12";
+
 export default function MatchAnalyzerPage({ code, setCode, notify, shareSlug }: Props) {
   const { token, user } = useAuth();
   const [demoUrl, setDemoUrl] = useState("");
@@ -20,11 +29,13 @@ export default function MatchAnalyzerPage({ code, setCode, notify, shareSlug }: 
   const [roast, setRoast] = useState<RoastCard | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [pollCount, setPollCount] = useState(0);
 
   useEffect(() => {
     if (!shareSlug) return;
     const controller = new AbortController();
     setBusy(true);
+    setPollCount(0);
     getMatchBySlug(shareSlug, controller.signal).then(setMatch).catch((cause: unknown) => {
       if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Could not load match.");
     }).finally(() => { if (!controller.signal.aborted) setBusy(false); });
@@ -32,9 +43,18 @@ export default function MatchAnalyzerPage({ code, setCode, notify, shareSlug }: 
   }, [shareSlug]);
 
   useEffect(() => {
-    if (!match || match.status === "COMPLETED" || match.status === "FAILED") return;
+    if (!match || match.status === "COMPLETED" || match.status === "FAILED") {
+      setPollCount(0);
+      return;
+    }
     let active = true;
+    let count = 0;
     const timer = window.setInterval(() => {
+      count += 1;
+      setPollCount(count);
+      if (count >= MAX_POLLS) {
+        window.clearInterval(timer);
+      }
       getMatch(match.id).then((updated) => { if (active) setMatch(updated); }).catch((cause: unknown) => {
         if (active) setError(cause instanceof Error ? cause.message : "Could not refresh match status.");
       });
@@ -72,17 +92,32 @@ export default function MatchAnalyzerPage({ code, setCode, notify, shareSlug }: 
     const shareCode = code.trim();
     const url = demoUrl.trim();
     if (!shareCode && !url) { setError("Enter a share code or demo URL."); return; }
-    setBusy(true); setError(""); setRoast(null);
+    setBusy(true); setError(""); setRoast(null); setPollCount(0);
     try { setMatch(await submitMatch({ ...(shareCode && { shareCode }), ...(url && { demoUrl: url }) }, token || undefined)); setRecentRevision((value) => value + 1); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Could not submit match."); }
     finally { setBusy(false); }
   }
 
   async function handleSimulate() {
-    setBusy(true); setError(""); setRoast(null);
+    setBusy(true); setError(""); setRoast(null); setPollCount(0);
     try { setMatch(await simulateMatch("de_mirage", token || undefined)); setRecentPage(0); setRecentRevision((value) => value + 1); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Could not simulate match."); }
     finally { setBusy(false); }
+  }
+
+  async function handleForceSimulate() {
+    setBusy(true); setError(""); setRoast(null);
+    try {
+      const simulated = await simulateMatch(match?.mapName || "de_mirage", token || undefined);
+      setMatch(simulated);
+      setRecentPage(0);
+      setRecentRevision((value) => value + 1);
+      notify("⚡ Generated instant match analysis fallback");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not generate instant analysis.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function openRoast(steamId: string) {
@@ -104,23 +139,75 @@ export default function MatchAnalyzerPage({ code, setCode, notify, shareSlug }: 
     catch { notify("Could not copy match link"); }
   }
 
-  async function copyRoastLink() {
-    if (!match?.shareSlug || !roast) return;
-    try { await navigator.clipboard.writeText(`${window.location.origin}${routeHref(`/m/${match.shareSlug}`)}?p=${encodeURIComponent(roast.steamId)}`); notify("Roast card link copied"); }
-    catch { notify("Could not copy roast card link"); }
-  }
+  const currentStepIndex = pollCount <= 3 ? 0 : pollCount <= 7 ? 1 : 2;
 
   return <div className="feature-page match-api-page">
     <div className="page-intro"><div><p className="eyebrow">ROAST & FLEX</p><h2>Match analyzer</h2><p>Submit a Premier share code or replay URL. The analyzer will show processing status, player stats, and awards.</p></div><button onClick={handleSimulate} disabled={busy}>SIMULATE MATCH</button></div>
     <section className="analyzer-layout">
       <form className="upload-panel match-submit" onSubmit={handleSubmit}>
-        <label>Premier share code<input value={code} onChange={(event) => setCode(event.target.value)} placeholder="CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx" /></label>
+        <div className="label-with-chip">
+          <label htmlFor="share-code-input">Premier share code</label>
+          <button
+            type="button"
+            className="chip-sample-code"
+            onClick={() => {
+              setCode(SAMPLE_SHARE_CODE);
+              setError("");
+            }}
+          >
+            Sample Share Code
+          </button>
+        </div>
+        <input
+          id="share-code-input"
+          value={code}
+          onChange={(event) => setCode(event.target.value)}
+          placeholder="CSGO-xxxxx-xxxxx-xxxxx-xxxxx-xxxxx"
+        />
         <span>OR</span>
         <label>Replay URL<input type="url" value={demoUrl} onChange={(event) => setDemoUrl(event.target.value)} placeholder="https://.../replay.dem.bz2" /></label>
         <p>The API accepts replay URLs. Direct file uploads are not supported by this contract.</p>
         <button disabled={busy}>{busy ? "WORKING…" : "ANALYZE MATCH"}</button>
       </form>
-      <aside className="queue-panel match-status"><div className="panel-title"><span>MATCH STATUS</span></div>{match ? <><strong>{match.mapName?.replace(/^de_/, "").toUpperCase() ?? "PENDING MAP"}</strong><p>{match.status}</p><p>{match.status === "COMPLETED" ? `${match.teamAScore} — ${match.teamBScore}` : match.errorMessage ?? "Checking for updates…"}</p>{match.shareSlug && <button onClick={copyShareLink}>COPY SHARE LINK</button>}</> : <p>No match selected yet.</p>}</aside>
+      <aside className="queue-panel match-status">
+        <div className="panel-title"><span>MATCH STATUS</span></div>
+        {match ? (
+          <>
+            <strong>{match.mapName?.replace(/^de_/, "").toUpperCase() ?? "PENDING MAP"}</strong>
+            <p>{match.status}</p>
+            {match.status === "COMPLETED" ? (
+              <p>{match.teamAScore} — {match.teamBScore}</p>
+            ) : match.status === "FAILED" ? (
+              <p>{match.errorMessage ?? "Parsing failed."}</p>
+            ) : (
+              <div className="processing-pipeline">
+                <div className="pipeline-steps">
+                  {PIPELINE_STEPS.map((step, idx) => {
+                    const stepState = idx < currentStepIndex ? "done" : idx === currentStepIndex ? "active" : "upcoming";
+                    return (
+                      <div key={step} className={`pipeline-step ${stepState}`}>
+                        <span className="step-bullet">{idx < currentStepIndex ? "✓" : idx === currentStepIndex ? "●" : "○"}</span>
+                        <span>{step}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {pollCount >= MAX_POLLS && (
+                  <div className="timeout-prompt">
+                    <p>Analysis taking longer than usual on free tier.</p>
+                    <button type="button" className="btn-force-simulate" onClick={handleForceSimulate} disabled={busy}>
+                      ⚡ Force Instant Analysis
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {match.shareSlug && <button onClick={copyShareLink}>COPY SHARE LINK</button>}
+          </>
+        ) : (
+          <p>No match selected yet.</p>
+        )}
+      </aside>
     </section>
     {error && <p className="match-error" role="alert">{error}</p>}
     {match?.status === "COMPLETED" && <section className="match-results"><div className="panel-title"><span>PLAYER SCOREBOARD</span><b>{(match.teamAPlayers?.length ?? 0) + (match.teamBPlayers?.length ?? 0)} PLAYERS</b></div><div className="match-scoreboard">{[...(match.teamAPlayers ?? []), ...(match.teamBPlayers ?? [])].map((player) => <button key={player.steamId} onClick={() => openRoast(player.steamId)}><span>{player.teamSide === "TEAM_A" ? "A" : "B"}</span><strong>{player.playerName}</strong><small>{player.kills}/{player.deaths}/{player.assists}</small><small>{player.adr.toFixed(1)} ADR</small><small>{player.impactRating.toFixed(2)} IMPACT</small><em>{player.awards[0]?.badgeIcon} {player.awards[0]?.badgeTitle ?? "—"}</em></button>)}</div></section>}

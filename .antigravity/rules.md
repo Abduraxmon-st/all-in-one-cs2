@@ -39,3 +39,11 @@
   - `chore(...)`: tooling, dependency updates, baseline configuration
   - `refactor(...)`: restructuring code without behavioral changes
 - **Integration:** Feature branches are merged cleanly into `main` upon task completion.
+
+---
+
+## 5. Multi-Agent Orchestration Rules
+1. **Lead Architect & Release Manager**: The Main Agent acts as Lead Architect & Release Manager, coordinating work, assigning tasks, and conducting final integration.
+2. **Backend Subagent Scope**: Strictly confined to `d:/Return/CS` (`panda-cs`, Java 21 / Spring Boot, verified via `mvn test`).
+3. **Frontend Subagent Scope**: Strictly confined to `d:/Return/CS-front/all-in-one-cs2-main` (`all-in-one-cs2`, React 19 / TypeScript / Vite 8, verified via `npx tsc --noEmit && npm run build`).
+4. **Git Operation Restrictions**: Subagents must **NEVER** run `git commit`, `git merge`, or `git push`. Only the Main Agent executes Git operations after verifying all subagent test gates pass.

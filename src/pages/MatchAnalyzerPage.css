@@ -1,4 +1,8 @@
 .match-api-page .match-submit{display:flex;flex-direction:column;gap:13px;padding:24px}
+.label-with-chip{display:flex;align-items:center;justify-content:space-between;width:100%}
+.label-with-chip label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.chip-sample-code{border:1px solid var(--lime);background:rgba(200,255,0,0.08);color:var(--lime);font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.05em;transition:all .15s ease}
+.chip-sample-code:hover{background:var(--lime);color:#111}
 .match-submit label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
 .match-submit input{background:#101312;border:1px solid var(--line);color:var(--paper);padding:12px;font-size:12px}
 .match-submit>span{color:var(--muted);font-size:9px}
@@ -7,6 +11,18 @@
 .match-status{padding:20px}
 .match-status>strong{display:block;margin-top:30px;font:700 34px "Barlow Condensed"}
 .match-status button{margin-top:20px}
+.processing-pipeline{margin-top:14px;display:flex;flex-direction:column;gap:10px;text-align:left}
+.pipeline-steps{display:flex;flex-direction:column;gap:6px;background:rgba(0,0,0,0.25);padding:10px;border:1px solid var(--line);border-radius:4px}
+.pipeline-step{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+.pipeline-step.active{color:var(--lime);font-weight:700}
+.pipeline-step.done{color:var(--paper);opacity:.7}
+.pipeline-step .step-bullet{font-family:monospace;font-size:12px}
+.pipeline-step.active .step-bullet{animation:pulse 1s infinite alternate}
+.timeout-prompt{margin-top:8px;padding:10px;background:#241d14;border:1px solid #7d5a1b;border-radius:4px}
+.timeout-prompt p{color:#ffcf87;font-size:10px;margin-bottom:8px}
+.btn-force-simulate{display:block;width:100%;border:0;background:#ffcf87;color:#111;padding:8px 10px;font-size:10px;font-weight:800;cursor:pointer;border-radius:3px;text-transform:uppercase}
+.btn-force-simulate:hover{background:#ffe3b3}
+@keyframes pulse{from{opacity:.4}to{opacity:1}}
 .match-error{padding:12px;color:#ff8d8d;border:1px solid #603737;background:#2a1a1a;font-size:11px}
 .match-results,.match-roast{border:1px solid var(--line);background:var(--panel);margin-top:16px;padding:18px}
 .match-scoreboard{margin-top:12px}
