@@ -325,3 +325,29 @@
   border-color: #ff6060;
   color: #fff;
 }
+
+
+/* Dedicated Quick Admin login chip */
+.auth-quick-admin-chip {
+  align-self: flex-start;
+  background: rgba(235, 75, 75, 0.12);
+  border: 1px solid rgba(235, 75, 75, 0.45);
+  color: #ff8b8b;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  letter-spacing: .05em;
+  transition: all 0.15s ease;
+}
+.auth-quick-admin-chip:hover {
+  background: rgba(235, 75, 75, 0.25);
+  border-color: #eb4b4b;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
