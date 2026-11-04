@@ -1,0 +1,494 @@
+.events-page {
+  padding-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.events-loader-bar {
+  background: #19241c;
+  color: var(--lime);
+  border: 1px solid #314637;
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 3px;
+  animation: pulseLoader 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulseLoader {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+.events-section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 22px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.events-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid #232d26;
+  padding-bottom: 14px;
+}
+.events-section-header h3 {
+  font: 700 24px "Barlow Condensed";
+  letter-spacing: .05em;
+  margin: 0 0 4px;
+  color: var(--paper);
+}
+.events-section-header p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.events-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: rgba(200, 241, 53, 0.12);
+  color: var(--lime);
+  border: 1px solid rgba(200, 241, 53, 0.35);
+}
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 8px var(--lime);
+  animation: dotPulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes dotPulse {
+  from { opacity: 0.4; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1.3); }
+}
+
+.events-deals-badge,
+.events-tier1-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+}
+.events-tier1-badge {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+/* SECTION 1: Giveaways Grid */
+.events-giveaways-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.events-giveaway-card {
+  position: relative;
+  background: #111613;
+  border: 1px solid #27362c;
+  padding: 16px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.events-giveaway-card:hover {
+  transform: translateY(-2px);
+  border-color: #3e5344;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.giveaway-accent-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+.giveaway-top-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.giveaway-rarity-badge {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 2px;
+  border: 1px solid;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.giveaway-value-badge {
+  font: 800 15px "Barlow Condensed";
+  color: var(--lime);
+  background: rgba(200, 241, 53, 0.1);
+  border: 1px solid rgba(200, 241, 53, 0.3);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+.giveaway-image-wrapper {
+  height: 130px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+}
+.giveaway-image-wrapper img {
+  max-width: 90%;
+  max-height: 95%;
+  object-fit: contain;
+  transition: transform .2s ease;
+}
+.events-giveaway-card:hover .giveaway-image-wrapper img {
+  transform: scale(1.06);
+}
+.giveaway-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.giveaway-info strong {
+  font: 700 18px "Barlow Condensed";
+  color: var(--paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.giveaway-info span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.giveaway-stats-box {
+  background: #0d120f;
+  border: 1px solid #233027;
+  padding: 10px;
+  border-radius: 3px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stat-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: .06em;
+}
+.stat-value {
+  font: 800 14px "Barlow Condensed";
+  color: var(--paper);
+}
+.stat-value.countdown {
+  color: #38bdf8;
+  font-family: monospace;
+  font-size: 12px;
+}
+.giveaway-enter-btn {
+  background: var(--lime);
+  color: #111;
+  border: 1px solid var(--lime);
+  padding: 12px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all .15s ease;
+}
+.giveaway-enter-btn:hover:not(:disabled) {
+  background: #d4f850;
+  box-shadow: 0 0 14px rgba(200, 241, 53, 0.4);
+}
+.giveaway-enter-btn.entered {
+  background: #1a251e;
+  border-color: #38503e;
+  color: var(--lime);
+  cursor: default;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 14px;
+}
+.giveaway-enter-btn.entered small {
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: none;
+  font-weight: normal;
+}
+
+/* SECTION 2: Deals Grid */
+.events-deals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.events-deal-card {
+  position: relative;
+  background: #111613;
+  border: 1px solid #27362c;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.events-deal-card:hover {
+  transform: translateY(-2px);
+  border-color: #3e5344;
+}
+.deal-discount-ribbon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ef4444;
+  color: #fff;
+  font: 800 12px "Barlow Condensed";
+  padding: 3px 8px;
+  border-radius: 2px;
+  letter-spacing: .04em;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+  z-index: 2;
+}
+.deal-image-wrap {
+  height: 120px;
+  background: #0b0f0d;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.deal-image-wrap img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+.deal-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.deal-badge-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.deal-store-pill {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 2px 6px;
+  background: #1a221d;
+  border: 1px solid #2f3e34;
+  color: #94a3b8;
+  border-radius: 2px;
+}
+.deal-custom-pill {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 2px 6px;
+  background: rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  color: #f97316;
+  border-radius: 2px;
+}
+.deal-body strong {
+  font: 700 16px "Barlow Condensed";
+  color: var(--paper);
+}
+.deal-pricing {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #1f2a22;
+}
+.deal-prices {
+  display: flex;
+  flex-direction: column;
+}
+.deal-orig-price {
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.deal-sale-price {
+  font: 800 18px "Barlow Condensed";
+  color: var(--lime);
+}
+.deal-shop-btn {
+  background: #1f2722;
+  color: var(--lime);
+  border: 1px solid #3c5042;
+  padding: 8px 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: all .15s ease;
+}
+.deal-shop-btn:hover {
+  background: var(--lime);
+  color: #111;
+  border-color: var(--lime);
+}
+
+/* SECTION 3: Major Events Calendar */
+.events-calendar-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.events-calendar-card {
+  background: #111613;
+  border: 1px solid #27362c;
+  padding: 16px 20px;
+  border-radius: 4px;
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  transition: border-color .15s ease;
+}
+.events-calendar-card.live {
+  border-left: 4px solid var(--lime);
+  background: #131b15;
+}
+.events-calendar-card:hover {
+  border-color: #3e5344;
+}
+.evt-status-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.evt-status-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 2px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  display: inline-block;
+  width: fit-content;
+}
+.evt-status-badge.live {
+  background: rgba(200, 241, 53, 0.15);
+  color: var(--lime);
+  border: 1px solid rgba(200, 241, 53, 0.4);
+}
+.evt-status-badge.upcoming {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+.evt-type-badge {
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: .05em;
+}
+.evt-content-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.evt-date-range {
+  font-size: 10px;
+  color: var(--muted);
+}
+.evt-title {
+  margin: 0;
+  font: 700 20px "Barlow Condensed";
+  color: var(--paper);
+}
+.evt-desc {
+  margin: 0;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+.evt-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.evt-highlight-chip {
+  font-size: 9px;
+  background: #18221b;
+  border: 1px solid #2f4033;
+  color: #d1d5db;
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+.evt-prize-chip {
+  font-size: 9px;
+  font-weight: 800;
+  background: rgba(200, 241, 53, 0.1);
+  border: 1px solid rgba(200, 241, 53, 0.3);
+  color: var(--lime);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+.evt-action-col {
+  display: flex;
+  align-items: center;
+}
+.evt-link-btn {
+  background: #1e2621;
+  color: var(--lime);
+  border: 1px solid #3c5243;
+  padding: 8px 14px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+.evt-link-btn:hover {
+  background: var(--lime);
+  color: #111;
+  border-color: var(--lime);
+}
+
+@media (max-width: 900px) {
+  .events-calendar-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

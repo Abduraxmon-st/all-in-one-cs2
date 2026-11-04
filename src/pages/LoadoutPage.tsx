@@ -263,6 +263,59 @@ function getDefaultPattern(slot: string): number {
   return 555
 }
 
+const MEGA_CATEGORIES = [
+  { label: "All Skins", kind: "skins" as const, category: "" },
+  { label: "🔪 Knives", kind: "skins" as const, category: "KNIVES" },
+  { label: "🧤 Gloves", kind: "skins" as const, category: "GLOVES" },
+  { label: "🎯 Rifles", kind: "skins" as const, category: "RIFLES" },
+  { label: "🔫 Pistols", kind: "skins" as const, category: "PISTOLS" },
+  { label: "⚡ SMGs", kind: "skins" as const, category: "SMGS" },
+  { label: "🛡️ Heavy", kind: "skins" as const, category: "HEAVY" },
+  { label: "✨ Stickers", kind: "stickers" as const, category: "" },
+] as const;
+
+function getSkinCollection(skin: Skin): string {
+  const name = skin.name.toLowerCase();
+  if (name.includes("asiimov")) return "📦 Phoenix Case";
+  if (name.includes("printstream")) return "📦 Fracture Case";
+  if (name.includes("redline")) return "📦 Winter Offensive Case";
+  if (name.includes("dragon lore")) return "📦 Cobblestone Collection";
+  if (name.includes("howl")) return "📦 Huntsman Case";
+  if (name.includes("fire serpent")) return "📦 Operation Bravo Case";
+  if (name.includes("fade")) return "📦 CS:GO Weapon Case";
+  if (name.includes("doppler") || name.includes("marble fade") || name.includes("tiger tooth")) return "📦 Chroma Case";
+  if (name.includes("gamma")) return "📦 Gamma Case";
+  if (name.includes("hyper beast")) return "📦 Chroma 2 Case";
+  if (name.includes("bloodsport") || name.includes("neo-noir") || name.includes("the empress")) return "📦 Spectrum Case";
+  if (name.includes("inheritance") || name.includes("olympus") || name.includes("jawbreaker") || name.includes("chrome cannon")) return "📦 Kilowatt Case";
+  if (name.includes("vulcan") || name.includes("kill confirmed")) return "📦 Huntsman & Shadow Cases";
+  if (name.includes("overpass")) return "📦 Overpass 2024 Collection";
+  if (name.includes("anubis")) return "📦 Anubis Collection";
+  if (name.includes("inferno")) return "📦 Inferno 2024 Collection";
+  if (name.includes("mirage")) return "📦 Mirage 2024 Collection";
+  if (name.includes("nuke")) return "📦 Nuke 2024 Collection";
+  if (name.includes("dust")) return "📦 Dust II 2024 Collection";
+  if (skin.category === "KNIVES") return "📦 Dreams & Nightmares Case";
+  if (skin.category === "GLOVES") return "📦 Revolution Case";
+  if (skin.category === "RIFLES") return "📦 Kilowatt Case";
+  if (skin.category === "PISTOLS") return "📦 Recoil Case";
+  return "📦 Kilowatt Case";
+}
+
+function getSkinClassDisplay(skin: Skin): string {
+  if (skin.skinClass && skin.skinClass !== "ANY") {
+    return skin.skinClass.replace(/_/g, " ");
+  }
+  const rarity = getRarityLabel(skin.rarity);
+  if (skin.category === "KNIVES") return `${rarity} Knife`;
+  if (skin.category === "GLOVES") return `Extraordinary Gloves`;
+  if (skin.category === "RIFLES") return `${rarity} Rifle`;
+  if (skin.category === "PISTOLS") return `${rarity} Pistol`;
+  if (skin.category === "SMGS") return `${rarity} SMG`;
+  if (skin.category === "HEAVY") return `${rarity} Heavy`;
+  return `${rarity} ${skin.weaponName}`;
+}
+
 export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const { token, user } = useAuth()
   const [tab, setTab] = useState<Tab>("builder")
@@ -271,6 +324,65 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const [ctRifle, setCtRifle] = useState("weapon_m4a1_silencer")
   const [includeKnife, setIncludeKnife] = useState(false)
   const [sideFilter, setSideFilter] = useState<SideFilter>("ALL")
+
+  // csgoskins.gg Loadout Lab state
+  const [cardSelectedWear, setCardSelectedWear] = useState<Record<string, Wear | undefined>>({});
+  const [equippedCt, setEquippedCt] = useState<Skin[]>(() => {
+    try {
+      const raw = localStorage.getItem("clutch_equipped_ct");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [equippedT, setEquippedT] = useState<Skin[]>(() => {
+    try {
+      const raw = localStorage.getItem("clutch_equipped_t");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showEquippedDrawer, setShowEquippedDrawer] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("clutch_equipped_ct", JSON.stringify(equippedCt));
+    } catch {}
+  }, [equippedCt]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("clutch_equipped_t", JSON.stringify(equippedT));
+    } catch {}
+  }, [equippedT]);
+
+  function toggleEquipSkin(skin: Skin, side: "CT" | "T") {
+    if (side === "CT") {
+      setEquippedCt((current) => {
+        const exists = current.some((s) => s.id === skin.id);
+        if (exists) {
+          notify(`Removed ${skin.name} from CT Loadout`);
+          return current.filter((s) => s.id !== skin.id);
+        }
+        notify(`Equipped ${skin.name} to CT Loadout`);
+        return [...current, skin];
+      });
+    } else {
+      setEquippedT((current) => {
+        const exists = current.some((s) => s.id === skin.id);
+        if (exists) {
+          notify(`Removed ${skin.name} from T Loadout`);
+          return current.filter((s) => s.id !== skin.id);
+        }
+        notify(`Equipped ${skin.name} to T Loadout`);
+        return [...current, skin];
+      });
+    }
+  }
+
+  const totalCtLoadoutValue = equippedCt.reduce((sum, s) => sum + (s.lowestPriceUsd || 0), 0);
+  const totalTLoadoutValue = equippedT.reduce((sum, s) => sum + (s.lowestPriceUsd || 0), 0);
 
   const [generated, setGenerated] = useState<GeneratedLoadout | null>(null)
   const [generatorBusy, setGeneratorBusy] = useState(false)
@@ -1289,6 +1401,123 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
       {/* Catalog Section */}
       {tab === "catalog" && (
         <section className="lo-section">
+          {/* csgoskins.gg Loadout Summary Header */}
+          <div className="csg-loadout-header-bar">
+            <div className="csg-side-summary ct">
+              <span className="csg-side-pill ct">CT LOADOUT</span>
+              <div className="csg-side-meta">
+                <span className="csg-side-label">TOTAL VALUE</span>
+                <strong className="csg-side-val">{money(totalCtLoadoutValue)}</strong>
+              </div>
+              <span className="csg-side-items-badge">{equippedCt.length} equipped</span>
+            </div>
+
+            <div className="csg-summary-sep" />
+
+            <div className="csg-side-summary t">
+              <span className="csg-side-pill t">T LOADOUT</span>
+              <div className="csg-side-meta">
+                <span className="csg-side-label">TOTAL VALUE</span>
+                <strong className="csg-side-val">{money(totalTLoadoutValue)}</strong>
+              </div>
+              <span className="csg-side-items-badge">{equippedT.length} equipped</span>
+            </div>
+
+            <div className="csg-header-actions">
+              <button
+                type="button"
+                className={`csg-view-drawer-btn ${showEquippedDrawer ? "active" : ""}`}
+                onClick={() => setShowEquippedDrawer((v) => !v)}
+              >
+                {showEquippedDrawer ? "HIDE EQUIPPED" : "VIEW EQUIPPED"} ({equippedCt.length + equippedT.length})
+              </button>
+              {(equippedCt.length > 0 || equippedT.length > 0) && (
+                <button
+                  type="button"
+                  className="csg-clear-btn"
+                  onClick={() => {
+                    if (window.confirm("Clear all equipped CT & T items?")) {
+                      setEquippedCt([]);
+                      setEquippedT([]);
+                      notify("Equipped loadout reset");
+                    }
+                  }}
+                >
+                  RESET
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Equipped Drawer */}
+          {showEquippedDrawer && (
+            <div className="csg-equipped-drawer">
+              <div className="csg-drawer-col">
+                <div className="csg-drawer-title ct">CT EQUIPPED ({equippedCt.length}) · {money(totalCtLoadoutValue)}</div>
+                {equippedCt.length === 0 ? (
+                  <p className="csg-drawer-empty">No CT skins equipped yet. Click &quot;+ EQUIP TO CT&quot; on any skin card below!</p>
+                ) : (
+                  <div className="csg-drawer-list">
+                    {equippedCt.map((item) => (
+                      <div key={`ct-${item.id}`} className="csg-drawer-item">
+                        <Picture url={item.imageUrl} label={item.name} />
+                        <div className="csg-drawer-item-info">
+                          <strong>{item.name}</strong>
+                          <small>{item.weaponName} · {money(item.lowestPriceUsd)}</small>
+                        </div>
+                        <button type="button" onClick={() => toggleEquipSkin(item, "CT")} title="Remove">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="csg-drawer-col">
+                <div className="csg-drawer-title t">T EQUIPPED ({equippedT.length}) · {money(totalTLoadoutValue)}</div>
+                {equippedT.length === 0 ? (
+                  <p className="csg-drawer-empty">No T skins equipped yet. Click &quot;+ EQUIP TO T&quot; on any skin card below!</p>
+                ) : (
+                  <div className="csg-drawer-list">
+                    {equippedT.map((item) => (
+                      <div key={`t-${item.id}`} className="csg-drawer-item">
+                        <Picture url={item.imageUrl} label={item.name} />
+                        <div className="csg-drawer-item-info">
+                          <strong>{item.name}</strong>
+                          <small>{item.weaponName} · {money(item.lowestPriceUsd)}</small>
+                        </div>
+                        <button type="button" onClick={() => toggleEquipSkin(item, "T")} title="Remove">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Top Category Navigation Bar: Mega-Category Pills */}
+          <div className="csg-mega-category-bar">
+            {MEGA_CATEGORIES.map((cat) => {
+              const isActive =
+                cat.kind === catalogKind &&
+                (cat.kind === "stickers" || catalogCategory === cat.category);
+              return (
+                <button
+                  key={cat.label}
+                  type="button"
+                  className={`csg-mega-pill ${isActive ? "active" : ""}`}
+                  onClick={() => {
+                    setCatalogKind(cat.kind);
+                    setCatalogCategory(cat.category as Category | "");
+                    setCatalogPage(0);
+                    setSelectedSkin(null);
+                    setSelectedSticker(null);
+                  }}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="lo-section-head">
             <h3>CS2 Item Database & Catalog</h3>
             <div className="lo-switch">
@@ -1447,40 +1676,233 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
           {catalogData && (
             <>
               <p className="lo-count">{catalogData.totalElements} items found</p>
-              <div className="lo-catalog-grid">
-                {catalogData.content.map((item) => {
-                  const itemRarity = "rarity" in item ? item.rarity : "Standard"
-                  const rarityColor = getRarityColor(itemRarity)
-                  return (
-                    <button
-                      className="lo-catalog-card csf-cat-card"
-                      key={item.id}
-                      onClick={() => {
-                        if (catalogKind === "skins") openSkin(item.id)
-                        else openSticker(item.id)
-                      }}
-                      style={{
-                        borderTop: `3px solid ${rarityColor}`,
-                      }}
-                    >
-                      <div className="lo-catalog-image">
-                        <Picture url={item.imageUrl} label={item.name} />
-                      </div>
-                      <span style={{ color: rarityColor }}>
-                        {item.primaryColor} · {itemRarity}
-                      </span>
-                      <strong>{item.name}</strong>
-                      <small>
-                        {money(
-                          "lowestPriceUsd" in item
-                            ? item.lowestPriceUsd
-                            : item.priceUsd,
-                        )}
-                      </small>
-                    </button>
-                  )
-                })}
-              </div>
+              {catalogKind === "skins" ? (
+                <div className="csg-skins-grid">
+                  {(catalogData.content as Skin[]).map((skin) => {
+                    const rarityColor = getRarityColor(skin.rarity, skin.category);
+                    const skinClassDisplay = getSkinClassDisplay(skin);
+                    const collectionName = getSkinCollection(skin);
+                    const hasStatTrak = skin.category !== "GLOVES";
+                    const hasSouvenir =
+                      skin.category !== "GLOVES" &&
+                      skin.category !== "KNIVES" &&
+                      (collectionName.includes("Collection") || (skin.rarity && !skin.rarity.toLowerCase().includes("covert")));
+
+                    const wearPrices: { wear: Wear; price: number | null }[] = [
+                      { wear: "FN", price: skin.priceFn },
+                      { wear: "MW", price: skin.priceMw },
+                      { wear: "FT", price: skin.priceFt },
+                      { wear: "WW", price: skin.priceWw },
+                      { wear: "BS", price: skin.priceBs },
+                    ];
+                    const validPrices = wearPrices
+                      .map((w) => w.price)
+                      .filter((p): p is number => p !== null && p > 0);
+                    const minPrice = validPrices.length ? Math.min(...validPrices) : skin.lowestPriceUsd;
+                    const maxPrice = validPrices.length ? Math.max(...validPrices) : skin.lowestPriceUsd;
+
+                    const activeWear = cardSelectedWear[skin.id];
+                    const activeWearPrice = activeWear
+                      ? wearPrices.find((w) => w.wear === activeWear)?.price
+                      : undefined;
+
+                    const minFloat = skin.minFloat ?? 0.00;
+                    const maxFloat = skin.maxFloat ?? 1.00;
+
+                    const isEquippedCt = equippedCt.some((s) => s.id === skin.id);
+                    const isEquippedT = equippedT.some((s) => s.id === skin.id);
+
+                    return (
+                      <article
+                        key={skin.id}
+                        className="csg-skin-card"
+                        style={{ borderColor: `${rarityColor}40` }}
+                      >
+                        {/* 1. Top Rarity Color Bar */}
+                        <div
+                          className="csg-card-rarity-bar"
+                          style={{
+                            backgroundColor: rarityColor,
+                            boxShadow: `0 0 10px ${rarityColor}88`,
+                          }}
+                        />
+
+                        {/* 2. Top Pill Row: skinClass badge + StatTrak / Souvenir tags */}
+                        <div className="csg-card-top-pills">
+                          <span
+                            className="csg-skinclass-chip"
+                            style={{
+                              color: rarityColor,
+                              borderColor: `${rarityColor}55`,
+                              backgroundColor: `${rarityColor}15`,
+                            }}
+                          >
+                            {skinClassDisplay}
+                          </span>
+
+                          <div className="csg-tags-wrap">
+                            {hasStatTrak && (
+                              <span className="csg-tag stattrak" title="StatTrak™ Available">
+                                ★ StatTrak™
+                              </span>
+                            )}
+                            {hasSouvenir && (
+                              <span className="csg-tag souvenir" title="Souvenir Edition Available">
+                                Souvenir
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 3. Skin Weapon Image */}
+                        <div
+                          className="csg-card-thumb"
+                          style={{
+                            background: `radial-gradient(circle at center, ${rarityColor}1a 0%, transparent 72%)`,
+                          }}
+                          onClick={() => openSkin(skin.id)}
+                        >
+                          <Picture url={skin.imageUrl} label={skin.name} />
+                        </div>
+
+                        {/* 4. Name & Weapon Info */}
+                        <div className="csg-card-meta" onClick={() => openSkin(skin.id)}>
+                          <strong className="csg-skin-title">{skin.name}</strong>
+                          <span className="csg-weapon-sub">
+                            {skin.weaponName} · {skin.rarity}
+                          </span>
+                        </div>
+
+                        {/* 5. Collection / Case Pill */}
+                        <div className="csg-collection-wrap">
+                          <span className="csg-collection-badge" title={collectionName}>
+                            {collectionName}
+                          </span>
+                        </div>
+
+                        {/* 6. Float Range Spectrum Bar */}
+                        <div className="csg-float-wrap">
+                          <div className="csg-float-track">
+                            <div
+                              className="csg-float-indicator"
+                              style={{
+                                left: `${Math.min(95, Math.max(0, minFloat * 100))}%`,
+                                width: `${Math.min(100, Math.max(6, (maxFloat - minFloat) * 100))}%`,
+                              }}
+                            />
+                          </div>
+                          <div className="csg-float-text-row">
+                            <span>Float Spectrum</span>
+                            <strong>
+                              {minFloat.toFixed(2)} – {maxFloat.toFixed(2)}
+                            </strong>
+                          </div>
+                        </div>
+
+                        {/* 7. Price Range across Exteriors & Interactive Wear Tabs */}
+                        <div className="csg-price-box">
+                          <div className="csg-price-row">
+                            <span className="csg-price-label">
+                              {activeWear ? `${activeWear} PRICE` : "PRICE RANGE"}
+                            </span>
+                            <strong className="csg-price-val">
+                              {activeWear
+                                ? activeWearPrice !== null && activeWearPrice !== undefined
+                                  ? money(activeWearPrice)
+                                  : "— (Out of stock)"
+                                : minPrice === maxPrice
+                                  ? money(minPrice)
+                                  : `${money(minPrice)} – ${money(maxPrice)}`}
+                            </strong>
+                          </div>
+
+                          {/* Wear Tabs: FN, MW, FT, WW, BS */}
+                          <div className="csg-wear-pill-row">
+                            {(["FN", "MW", "FT", "WW", "BS"] as Wear[]).map((w) => {
+                              const wp = wearPrices.find((x) => x.wear === w)?.price;
+                              const isSelected = activeWear === w;
+                              const isAvail = wp !== null && wp !== undefined;
+                              return (
+                                <button
+                                  key={w}
+                                  type="button"
+                                  className={`csg-wear-btn ${isSelected ? "active" : ""} ${!isAvail ? "dim" : ""}`}
+                                  title={isAvail ? `${w}: ${money(wp)}` : `${w}: Not available`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCardSelectedWear((prev) => ({
+                                      ...prev,
+                                      [skin.id]: prev[skin.id] === w ? undefined : w,
+                                    }));
+                                  }}
+                                >
+                                  {w}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* 8. 1-Click Equip to CT / Equip to T */}
+                        <div className="csg-equip-actions">
+                          {(skin.teamSide === "CT" || skin.teamSide === "BOTH") && (
+                            <button
+                              type="button"
+                              className={`csg-equip-btn ct ${isEquippedCt ? "active" : ""}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleEquipSkin(skin, "CT");
+                              }}
+                            >
+                              {isEquippedCt ? "✓ CT EQUIPPED" : "+ EQUIP TO CT"}
+                            </button>
+                          )}
+                          {(skin.teamSide === "T" || skin.teamSide === "BOTH") && (
+                            <button
+                              type="button"
+                              className={`csg-equip-btn t ${isEquippedT ? "active" : ""}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleEquipSkin(skin, "T");
+                              }}
+                            >
+                              {isEquippedT ? "✓ T EQUIPPED" : "+ EQUIP TO T"}
+                            </button>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="lo-catalog-grid">
+                  {catalogData.content.map((item) => {
+                    const itemRarity = "rarity" in item ? item.rarity : "Standard";
+                    const rarityColor = getRarityColor(itemRarity);
+                    return (
+                      <button
+                        className="lo-catalog-card csf-cat-card"
+                        key={item.id}
+                        onClick={() => openSticker(item.id)}
+                        style={{
+                          borderTop: `3px solid ${rarityColor}`,
+                        }}
+                      >
+                        <div className="lo-catalog-image">
+                          <Picture url={item.imageUrl} label={item.name} />
+                        </div>
+                        <span style={{ color: rarityColor }}>
+                          {item.primaryColor} · {itemRarity}
+                        </span>
+                        <strong>{item.name}</strong>
+                        <small>
+                          {money("priceUsd" in item ? item.priceUsd : ("lowestPriceUsd" in item ? item.lowestPriceUsd : 0))}
+                        </small>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <Pager
                 page={catalogPage}
                 totalPages={catalogData.totalPages}

@@ -5,6 +5,7 @@ import MatchAnalyzerPage from "./pages/MatchAnalyzerPage";
 import StratBoardPage from "./pages/StratBoardPage";
 import DailyGamesPage from "./pages/DailyGamesPage";
 import LoadoutPage from "./pages/LoadoutPage";
+import EventsPage from "./pages/EventsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminPage from "./pages/AdminPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -49,6 +50,9 @@ export default function App() {
       break;
     case "/loadout-lab":
       page = <LoadoutPage budget={budget} setBudget={setBudget} notify={notify} />;
+      break;
+    case "/events":
+      page = <EventsPage notify={notify} />;
       break;
     case "/admin":
       page = <AdminPage />;
@@ -101,6 +105,13 @@ export default function App() {
             <h1>{activeRoute?.title ?? "Page not found"}</h1>
           </div>
           <div className="top-actions">
+            <a
+              className="topbar-events-link"
+              href={routeHref("/events")}
+              onClick={(event) => handleRouteClick(event, "/events")}
+            >
+              <Icon name="bolt" size={14} /> <span>GIVEAWAYS &amp; DEALS</span>
+            </a>
             <button className="steam-button" onClick={() => setAuthOpen(true)}>{authLoading ? "Loading…" : user ? user.username : "Sign In / Connect"} <Icon name="arrow" size={16} /></button>
             {user && (
               <button

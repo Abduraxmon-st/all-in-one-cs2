@@ -5,6 +5,7 @@ import { connectRoom } from "../features/stratboard/realtime";
 import type { BoardEvent, CanvasElement, CreateLineupRequest, RoomParticipant, RoomSnapshot, TacticDetail, TacticSummary, TeamSide, UtilityLineup, UtilityType } from "../features/stratboard/types";
 import ClipPlayer from "../components/ClipPlayer";
 import Icon, { type IconName } from "../components/Icon";
+import RadarMapLayer from "../components/RadarMapLayer";
 import { navigate, routeHref } from "../routes";
 import "./StratBoardPage.css";
 
@@ -27,10 +28,10 @@ const mapRadarUrls: Record<string, string> = {
 };
 
 const utilityColors: Record<UtilityType, string> = {
-  SMOKE: "#94a3b8",
+  SMOKE: "#c8f135",
   FLASH: "#facc15",
   MOLOTOV: "#f97316",
-  HE: "#22c55e",
+  HE: "#ef4444",
 };
 
 function safeHttpUrl(value: string | null): string | null {
@@ -76,6 +77,7 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
   const [activeVideoLineup, setActiveVideoLineup] = useState<UtilityLineup | null>(null);
   const [showRadarPreview, setShowRadarPreview] = useState(true);
   const [selectedRadarLineupId, setSelectedRadarLineupId] = useState<string | null>(null);
+  const [hoveredRadarLineupId, setHoveredRadarLineupId] = useState<string | null>(null);
   const [tactics, setTactics] = useState<TacticSummary[]>([]);
   const [tacticPage, setTacticPage] = useState(0);
   const [tacticTotalPages, setTacticTotalPages] = useState(0);
@@ -309,7 +311,7 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
     notify(`Pinned "${lineup.title}" to whiteboard`);
   }
 
-  const selectedRadarLineup = lineups.find((l) => l.id === selectedRadarLineupId) ?? null;
+  const activeRadarLineup = lineups.find((l) => l.id === (hoveredRadarLineupId ?? selectedRadarLineupId)) ?? null;
 
   return <div className="feature-page strat-api-page">
     <div className="page-intro"><div><p className="eyebrow">LIVE TACTICAL ROOMS</p><h2>Strat board</h2><p>Create a guest room, draw with teammates, browse lineups, and save tactics when signed in.</p></div></div>
@@ -424,10 +426,8 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
           onClick={point}
           onMouseMove={moveCursor}
           role="presentation"
-          style={{
-            backgroundImage: `url(${mapRadarUrls[mapName] || `/maps/${mapName}.png`})`,
-          }}
         >
+          <RadarMapLayer mapName={mapName} />
           <div className="strat-radar-grid-overlay" />
           <span className="strat-site a">A</span>
           <span className="strat-site b">B</span>
@@ -600,46 +600,81 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
             </div>
           </div>
 
-          <div
-            className="strat-radar-map-box"
-            style={{
-              backgroundImage: `url(${mapRadarUrls[mapName] || `/maps/${mapName}.png`})`,
-            }}
-          >
+          <div className="strat-radar-map-box">
+            <RadarMapLayer mapName={mapName} />
             <div className="strat-radar-grid-overlay" />
             <span className="strat-site a">A</span>
             <span className="strat-site b">B</span>
 
             <svg className="strat-radar-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
               <defs>
-                <marker id="radar-arrowhead" markerWidth="4" markerHeight="4" refX="2.5" refY="2" orient="auto">
-                  <polygon points="0 0, 4 2, 0 4" fill="#c8f135" opacity="0.8" />
+                <marker id="marker-smoke" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                  <path d="M 0 0 L 6 3 L 0 6 Z" fill="#c8f135" />
+                </marker>
+                <marker id="marker-flash" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                  <path d="M 0 0 L 6 3 L 0 6 Z" fill="#facc15" />
+                </marker>
+                <marker id="marker-molotov" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                  <path d="M 0 0 L 6 3 L 0 6 Z" fill="#f97316" />
+                </marker>
+                <marker id="marker-he" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                  <path d="M 0 0 L 6 3 L 0 6 Z" fill="#ef4444" />
                 </marker>
               </defs>
               {lineups.map((l) => {
                 const isSelected = selectedRadarLineupId === l.id;
+                const isHovered = hoveredRadarLineupId === l.id;
+                const isActive = isSelected || isHovered;
                 const color = utilityColors[l.utilityType] ?? "#c8f135";
+                const markerId = `marker-${l.utilityType.toLowerCase()}`;
+
                 return (
-                  <g key={l.id}>
+                  <g key={l.id} className={`strat-radar-lineup-path ${isActive ? "active" : ""}`}>
+                    {/* Stand Circle */}
+                    <circle
+                      cx={l.standX}
+                      cy={l.standY}
+                      r={isActive ? "2.6" : "1.3"}
+                      fill={isActive ? color : "none"}
+                      stroke={color}
+                      strokeWidth={isActive ? "1" : "0.7"}
+                      opacity={isActive ? 1 : 0.6}
+                    />
+                    {isActive && (
+                      <>
+                        <circle
+                          cx={l.standX}
+                          cy={l.standY}
+                          r="4.8"
+                          fill="none"
+                          stroke={color}
+                          strokeWidth="0.8"
+                          className="strat-radar-stand-pulse"
+                        />
+                        <text
+                          x={l.standX}
+                          y={l.standY - 3}
+                          textAnchor="middle"
+                          fill={color}
+                          fontSize="2.4"
+                          fontWeight="bold"
+                        >
+                          STAND
+                        </text>
+                      </>
+                    )}
+                    {/* Trajectory Line */}
                     <line
                       x1={l.standX}
                       y1={l.standY}
                       x2={l.landX}
                       y2={l.landY}
                       stroke={color}
-                      strokeWidth={isSelected ? "1.5" : "0.7"}
-                      strokeDasharray={isSelected ? "none" : "2,2"}
-                      opacity={isSelected ? "1" : "0.6"}
-                      markerEnd="url(#radar-arrowhead)"
-                    />
-                    <circle
-                      cx={l.standX}
-                      cy={l.standY}
-                      r={isSelected ? "2.2" : "1.4"}
-                      fill="none"
-                      stroke={color}
-                      strokeWidth="0.8"
-                      opacity={isSelected ? "1" : "0.7"}
+                      strokeWidth={isActive ? "2" : "0.8"}
+                      strokeDasharray={isActive ? "4,3" : "2,2"}
+                      opacity={isActive ? 1 : 0.55}
+                      className={isActive ? "strat-radar-trajectory-active" : undefined}
+                      markerEnd={`url(#${markerId})`}
                     />
                   </g>
                 );
@@ -648,6 +683,8 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
 
             {lineups.map((l) => {
               const isSelected = selectedRadarLineupId === l.id;
+              const isHovered = hoveredRadarLineupId === l.id;
+              const isActive = isSelected || isHovered;
               const color = utilityColors[l.utilityType] ?? "#c8f135";
               const iconName: IconName =
                 l.utilityType === "SMOKE"
@@ -660,14 +697,17 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
               return (
                 <button
                   key={l.id}
-                  className={`strat-radar-pin ${isSelected ? "selected" : ""} type-${l.utilityType.toLowerCase()}`}
+                  className={`strat-radar-pin ${isActive ? "selected" : ""} type-${l.utilityType.toLowerCase()}`}
                   style={{
                     left: `${l.landX}%`,
                     top: `${l.landY}%`,
                     borderColor: color,
-                    color: isSelected ? "#111" : color,
-                    backgroundColor: isSelected ? color : "rgba(19, 25, 23, 0.85)",
+                    color: isActive ? "#0b100d" : color,
+                    backgroundColor: isActive ? color : "rgba(11, 16, 13, 0.9)",
+                    boxShadow: isActive ? `0 0 16px ${color}` : undefined,
                   }}
+                  onMouseEnter={() => setHoveredRadarLineupId(l.id)}
+                  onMouseLeave={() => setHoveredRadarLineupId(null)}
                   onClick={() => setSelectedRadarLineupId(isSelected ? null : l.id)}
                   title={`${l.title} (${l.utilityType})`}
                 >
@@ -677,36 +717,63 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
             })}
           </div>
 
-          {selectedRadarLineup && (
+          {activeRadarLineup && (
             <div className="strat-radar-selected-shelf">
               <div className="strat-radar-selected-info">
-                <span className="strat-badge" style={{ borderColor: utilityColors[selectedRadarLineup.utilityType], color: utilityColors[selectedRadarLineup.utilityType] }}>
-                  {selectedRadarLineup.utilityType}
-                </span>
-                <strong>{selectedRadarLineup.title}</strong>
+                <div className="strat-lineup-badge-row">
+                  <span className="strat-badge" style={{ borderColor: utilityColors[activeRadarLineup.utilityType], color: utilityColors[activeRadarLineup.utilityType] }}>
+                    {activeRadarLineup.utilityType}
+                  </span>
+                  <span className="strat-throw-badge">{activeRadarLineup.throwType}</span>
+                  <span className="strat-badge map">{mapName.replace(/^de_/, "").toUpperCase()}</span>
+                  <span className="strat-badge team">{activeRadarLineup.teamSide} SIDE</span>
+                </div>
+                <strong className="strat-route-title">
+                  {activeRadarLineup.title.toLowerCase().startsWith(mapName.replace(/^de_/, "").toLowerCase())
+                    ? activeRadarLineup.title
+                    : `${mapName.replace(/^de_/, "").toUpperCase()}: ${activeRadarLineup.title}`}
+                </strong>
                 <small>
-                  {selectedRadarLineup.throwType} · Stand ({selectedRadarLineup.standX}, {selectedRadarLineup.standY}) → Land ({selectedRadarLineup.landX}, {selectedRadarLineup.landY})
+                  Stand ({activeRadarLineup.standX}, {activeRadarLineup.standY}) → Land ({activeRadarLineup.landX}, {activeRadarLineup.landY})
+                  {activeRadarLineup.description ? ` · ${activeRadarLineup.description}` : ""}
                 </small>
               </div>
               <div className="strat-radar-selected-actions">
-                {safeHttpUrl(selectedRadarLineup.videoUrl) && (
+                {safeHttpUrl(activeRadarLineup.videoUrl) ? (
                   <button
                     type="button"
                     className="strat-video-action-btn"
-                    onClick={() => setActiveVideoLineup(selectedRadarLineup)}
+                    onClick={() => setActiveVideoLineup(activeRadarLineup)}
                   >
-                    ▶ WATCH IN-APP VIDEO
+                    ▶ Watch Video Guide
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="strat-video-action-btn"
+                    disabled
+                  >
+                    No Video
                   </button>
                 )}
-                <button onClick={() => placeLineup(selectedRadarLineup)}>
-                  + PLACE ON WHITEBOARD
-                </button>
                 <button
-                  className="strat-radar-close-btn"
-                  onClick={() => setSelectedRadarLineupId(null)}
+                  type="button"
+                  className="strat-place-action-btn"
+                  onClick={() => placeLineup(activeRadarLineup)}
                 >
-                  DESELECT ✕
+                  + Place on Strat Board
                 </button>
+                {selectedRadarLineupId && (
+                  <button
+                    className="strat-radar-close-btn"
+                    onClick={() => {
+                      setSelectedRadarLineupId(null);
+                      setHoveredRadarLineupId(null);
+                    }}
+                  >
+                    DESELECT ✕
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -715,10 +782,16 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
 
       <div className="strat-lineups-grid">
         {lineups.map((lineup) => {
-          const isSelected = selectedRadarLineupId === lineup.id;
+          const isSelected = selectedRadarLineupId === lineup.id || hoveredRadarLineupId === lineup.id;
           const color = utilityColors[lineup.utilityType] ?? "#c8f135";
           return (
-            <article key={lineup.id} className={`strat-lineup-card ${isSelected ? "highlighted" : ""}`}>
+            <article
+              key={lineup.id}
+              className={`strat-lineup-card ${isSelected ? "highlighted" : ""}`}
+              onMouseEnter={() => setHoveredRadarLineupId(lineup.id)}
+              onMouseLeave={() => setHoveredRadarLineupId(null)}
+              onClick={() => setSelectedRadarLineupId(selectedRadarLineupId === lineup.id ? null : lineup.id)}
+            >
               <div className="strat-lineup-card-header">
                 <span className="strat-badge" style={{ borderColor: color, color }}>
                   {lineup.utilityType}
