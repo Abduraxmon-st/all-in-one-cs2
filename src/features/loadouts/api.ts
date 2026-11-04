@@ -5,7 +5,9 @@ import type {
   CommunityLoadout,
   CreateCommunityLoadout,
   GenerateRequest,
+  GenerateLoadoutRequest,
   GeneratedLoadout,
+  GeneratedLoadoutItem,
   Page,
   Skin,
   SkinFilters,
@@ -59,19 +61,24 @@ async function request<T>(
 
 export const getSkins = (filters: SkinFilters = {}, signal?: AbortSignal) =>
   request<Page<Skin>>(`/catalog/skins${query(filters)}`, { signal })
+
 export const getSkin = (skinId: string, signal?: AbortSignal) =>
   request<Skin>(`/catalog/skins/${encodeURIComponent(skinId)}`, { signal })
+
 export const getStickers = (
   filters: StickerFilters = {},
   signal?: AbortSignal,
 ) => request<Page<Sticker>>(`/catalog/stickers${query(filters)}`, { signal })
+
 export const getSticker = (stickerId: string, signal?: AbortSignal) =>
   request<Sticker>(`/catalog/stickers/${encodeURIComponent(stickerId)}`, { signal })
-export const generateLoadout = (body: GenerateRequest) =>
+
+export const generateLoadout = (body: GenerateLoadoutRequest | GenerateRequest) =>
   request<GeneratedLoadout>("/generate", {
     method: "POST",
     body: JSON.stringify(body),
   })
+
 export const getCommunity = (
   filters: CommunityFilters = {},
   token?: string,
@@ -82,6 +89,7 @@ export const getCommunity = (
     { signal },
     token,
   )
+
 export const getCommunityDetail = (
   id: string,
   token?: string,
@@ -92,8 +100,10 @@ export const getCommunityDetail = (
     { signal },
     token,
   )
+
 export const getMyLoadouts = (token: string, signal?: AbortSignal) =>
   request<CommunityLoadout[]>("/community/my", { signal }, token)
+
 export const createCommunityLoadout = (
   body: CreateCommunityLoadout,
   token: string,
@@ -103,19 +113,23 @@ export const createCommunityLoadout = (
     { method: "POST", body: JSON.stringify(body) },
     token,
   )
+
 export const toggleUpvote = (id: string, token: string) =>
   request<UpvoteResult>(
     `/community/${encodeURIComponent(id)}/upvote`,
     { method: "POST" },
     token,
   )
+
 export const deleteCommunityLoadout = (id: string, token: string) =>
   request<null>(
     `/community/${encodeURIComponent(id)}`,
     { method: "DELETE" },
     token,
   )
+
 export const seedCatalog = (token: string) =>
   request<SeedSummary>("/admin/seed", { method: "POST" }, token)
+
 export const syncCatalog = (token: string) =>
   request<SeedSummary>("/admin/sync", { method: "POST" }, token)

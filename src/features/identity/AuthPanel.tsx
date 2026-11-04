@@ -37,8 +37,8 @@ export default function AuthPanel({ onClose, notify }: AuthPanelProps) {
   const [regPassword, setRegPassword] = useState("");
 
   // Dev login inputs
-  const [steamId, setSteamId] = useState("76561198000000001");
-  const [devUsername, setDevUsername] = useState("DevPlayer");
+  const [steamId, setSteamId] = useState("76561198000000002");
+  const [devUsername, setDevUsername] = useState("TesterUser");
   const [role, setRole] = useState<UserRole>("USER");
   const [devOpen, setDevOpen] = useState(false);
 
@@ -53,7 +53,7 @@ export default function AuthPanel({ onClose, notify }: AuthPanelProps) {
     setUsername(user?.username ?? "");
     setTradeUrl(user?.tradeUrl ?? "");
     if (user) {
-      setSteamId(user.steamId ?? "76561198000000001");
+      setSteamId(user.steamId ?? "76561198000000002");
       setDevUsername(user.username);
     }
   }, [user]);
@@ -113,9 +113,9 @@ export default function AuthPanel({ onClose, notify }: AuthPanelProps) {
       await signInForDevelopment({
         steamId: steamId.trim(),
         username: devUsername.trim(),
-        role,
+        role: "USER",
       });
-      notify?.(`Signed in as ${role} (${devUsername.trim()})`);
+      notify?.(`Signed in as USER (${devUsername.trim()})`);
       onClose();
     });
   }
@@ -312,6 +312,18 @@ export default function AuthPanel({ onClose, notify }: AuthPanelProps) {
 
                 {passwordMode === "signin" ? (
                   <form onSubmit={handlePasswordLogin}>
+                    <button
+                      type="button"
+                      className="auth-quick-admin-chip"
+                      onClick={() => {
+                        setUsernameOrEmail("clutch_admin");
+                        setLoginPassword("ClutchAdmin#2026!");
+                      }}
+                      title="Quick fill dedicated Administrator credentials"
+                    >
+                      👑 Quick Admin (clutch_admin)
+                    </button>
+
                     <label>
                       Username or Email
                       <input
@@ -399,22 +411,11 @@ export default function AuthPanel({ onClose, notify }: AuthPanelProps) {
               onClick={() => setDevOpen((prev) => !prev)}
               aria-expanded={devOpen}
             >
-              <span>{devOpen ? "▼" : "▶"} Developer / Admin Quick Login</span>
+              <span>{devOpen ? "▼" : "▶"} Developer / Test User Quick Login</span>
             </button>
             {devOpen && (
               <form onSubmit={submitDev} className="auth-dev-form">
                 <div className="auth-preset-bar">
-                  <button
-                    type="button"
-                    className="auth-preset-btn admin"
-                    onClick={() => {
-                      setSteamId(user?.steamId || "76561198000000001");
-                      setDevUsername(user?.username || "AdminPlayer");
-                      setRole("ADMIN");
-                    }}
-                  >
-                    ★ Fill Admin Preset
-                  </button>
                   <button
                     type="button"
                     className="auth-preset-btn"
@@ -450,15 +451,10 @@ export default function AuthPanel({ onClose, notify }: AuthPanelProps) {
                     onChange={(event) => setRole(event.target.value as UserRole)}
                   >
                     <option value="USER">USER</option>
-                    <option value="ADMIN">ADMIN</option>
                   </select>
                 </label>
                 <button disabled={busy} className="auth-dev-submit" type="submit">
-                  {busy
-                    ? "CONNECTING…"
-                    : role === "ADMIN"
-                      ? "GET ADMIN TOKEN"
-                      : "GET DEV TOKEN"}
+                  {busy ? "CONNECTING…" : "GET DEV TOKEN"}
                 </button>
               </form>
             )}

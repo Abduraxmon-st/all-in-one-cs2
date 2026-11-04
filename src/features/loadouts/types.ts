@@ -15,6 +15,20 @@ export type TeamSide = "T" | "CT" | "BOTH"
 export type Category = "PISTOLS" | "RIFLES" | "SMGS" | "HEAVY" | "KNIVES" | "GLOVES"
 export type Wear = "FN" | "MW" | "FT" | "WW" | "BS"
 
+export const SKIN_CLASSES = [
+  { label: "All Classes", value: "ANY" },
+  { label: "Covert Rifle", value: "COVERT_RIFLE", color: "#eb4b4b" },
+  { label: "Classified Rifle", value: "CLASSIFIED_RIFLE", color: "#d32ce6" },
+  { label: "Restricted Rifle", value: "RESTRICTED_RIFLE", color: "#8847ff" },
+  { label: "Mil-Spec Rifle", value: "MIL_SPEC_RIFLE", color: "#4b69ff" },
+  { label: "Covert Pistol", value: "COVERT_PISTOL", color: "#eb4b4b" },
+  { label: "Classified Pistol", value: "CLASSIFIED_PISTOL", color: "#d32ce6" },
+  { label: "All Covert", value: "ALL_COVERT", color: "#eb4b4b" },
+  { label: "All Classified", value: "ALL_CLASSIFIED", color: "#d32ce6" },
+] as const
+export type SkinClassOption = (typeof SKIN_CLASSES)[number]
+export type SkinClassValue = SkinClassOption["value"]
+
 export interface Page<T> {
   content: T[]
   totalElements: number
@@ -33,6 +47,7 @@ export interface Skin {
   category: Category
   teamSide: TeamSide
   rarity: string
+  skinClass?: string
   primaryColor: Color
   secondaryColor: Color | null
   imageUrl: string | null
@@ -60,6 +75,8 @@ export interface SkinFilters {
   weaponId?: string
   category?: Category
   teamSide?: TeamSide
+  skinClass?: string
+  rarity?: string
   maxPrice?: number
   q?: string
   page?: number
@@ -81,7 +98,10 @@ export interface GenerateRequest {
   themeColor: Color
   preferredCtRifle: string
   includeKnifeAndGloves: boolean
+  skinClass?: string
+  rarity?: string
 }
+export type GenerateLoadoutRequest = GenerateRequest
 
 export interface GeneratedItem {
   slot: string
@@ -93,7 +113,10 @@ export interface GeneratedItem {
   priceUsd: number
   primaryColor: Color
   imageUrl: string | null
+  rarity?: string
+  skinClass?: string
 }
+export type GeneratedLoadoutItem = GeneratedItem
 
 export interface GeneratedLoadout {
   themeColor: Color

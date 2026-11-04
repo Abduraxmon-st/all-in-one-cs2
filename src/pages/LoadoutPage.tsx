@@ -15,16 +15,20 @@ import {
 } from "../features/loadouts/api"
 import {
   COLORS,
+  SKIN_CLASSES,
   type Category,
   type Color,
   type CommunityDetail,
   type CommunityLoadout,
+  type GeneratedItem,
   type GeneratedLoadout,
   type Page,
   type Skin,
+  type SkinClassValue,
   type Sticker,
   type StickerPlacement,
   type TeamSide,
+  type Wear,
 } from "../features/loadouts/types"
 import "./LoadoutPage.css"
 
@@ -35,6 +39,9 @@ type Props = {
 }
 type Tab = "builder" | "catalog" | "community"
 type CatalogKind = "skins" | "stickers"
+type SideFilter = "ALL" | "CT" | "T"
+type EquipmentColumn = "PISTOLS" | "SMGS & HEAVY" | "RIFLES" | "KNIVES & GLOVES"
+
 interface PictureProps {
   url: string | null
   label: string
@@ -58,7 +65,7 @@ function Picture({ url, label }: PictureProps) {
   return src ? (
     <img src={src} alt={label} loading="lazy" />
   ) : (
-    <div className="lo-image-empty">NO IMAGE</div>
+    <div className="lo-image-empty">NO PREVIEW</div>
   )
 }
 
@@ -90,52 +97,228 @@ function Pager({
   )
 }
 
+// 4-Column Equipment Classifier
+function getEquipmentColumn(item: GeneratedItem): EquipmentColumn {
+  const slot = (item.slot || "").toUpperCase()
+  const weaponId = (item.weaponId || "").toLowerCase()
+  const weaponName = (item.weaponName || "").toLowerCase()
+
+  if (
+    slot === "KNIFE" ||
+    slot === "GLOVES" ||
+    weaponName.includes("knife") ||
+    weaponName.includes("bayonet") ||
+    weaponName.includes("karambit") ||
+    weaponName.includes("daggers") ||
+    weaponName.includes("gloves") ||
+    weaponName.includes("hand wraps")
+  ) {
+    return "KNIVES & GLOVES"
+  }
+
+  if (
+    slot.includes("PISTOL") ||
+    slot.includes("DEAGLE") ||
+    weaponId.includes("glock") ||
+    weaponId.includes("usp") ||
+    weaponId.includes("deagle") ||
+    weaponId.includes("p250") ||
+    weaponId.includes("fiveseven") ||
+    weaponId.includes("tec9") ||
+    weaponId.includes("revolver") ||
+    weaponId.includes("cz75") ||
+    weaponId.includes("elite") ||
+    weaponName.includes("glock") ||
+    weaponName.includes("usp") ||
+    weaponName.includes("desert eagle") ||
+    weaponName.includes("p250") ||
+    weaponName.includes("five-seven") ||
+    weaponName.includes("tec-9") ||
+    weaponName.includes("dual berettas")
+  ) {
+    return "PISTOLS"
+  }
+
+  if (
+    slot.includes("SMG") ||
+    weaponId.includes("mp9") ||
+    weaponId.includes("mac10") ||
+    weaponId.includes("ump") ||
+    weaponId.includes("mp7") ||
+    weaponId.includes("mp5") ||
+    weaponId.includes("p90") ||
+    weaponId.includes("bizon") ||
+    weaponId.includes("nova") ||
+    weaponId.includes("xm1014") ||
+    weaponId.includes("mag7") ||
+    weaponId.includes("sawedoff") ||
+    weaponId.includes("m249") ||
+    weaponId.includes("negev") ||
+    weaponName.includes("mp9") ||
+    weaponName.includes("mac-10") ||
+    weaponName.includes("ump-45") ||
+    weaponName.includes("mp7") ||
+    weaponName.includes("p90") ||
+    weaponName.includes("nova") ||
+    weaponName.includes("xm1014") ||
+    weaponName.includes("negev")
+  ) {
+    return "SMGS & HEAVY"
+  }
+
+  return "RIFLES"
+}
+
+// Side Classifier: CT vs T vs BOTH
+function getItemTeamSide(item: GeneratedItem): "CT" | "T" | "BOTH" {
+  const slot = (item.slot || "").toUpperCase()
+  const weaponId = (item.weaponId || "").toLowerCase()
+
+  if (
+    slot.startsWith("CT_") ||
+    weaponId.includes("m4a1") ||
+    weaponId.includes("m4a4") ||
+    weaponId.includes("usp") ||
+    weaponId.includes("mp9") ||
+    weaponId.includes("fiveseven") ||
+    weaponId.includes("famas")
+  ) {
+    return "CT"
+  }
+  if (
+    slot.startsWith("T_") ||
+    weaponId.includes("ak47") ||
+    weaponId.includes("glock") ||
+    weaponId.includes("mac10") ||
+    weaponId.includes("galil") ||
+    weaponId.includes("tec9")
+  ) {
+    return "T"
+  }
+  return "BOTH"
+}
+
+function matchesSide(item: GeneratedItem, filter: SideFilter): boolean {
+  if (filter === "ALL") return true
+  const side = getItemTeamSide(item)
+  return side === "BOTH" || side === filter
+}
+
+// Rarity Palette & Utilities
+const RARITY_PALETTE: Record<string, { color: string; label: string }> = {
+  Covert: { color: "#eb4b4b", label: "Covert" },
+  Classified: { color: "#d32ce6", label: "Classified" },
+  Restricted: { color: "#8847ff", label: "Restricted" },
+  "Mil-Spec": { color: "#4b69ff", label: "Mil-Spec" },
+  "Mil-Spec Grade": { color: "#4b69ff", label: "Mil-Spec" },
+  "Industrial Grade": { color: "#5e98d9", label: "Industrial" },
+  "Consumer Grade": { color: "#b0c3d9", label: "Consumer" },
+  Extraordinary: { color: "#e4ae39", label: "Extraordinary" },
+  Contraband: { color: "#e4ae39", label: "Contraband" },
+}
+
+function getRarityColor(rarity?: string, slot?: string): string {
+  if (rarity && RARITY_PALETTE[rarity]) return RARITY_PALETTE[rarity].color
+  if (rarity?.toLowerCase().includes("covert")) return "#eb4b4b"
+  if (rarity?.toLowerCase().includes("classified")) return "#d32ce6"
+  if (rarity?.toLowerCase().includes("restricted")) return "#8847ff"
+  if (rarity?.toLowerCase().includes("mil")) return "#4b69ff"
+  if (rarity?.toLowerCase().includes("extra") || rarity?.toLowerCase().includes("gold")) return "#e4ae39"
+  if (slot === "KNIFE" || slot === "GLOVES") return "#e4ae39"
+  if (slot === "T_RIFLE" || slot === "CT_RIFLE" || slot === "AWP") return "#eb4b4b"
+  if (slot?.includes("SMG")) return "#8847ff"
+  return "#4b69ff"
+}
+
+function getRarityLabel(rarity?: string, slot?: string): string {
+  if (rarity && RARITY_PALETTE[rarity]) return RARITY_PALETTE[rarity].label
+  if (rarity) return rarity
+  if (slot === "KNIFE" || slot === "GLOVES") return "Extraordinary"
+  if (slot === "T_RIFLE" || slot === "CT_RIFLE" || slot === "AWP") return "Covert"
+  if (slot?.includes("SMG")) return "Restricted"
+  return "Mil-Spec"
+}
+
+function getDefaultFloatForWear(wear: Wear): number {
+  switch (wear) {
+    case "FN":
+      return 0.014285
+    case "MW":
+      return 0.089123
+    case "FT":
+      return 0.185204
+    case "WW":
+      return 0.41249
+    case "BS":
+      return 0.63412
+    default:
+      return 0.15
+  }
+}
+
+function getDefaultPattern(slot: string): number {
+  if (slot.includes("RIFLE")) return 661
+  if (slot.includes("PISTOL") || slot.includes("DEAGLE")) return 387
+  if (slot.includes("KNIFE")) return 412
+  return 555
+}
+
 export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const { token, user } = useAuth()
   const [tab, setTab] = useState<Tab>("builder")
   const [color, setColor] = useState<Color>("PURPLE")
+  const [skinClass, setSkinClass] = useState<SkinClassValue>("ANY")
   const [ctRifle, setCtRifle] = useState("weapon_m4a1_silencer")
   const [includeKnife, setIncludeKnife] = useState(false)
+  const [sideFilter, setSideFilter] = useState<SideFilter>("ALL")
+
   const [generated, setGenerated] = useState<GeneratedLoadout | null>(null)
   const [generatorBusy, setGeneratorBusy] = useState(false)
   const [generatorError, setGeneratorError] = useState("")
   const [stickerOptions, setStickerOptions] = useState<Sticker[]>([])
+
+  // CSFloat interactive custom crafts & floats
   const [crafts, setCrafts] = useState<Record<string, StickerPlacement[]>>({})
   const [activeSlot, setActiveSlot] = useState<Record<string, number>>({})
+  const [openStickerDrawer, setOpenStickerDrawer] = useState<Record<string, boolean>>({})
+  const [itemFloats, setItemFloats] = useState<Record<string, number>>({})
+  const [itemPatterns, setItemPatterns] = useState<Record<string, number>>({})
+  const [statTrakSlots, setStatTrakSlots] = useState<Record<string, boolean>>({})
+
+  // Publishing
   const [title, setTitle] = useState("")
   const [isPublic, setIsPublic] = useState(true)
   const [publishing, setPublishing] = useState(false)
 
+  // Catalog
   const [catalogKind, setCatalogKind] = useState<CatalogKind>("skins")
   const [catalogSearch, setCatalogSearch] = useState("")
   const [catalogQuery, setCatalogQuery] = useState("")
   const [catalogColor, setCatalogColor] = useState<Color | "">("")
   const [catalogCategory, setCatalogCategory] = useState<Category | "">("")
   const [catalogSide, setCatalogSide] = useState<TeamSide | "">("")
+  const [catalogSkinClass, setCatalogSkinClass] = useState<string>("")
+  const [catalogRarity, setCatalogRarity] = useState<string>("")
   const [catalogMaxPrice, setCatalogMaxPrice] = useState("")
   const [catalogPage, setCatalogPage] = useState(0)
-  const [catalogData, setCatalogData] = useState<Page<Skin | Sticker> | null>(
-    null,
-  )
+  const [catalogData, setCatalogData] = useState<Page<Skin | Sticker> | null>(null)
   const [catalogBusy, setCatalogBusy] = useState(false)
   const [catalogError, setCatalogError] = useState("")
   const [selectedSkin, setSelectedSkin] = useState<Skin | null>(null)
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null)
 
+  // Community
   const [communityColor, setCommunityColor] = useState<Color | "">("")
   const [communityBudget, setCommunityBudget] = useState("")
-  const [communitySort, setCommunitySort] = useState<"popular" | "latest">(
-    "popular",
-  )
+  const [communitySort, setCommunitySort] = useState<"popular" | "latest">("popular")
   const [communityPage, setCommunityPage] = useState(0)
-  const [communityData, setCommunityData] =
-    useState<Page<CommunityLoadout> | null>(null)
+  const [communityData, setCommunityData] = useState<Page<CommunityLoadout> | null>(null)
   const [communityBusy, setCommunityBusy] = useState(false)
   const [communityError, setCommunityError] = useState("")
-  const [communityDetail, setCommunityDetail] =
-    useState<CommunityDetail | null>(null)
+  const [communityDetail, setCommunityDetail] = useState<CommunityDetail | null>(null)
   const [communityRevision, setCommunityRevision] = useState(0)
 
+  // Fetch Catalog
   useEffect(() => {
     if (tab !== "catalog") return
     const controller = new AbortController()
@@ -156,6 +339,8 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
               ...common,
               category: catalogCategory || undefined,
               teamSide: catalogSide || undefined,
+              skinClass: catalogSkinClass || undefined,
+              rarity: catalogRarity || undefined,
             },
             controller.signal,
           )
@@ -178,11 +363,14 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     catalogColor,
     catalogCategory,
     catalogSide,
+    catalogSkinClass,
+    catalogRarity,
     catalogMaxPrice,
     catalogQuery,
     catalogPage,
   ])
 
+  // Fetch Community
   useEffect(() => {
     if (tab !== "community") return
     const controller = new AbortController()
@@ -236,10 +424,15 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         themeColor: color,
         preferredCtRifle: ctRifle,
         includeKnifeAndGloves: includeKnife,
+        skinClass: skinClass !== "ANY" ? skinClass : undefined,
       })
       setGenerated(result)
       setCrafts({})
-      setTitle(`${color[0]}${color.slice(1).toLowerCase()} loadout`)
+      setItemFloats({})
+      setItemPatterns({})
+      setStatTrakSlots({})
+      setOpenStickerDrawer({})
+      setTitle(`${color[0]}${color.slice(1).toLowerCase()} CSFloat Loadout`)
       getStickers({ color, page: 0, size: 50 })
         .then((data) => setStickerOptions(data.content))
         .catch(() => setStickerOptions([]))
@@ -346,7 +539,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
       setCommunityDetail(saved)
       setCommunityRevision((value) => value + 1)
       setTab("community")
-      notify("Loadout saved")
+      notify("Loadout saved to community")
     } catch (cause) {
       setGeneratorError(
         cause instanceof Error ? cause.message : "Could not save loadout",
@@ -418,21 +611,48 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     }
   }
 
+  // Filter items by side
+  const displayedItems = (generated?.items ?? []).filter((item) => matchesSide(item, sideFilter))
+
+  // Categorize items into 4 CSFloat columns
+  const columnMatrix: Record<EquipmentColumn, GeneratedItem[]> = {
+    PISTOLS: displayedItems.filter((item) => getEquipmentColumn(item) === "PISTOLS"),
+    "SMGS & HEAVY": displayedItems.filter((item) => getEquipmentColumn(item) === "SMGS & HEAVY"),
+    RIFLES: displayedItems.filter((item) => getEquipmentColumn(item) === "RIFLES"),
+    "KNIVES & GLOVES": displayedItems.filter((item) => getEquipmentColumn(item) === "KNIVES & GLOVES"),
+  }
+
+  // Calculate dynamic sticker craft additions and market value
+  const totalStickerCost = Object.values(crafts).reduce((sum, itemCrafts) => {
+    return (
+      sum +
+      itemCrafts.reduce((slotSum, p) => {
+        const st = stickerOptions.find((s) => s.id === p.stickerId)
+        return slotSum + (st?.priceUsd ?? 0)
+      }, 0)
+    )
+  }, 0)
+  const totalMarketValue = (generated?.totalCostUsd ?? 0) + totalStickerCost
+
   return (
-    <div className="feature-page lo-page">
+    <div className="feature-page lo-page csf-theme">
+      {/* Page Header */}
       <div className="page-intro">
         <div>
-          <p className="eyebrow">CATALOG · GENERATOR · COMMUNITY</p>
-          <h2>Loadout lab</h2>
+          <p className="eyebrow">CSFLOAT DATABASE & LOADOUT LAB</p>
+          <h2>Loadout lab & Equipment Matrix</h2>
           <p>
-            Build a color-matched inventory from live catalog prices, then share
-            it with the community.
+            Build, inspect, and fine-tune your color-synchronized CS2 inventory
+            with authentic CSFloat wear floats, pattern seeds, and 5-slot sticker crafts.
           </p>
         </div>
       </div>
+
       <div className="lo-auth">
-        <span>{user ? `SIGNED IN AS ${user.username}` : "GUEST MODE"}</span>
+        <span>{user ? `OPERATOR: ${user.username}` : "GUEST MODE (SIGN IN FOR CLOUD SAVES)"}</span>
       </div>
+
+      {/* Primary Navigation Tabs */}
       <div className="lo-tabs" role="tablist" aria-label="Loadout sections">
         {(["builder", "catalog", "community"] as Tab[]).map((item) => (
           <button
@@ -442,315 +662,635 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
             className={tab === item ? "active" : ""}
             onClick={() => setTab(item)}
           >
-            {item.toUpperCase()}
+            {item === "builder"
+              ? "🎯 LOADOUT LAB & MATRIX"
+              : item === "catalog"
+                ? "📚 SKIN CATALOG"
+                : "🌐 COMMUNITY BUILDS"}
           </button>
         ))}
       </div>
 
       {tab === "builder" && (
-        <section className="loadout-builder">
-          <form
-            className="filter-panel lo-builder-form"
-            onSubmit={handleGenerate}
-          >
-            <label>
-              Budget in USD
-              <input
-                type="number"
-                min="1"
-                max="100000"
-                step="0.01"
-                value={budget}
-                onChange={(event) => setBudget(Number(event.target.value))}
-                required
-              />
-            </label>
-            <label>
-              Color theme
-              <select
-                value={color}
-                onChange={(event) => setColor(event.target.value as Color)}
-              >
-                {COLORS.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Preferred CT rifle
-              <select
-                value={ctRifle}
-                onChange={(event) => setCtRifle(event.target.value)}
-              >
-                <option value="weapon_m4a1_silencer">M4A1-S</option>
-                <option value="weapon_m4a1">M4A4</option>
-              </select>
-            </label>
-            <label className="lo-check">
-              <input
-                type="checkbox"
-                checked={includeKnife}
-                onChange={(event) => setIncludeKnife(event.target.checked)}
-              />{" "}
-              Include knife and gloves
-            </label>
-            <button className="generate" disabled={generatorBusy}>
-              {generatorBusy ? "GENERATING…" : "GENERATE LOADOUT"}
-            </button>
-          </form>
-          <div className="inventory lo-generated">
-            <div className="inventory-head">
-              <div>
-                <span>
-                  {generated
-                    ? `${generated.themeColor} LOADOUT`
-                    : "YOUR LOADOUT"}
-                </span>
-                <small>
-                  {generated
-                    ? `${generated.items.length} ITEMS`
-                    : "GENERATE TO SEE LIVE RESULTS"}
-                </small>
-              </div>
-              {generated && (
-                <strong>
-                  {money(generated.totalCostUsd)}
-                  <small>TOTAL COST</small>
-                </strong>
-              )}
+        <section className="csf-builder-layout">
+          {/* Top Generator Control Bar */}
+          <form className="csf-control-card" onSubmit={handleGenerate}>
+            <div className="csf-form-grid">
+              <label>
+                <span>Budget (USD)</span>
+                <input
+                  type="number"
+                  min="5"
+                  max="100000"
+                  step="0.01"
+                  value={budget}
+                  onChange={(event) => setBudget(Number(event.target.value))}
+                  required
+                />
+              </label>
+
+              <label>
+                <span>Theme Color</span>
+                <select
+                  value={color}
+                  onChange={(event) => setColor(event.target.value as Color)}
+                >
+                  {COLORS.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span>Preferred CT Rifle</span>
+                <select
+                  value={ctRifle}
+                  onChange={(event) => setCtRifle(event.target.value)}
+                >
+                  <option value="weapon_m4a1_silencer">M4A1-S (Silenced)</option>
+                  <option value="weapon_m4a1">M4A4</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Skin Class Filter</span>
+                <select
+                  value={skinClass}
+                  onChange={(event) => setSkinClass(event.target.value as SkinClassValue)}
+                >
+                  {SKIN_CLASSES.map((sc) => (
+                    <option key={sc.value} value={sc.value}>
+                      {sc.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="csf-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={includeKnife}
+                  onChange={(event) => setIncludeKnife(event.target.checked)}
+                />
+                <span>Include Knife & Gloves</span>
+              </label>
+
+              <button className="csf-gen-btn" disabled={generatorBusy}>
+                {generatorBusy ? "GENERATING LOADOUT…" : "⚡ GENERATE CSFLOAT MATRIX"}
+              </button>
             </div>
+          </form>
+
+          {/* CSFloat Equipment Matrix View */}
+          <div className="csf-matrix-container">
+            {/* Top Bar with Side Filter Tabs, Value Badge, and Skin Class Selector */}
+            <div className="csf-topbar">
+              {/* Equipment Side Filter Tabs */}
+              <div className="csf-side-tabs" role="tablist" aria-label="Equipment side filter">
+                {(["ALL", "CT", "T"] as SideFilter[]).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    role="tab"
+                    aria-selected={sideFilter === s}
+                    className={`csf-side-tab ${sideFilter === s ? "active" : ""}`}
+                    onClick={() => setSideFilter(s)}
+                  >
+                    {s === "ALL" ? "ALL EQUIPMENT" : s === "CT" ? "CT SIDE" : "T SIDE"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Skin Class Quick Pills */}
+              <div className="csf-class-pills">
+                <span className="csf-class-label">CLASS:</span>
+                {SKIN_CLASSES.slice(0, 5).map((sc) => (
+                  <button
+                    key={sc.value}
+                    type="button"
+                    className={`csf-class-chip ${skinClass === sc.value ? "active" : ""}`}
+                    onClick={() => setSkinClass(sc.value)}
+                  >
+                    {"color" in sc && (
+                      <span className="csf-dot" style={{ backgroundColor: sc.color }} />
+                    )}
+                    {sc.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Total Market Value & Item Count Badge */}
+              <div className="csf-val-badge">
+                <div className="csf-val-main">
+                  <small>TOTAL LOADOUT MARKET VALUE</small>
+                  <strong>{money(totalMarketValue)}</strong>
+                </div>
+                <div className="csf-val-meta">
+                  <span className="csf-count-pill">
+                    {displayedItems.length} {displayedItems.length === 1 ? "ITEM" : "ITEMS"}
+                  </span>
+                  {generated && (
+                    <span className="csf-rem-pill">
+                      REMAINING: {money(generated.remainingBudgetUsd)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {generatorError && (
               <p className="lo-error" role="alert">
                 {generatorError}
               </p>
             )}
+
             {!generated ? (
-              <div className="lo-empty">
-                Set a budget and color to generate a loadout from the API.
+              <div className="csf-empty-hero">
+                <div className="csf-empty-icon">🛡️</div>
+                <h3>CSFloat Equipment Matrix Ready</h3>
+                <p>
+                  Set your budget ceiling, color theme, and preferred weapon classes above,
+                  then click <strong>Generate CSFloat Matrix</strong> to populate your 4-column loadout.
+                </p>
               </div>
             ) : (
               <>
-                <div className="skin-grid lo-generated-grid">
-                  {generated.items.map((item) => (
-                    <article className="skin-card lo-item" key={item.slot}>
-                      <div className="lo-item-image">
-                        <Picture url={item.imageUrl} label={item.skinName} />
-                      </div>
-                      <span>
-                        {item.slot.replace(/_/g, " ")} · {item.wearCondition}
-                      </span>
-                      <strong>{item.skinName}</strong>
-                      <small>{money(item.priceUsd)}</small>
-                      {/* 5-Slot Crafting Strip */}
-                      {(() => {
-                        const itemCrafts = crafts[item.slot] ?? []
-                        const curSlot = activeSlot[item.slot] ?? 0
-                        const currentPlacement = itemCrafts.find((p) => p.slotIndex === curSlot)
-                        const weaponStickersCost = itemCrafts.reduce((sum, p) => {
-                          const st = stickerOptions.find((s) => s.id === p.stickerId)
-                          return sum + (st?.priceUsd ?? 0)
-                        }, 0)
+                {/* 4-Column CS2 Equipment Matrix */}
+                <div className="csf-equipment-matrix">
+                  {([
+                    {
+                      key: "PISTOLS",
+                      title: "1. PISTOLS",
+                      desc: "Glock-18 · USP-S · Desert Eagle · P250 · Five-SeveN",
+                    },
+                    {
+                      key: "SMGS & HEAVY",
+                      title: "2. SMGS & HEAVY",
+                      desc: "MP9 · MAC-10 · UMP-45 · MP7 · P90 · Nova · XM1014",
+                    },
+                    {
+                      key: "RIFLES",
+                      title: "3. RIFLES",
+                      desc: "AK-47 · M4A4 · M4A1-S · AWP · Galil AR · FAMAS",
+                    },
+                    {
+                      key: "KNIVES & GLOVES",
+                      title: "4. KNIVES & GLOVES",
+                      desc: "Specialist & Rare Melee Equipment",
+                    },
+                  ] as const).map((col) => {
+                    const items = columnMatrix[col.key]
+                    return (
+                      <div className="csf-column" key={col.key}>
+                        <div className="csf-col-header">
+                          <div className="csf-col-title-row">
+                            <h4>{col.title}</h4>
+                            <span className="csf-col-count">{items.length}</span>
+                          </div>
+                          <span className="csf-col-desc">{col.desc}</span>
+                        </div>
 
-                        return (
-                          <div className="lo-craft-container">
-                            <div className="lo-craft-summary">
-                              <span className="lo-craft-count-tag">
-                                {itemCrafts.length}/5 STICKERS {weaponStickersCost > 0 ? `(+${money(weaponStickersCost)})` : ""}
-                              </span>
-                              <div className="lo-craft-batch-btns">
-                                {currentPlacement && (
-                                  <button
-                                    type="button"
-                                    className="lo-craft-mini-btn"
-                                    onClick={() => applyStickerToAllSlots(item.slot, currentPlacement.stickerId)}
-                                    title="Duplicate current sticker across all 5 slots"
-                                  >
-                                    5× ALL
-                                  </button>
-                                )}
-                                {itemCrafts.length > 0 && (
-                                  <button
-                                    type="button"
-                                    className="lo-craft-mini-btn danger"
-                                    onClick={() => clearAllStickers(item.slot)}
-                                    title="Remove all stickers from this weapon"
-                                  >
-                                    CLEAR
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* 5 Slot Selection Pills */}
-                            <div className="lo-slot-pills-row" role="tablist" aria-label="Sticker slot selector">
-                              {[0, 1, 2, 3, 4].map((sIdx) => {
-                                const p = itemCrafts.find((craft) => craft.slotIndex === sIdx)
-                                const isSelected = curSlot === sIdx
-                                return (
-                                  <button
-                                    key={sIdx}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={isSelected}
-                                    className={`lo-slot-pill ${isSelected ? "selected" : ""} ${p ? "occupied" : ""}`}
-                                    onClick={() => setActiveSlot((curr) => ({ ...curr, [item.slot]: sIdx }))}
-                                  >
-                                    <span className="lo-slot-pill-idx">{sIdx + 1}</span>
-                                    <span className="lo-slot-pill-state">{p ? "★" : "+"}</span>
-                                  </button>
-                                )
-                              })}
-                            </div>
-
-                            {/* Active Slot Configuration */}
-                            <div className="lo-active-slot-panel">
-                              <label>
-                                Slot {curSlot + 1} Sticker
-                                <select
-                                  value={currentPlacement?.stickerId ?? ""}
-                                  onChange={(event) => setSlotSticker(item.slot, curSlot, event.target.value)}
-                                >
-                                  <option value="">No Sticker (Empty Slot)</option>
-                                  {stickerOptions.map((st) => (
-                                    <option key={st.id} value={st.id}>
-                                      {st.name} · {money(st.priceUsd)}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
-
-                              {currentPlacement && (
-                                <div className="lo-craft-fields">
-                                  <label>
-                                    Position X ({currentPlacement.offsetX}px)
-                                    <input
-                                      type="number"
-                                      step="any"
-                                      value={currentPlacement.offsetX}
-                                      onChange={(event) =>
-                                        updateSlotPlacement(item.slot, curSlot, {
-                                          offsetX: Number(event.target.value),
-                                        })
-                                      }
-                                    />
-                                  </label>
-                                  <label>
-                                    Position Y ({currentPlacement.offsetY}px)
-                                    <input
-                                      type="number"
-                                      step="any"
-                                      value={currentPlacement.offsetY}
-                                      onChange={(event) =>
-                                        updateSlotPlacement(item.slot, curSlot, {
-                                          offsetY: Number(event.target.value),
-                                        })
-                                      }
-                                    />
-                                  </label>
-                                  <label>
-                                    Rotation ({currentPlacement.rotation}°)
-                                    <input
-                                      type="number"
-                                      min="-180"
-                                      max="180"
-                                      step="any"
-                                      value={currentPlacement.rotation}
-                                      onChange={(event) =>
-                                        updateSlotPlacement(item.slot, curSlot, {
-                                          rotation: Number(event.target.value),
-                                        })
-                                      }
-                                    />
-                                  </label>
-                                  <label>
-                                    Scale ({currentPlacement.scale}x)
-                                    <input
-                                      type="number"
-                                      min="0.1"
-                                      max="2"
-                                      step="0.05"
-                                      value={currentPlacement.scale}
-                                      onChange={(event) =>
-                                        updateSlotPlacement(item.slot, curSlot, {
-                                          scale: Number(event.target.value),
-                                        })
-                                      }
-                                    />
-                                  </label>
-                                  <label className="lo-scrape-field">
-                                    Wear Scrape ({Math.round((currentPlacement.wear ?? 0) * 100)}%)
-                                    <input
-                                      type="range"
-                                      min="0"
-                                      max="1"
-                                      step="0.05"
-                                      value={currentPlacement.wear ?? 0}
-                                      onChange={(event) =>
-                                        updateSlotPlacement(item.slot, curSlot, {
-                                          wear: Number(event.target.value),
-                                        })
-                                      }
-                                    />
-                                  </label>
-                                  <button
-                                    type="button"
-                                    className="lo-slot-remove-btn"
-                                    onClick={() => setSlotSticker(item.slot, curSlot, "")}
-                                  >
-                                    Remove Slot {curSlot + 1}
-                                  </button>
-                                </div>
+                        <div className="csf-col-body">
+                          {items.length === 0 ? (
+                            <div className="csf-col-empty">
+                              <span>No equipment in this category</span>
+                              {col.key === "KNIVES & GLOVES" && !includeKnife && (
+                                <small>Enable &quot;Include Knife & Gloves&quot; above to add luxury items.</small>
                               )}
                             </div>
-                          </div>
-                        )
-                      })()}
-                    </article>
-                  ))}
+                          ) : (
+                            items.map((item) => {
+                              const rarityColor = getRarityColor(item.rarity, item.slot)
+                              const rarityLabel = getRarityLabel(item.rarity, item.slot)
+                              const skinClassDisplay = item.skinClass
+                                ? item.skinClass.replace(/_/g, " ")
+                                : `${rarityLabel.toUpperCase()} ${getEquipmentColumn(item).replace(" & HEAVY", "").replace("S & GLOVES", "")}`
+
+                              const curFloat =
+                                itemFloats[item.slot] ?? getDefaultFloatForWear(item.wearCondition)
+                              const curPattern =
+                                itemPatterns[item.slot] ?? getDefaultPattern(item.slot)
+                              const isStatTrak = !!statTrakSlots[item.slot]
+
+                              const itemCrafts = crafts[item.slot] ?? []
+                              const curSlotIdx = activeSlot[item.slot] ?? 0
+                              const activePlacement = itemCrafts.find((p) => p.slotIndex === curSlotIdx)
+                              const isDrawerOpen = !!openStickerDrawer[item.slot]
+
+                              return (
+                                <article
+                                  className="csf-card"
+                                  key={item.slot}
+                                  style={{
+                                    borderColor: `${rarityColor}40`,
+                                  }}
+                                >
+                                  {/* Top Rarity Accent Bar & Subtle Glow */}
+                                  <div
+                                    className="csf-rarity-bar"
+                                    style={{
+                                      backgroundColor: rarityColor,
+                                      boxShadow: `0 0 10px ${rarityColor}aa`,
+                                    }}
+                                  />
+
+                                  {/* Card Top Pill Row */}
+                                  <div className="csf-card-top-row">
+                                    <span
+                                      className="csf-rarity-pill"
+                                      style={{
+                                        borderColor: rarityColor,
+                                        color: rarityColor,
+                                      }}
+                                    >
+                                      <span
+                                        className="csf-dot"
+                                        style={{ backgroundColor: rarityColor }}
+                                      />
+                                      {skinClassDisplay}
+                                    </span>
+
+                                    {/* StatTrak™ Toggle Badge */}
+                                    <button
+                                      type="button"
+                                      className={`csf-stattrak-badge ${isStatTrak ? "active" : ""}`}
+                                      onClick={() =>
+                                        setStatTrakSlots((prev) => ({
+                                          ...prev,
+                                          [item.slot]: !prev[item.slot],
+                                        }))
+                                      }
+                                      title="Toggle StatTrak™"
+                                    >
+                                      ★ StatTrak™
+                                    </button>
+                                  </div>
+
+                                  {/* Weapon Image with Subtle Ambient Glow */}
+                                  <div
+                                    className="csf-image-wrapper"
+                                    style={{
+                                      background: `radial-gradient(circle, ${rarityColor}15 0%, transparent 70%)`,
+                                    }}
+                                  >
+                                    <Picture url={item.imageUrl} label={item.skinName} />
+                                  </div>
+
+                                  {/* Weapon Title & Slot */}
+                                  <div className="csf-info-row">
+                                    <div>
+                                      <h5 className="csf-item-title">
+                                        {isStatTrak && (
+                                          <span className="csf-st-tag">StatTrak™ </span>
+                                        )}
+                                        {item.skinName}
+                                      </h5>
+                                      <span className="csf-slot-sub">
+                                        {item.weaponName} · {item.slot.replace(/_/g, " ")}
+                                      </span>
+                                    </div>
+                                    <div className="csf-item-price">{money(item.priceUsd)}</div>
+                                  </div>
+
+                                  {/* Interactive CSFloat Wear Spectrum Bar (0.0000 - 1.0000) */}
+                                  <div className="csf-wear-block">
+                                    <div
+                                      className="csf-spectrum-track"
+                                      onClick={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect()
+                                        const clickX = e.clientX - rect.left
+                                        const newFloat = Math.max(
+                                          0.000001,
+                                          Math.min(0.999999, clickX / rect.width),
+                                        )
+                                        setItemFloats((prev) => ({
+                                          ...prev,
+                                          [item.slot]: Number(newFloat.toFixed(6)),
+                                        }))
+                                      }}
+                                      title="Click anywhere along the spectrum to adjust exact float wear"
+                                    >
+                                      <div
+                                        className="csf-seg seg-fn"
+                                        style={{ width: "7%" }}
+                                        title="FN: 0.00 - 0.07"
+                                      />
+                                      <div
+                                        className="csf-seg seg-mw"
+                                        style={{ width: "8%" }}
+                                        title="MW: 0.07 - 0.15"
+                                      />
+                                      <div
+                                        className="csf-seg seg-ft"
+                                        style={{ width: "23%" }}
+                                        title="FT: 0.15 - 0.38"
+                                      />
+                                      <div
+                                        className="csf-seg seg-ww"
+                                        style={{ width: "7%" }}
+                                        title="WW: 0.38 - 0.45"
+                                      />
+                                      <div
+                                        className="csf-seg seg-bs"
+                                        style={{ width: "55%" }}
+                                        title="BS: 0.45 - 1.00"
+                                      />
+                                      {/* Float Needle Indicator */}
+                                      <div
+                                        className="csf-needle"
+                                        style={{
+                                          left: `${Math.min(Math.max(curFloat, 0), 1) * 100}%`,
+                                        }}
+                                      />
+                                    </div>
+
+                                    {/* Float Meta Info Row */}
+                                    <div className="csf-wear-meta">
+                                      <span className="csf-wear-float">
+                                        FLOAT: <code>{curFloat.toFixed(6)}</code>
+                                      </span>
+                                      <span className="csf-wear-tag">{item.wearCondition}</span>
+                                      <div className="csf-pattern-chip">
+                                        <span>Pattern #</span>
+                                        <input
+                                          type="number"
+                                          min="1"
+                                          max="1000"
+                                          value={curPattern}
+                                          onChange={(e) => {
+                                            const v = Number(e.target.value)
+                                            setItemPatterns((prev) => ({
+                                              ...prev,
+                                              [item.slot]: v,
+                                            }))
+                                          }}
+                                          title="Pattern seed template (#1 - #1000)"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Inline 5-Slot Sticker Craft Dock */}
+                                  <div className="csf-craft-dock">
+                                    <div className="csf-craft-head">
+                                      <span className="csf-craft-slots-label">
+                                        STICKER CRAFT ({itemCrafts.length}/5)
+                                      </span>
+                                      <div className="csf-craft-quick-btns">
+                                        {activePlacement && (
+                                          <button
+                                            type="button"
+                                            className="csf-mini-action"
+                                            onClick={() =>
+                                              applyStickerToAllSlots(
+                                                item.slot,
+                                                activePlacement.stickerId,
+                                              )
+                                            }
+                                            title="Apply active sticker to all 5 slots"
+                                          >
+                                            5× ALL
+                                          </button>
+                                        )}
+                                        {itemCrafts.length > 0 && (
+                                          <button
+                                            type="button"
+                                            className="csf-mini-action danger"
+                                            onClick={() => clearAllStickers(item.slot)}
+                                            title="Clear all stickers on this weapon"
+                                          >
+                                            CLEAR
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* 5-Slot Thumbnails Row */}
+                                    <div
+                                      className="csf-slot-row"
+                                      role="tablist"
+                                      aria-label="5-Slot sticker crafts"
+                                    >
+                                      {[0, 1, 2, 3, 4].map((sIdx) => {
+                                        const p = itemCrafts.find((c) => c.slotIndex === sIdx)
+                                        const stObj = p
+                                          ? stickerOptions.find((s) => s.id === p.stickerId)
+                                          : null
+                                        const isSelected = curSlotIdx === sIdx && isDrawerOpen
+                                        return (
+                                          <button
+                                            key={sIdx}
+                                            type="button"
+                                            className={`csf-slot-box ${p ? "occupied" : ""} ${isSelected ? "selected" : ""}`}
+                                            onClick={() => {
+                                              setActiveSlot((prev) => ({
+                                                ...prev,
+                                                [item.slot]: sIdx,
+                                              }))
+                                              setOpenStickerDrawer((prev) => ({
+                                                ...prev,
+                                                [item.slot]: !prev[item.slot] || curSlotIdx !== sIdx,
+                                              }))
+                                            }}
+                                            title={
+                                              stObj
+                                                ? `${stObj.name} (Slot ${sIdx + 1}) - Click to customize`
+                                                : `Slot ${sIdx + 1} (Empty) - Click to apply sticker`
+                                            }
+                                          >
+                                            {stObj?.imageUrl ? (
+                                              <img
+                                                src={stObj.imageUrl}
+                                                alt={stObj.name}
+                                                className="csf-slot-img"
+                                              />
+                                            ) : (
+                                              <span className="csf-slot-empty-num">
+                                                {sIdx + 1}
+                                              </span>
+                                            )}
+                                          </button>
+                                        )
+                                      })}
+                                    </div>
+
+                                    {/* Expandable Sticker Drawer for Current Slot */}
+                                    {isDrawerOpen && (
+                                      <div className="csf-drawer">
+                                        <div className="csf-drawer-header">
+                                          <span>Configuring Slot {curSlotIdx + 1}</span>
+                                          <button
+                                            type="button"
+                                            className="csf-drawer-close"
+                                            onClick={() =>
+                                              setOpenStickerDrawer((prev) => ({
+                                                ...prev,
+                                                [item.slot]: false,
+                                              }))
+                                            }
+                                          >
+                                            ×
+                                          </button>
+                                        </div>
+
+                                        <label className="csf-drawer-field">
+                                          <span>Select Sticker</span>
+                                          <select
+                                            value={activePlacement?.stickerId ?? ""}
+                                            onChange={(e) =>
+                                              setSlotSticker(item.slot, curSlotIdx, e.target.value)
+                                            }
+                                          >
+                                            <option value="">No Sticker (Empty Slot)</option>
+                                            {stickerOptions.map((st) => (
+                                              <option key={st.id} value={st.id}>
+                                                {st.name} · {money(st.priceUsd)}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </label>
+
+                                        {activePlacement && (
+                                          <div className="csf-drawer-grid">
+                                            <label>
+                                              <span>Offset X ({activePlacement.offsetX}px)</span>
+                                              <input
+                                                type="number"
+                                                step="any"
+                                                value={activePlacement.offsetX}
+                                                onChange={(e) =>
+                                                  updateSlotPlacement(item.slot, curSlotIdx, {
+                                                    offsetX: Number(e.target.value),
+                                                  })
+                                                }
+                                              />
+                                            </label>
+                                            <label>
+                                              <span>Offset Y ({activePlacement.offsetY}px)</span>
+                                              <input
+                                                type="number"
+                                                step="any"
+                                                value={activePlacement.offsetY}
+                                                onChange={(e) =>
+                                                  updateSlotPlacement(item.slot, curSlotIdx, {
+                                                    offsetY: Number(e.target.value),
+                                                  })
+                                                }
+                                              />
+                                            </label>
+                                            <label>
+                                              <span>Rotation ({activePlacement.rotation}°)</span>
+                                              <input
+                                                type="number"
+                                                min="-180"
+                                                max="180"
+                                                step="any"
+                                                value={activePlacement.rotation}
+                                                onChange={(e) =>
+                                                  updateSlotPlacement(item.slot, curSlotIdx, {
+                                                    rotation: Number(e.target.value),
+                                                  })
+                                                }
+                                              />
+                                            </label>
+                                            <label>
+                                              <span>Scale ({activePlacement.scale}x)</span>
+                                              <input
+                                                type="number"
+                                                min="0.1"
+                                                max="2"
+                                                step="0.05"
+                                                value={activePlacement.scale}
+                                                onChange={(e) =>
+                                                  updateSlotPlacement(item.slot, curSlotIdx, {
+                                                    scale: Number(e.target.value),
+                                                  })
+                                                }
+                                              />
+                                            </label>
+                                            <label className="csf-wear-scrape">
+                                              <span>
+                                                Scrape Wear (
+                                                {Math.round((activePlacement.wear ?? 0) * 100)}%)
+                                              </span>
+                                              <input
+                                                type="range"
+                                                min="0"
+                                                max="1"
+                                                step="0.05"
+                                                value={activePlacement.wear ?? 0}
+                                                onChange={(e) =>
+                                                  updateSlotPlacement(item.slot, curSlotIdx, {
+                                                    wear: Number(e.target.value),
+                                                  })
+                                                }
+                                              />
+                                            </label>
+                                            <button
+                                              type="button"
+                                              className="csf-slot-clear-btn"
+                                              onClick={() =>
+                                                setSlotSticker(item.slot, curSlotIdx, "")
+                                              }
+                                            >
+                                              Remove Sticker
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </article>
+                              )
+                            })
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-                <div className="lo-totals">
-                  <span>Budget limit: {money(generated.budgetLimitUsd)}</span>
-                  <strong>
-                    Remaining: {money(generated.remainingBudgetUsd)}
-                  </strong>
-                </div>
-                {Object.values(crafts).some((arr) => arr.length > 0) && (
-                  <p className="lo-craft-note">
-                    🎨 {Object.values(crafts).reduce((sum, arr) => sum + arr.length, 0)} custom sticker craft
-                    {Object.values(crafts).reduce((sum, arr) => sum + arr.length, 0) > 1 ? "s" : ""} configured across weapons.
-                    Sticker prices are separate from the generator&apos;s budget estimate.
-                  </p>
-                )}
-                <form className="lo-publish" onSubmit={handlePublish}>
-                  <input
-                    aria-label="Loadout title"
-                    placeholder="Loadout title"
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    required
-                  />
-                  <label>
+
+                {/* Save to Community Bar */}
+                <div className="csf-publish-bar">
+                  <div className="csf-publish-info">
+                    <h4>Save & Publish Loadout</h4>
+                    <p>
+                      Save your {displayedItems.length}-item {generated.themeColor.toLowerCase()}{" "}
+                      equipment setup to the community feed.
+                    </p>
+                  </div>
+                  <form className="lo-publish" onSubmit={handlePublish}>
                     <input
-                      type="checkbox"
-                      checked={isPublic}
-                      onChange={(event) => setIsPublic(event.target.checked)}
-                    />{" "}
-                    Public
-                  </label>
-                  <button disabled={publishing}>
-                    {publishing ? "SAVING…" : "SAVE TO COMMUNITY"}
-                  </button>
-                </form>
+                      aria-label="Loadout title"
+                      placeholder="Loadout title (e.g. Neon Royalty 2026)"
+                      value={title}
+                      onChange={(event) => setTitle(event.target.value)}
+                      required
+                    />
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={isPublic}
+                        onChange={(event) => setIsPublic(event.target.checked)}
+                      />
+                      <span>Make Public</span>
+                    </label>
+                    <button disabled={publishing} type="submit">
+                      {publishing ? "SAVING LOADOUT…" : "PUBLISH TO COMMUNITY"}
+                    </button>
+                  </form>
+                </div>
               </>
             )}
           </div>
         </section>
       )}
 
+      {/* Catalog Section */}
       {tab === "catalog" && (
         <section className="lo-section">
           <div className="lo-section-head">
-            <h3>Catalog</h3>
+            <h3>CS2 Item Database & Catalog</h3>
             <div className="lo-switch">
               <button
                 className={catalogKind === "skins" ? "active" : ""}
@@ -776,6 +1316,8 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
               </button>
             </div>
           </div>
+
+          {/* Catalog Filter Controls */}
           <form
             className="lo-filters"
             onSubmit={(event) => {
@@ -786,11 +1328,12 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
           >
             <input
               aria-label="Catalog search"
-              placeholder="Search by name"
+              placeholder="Search by name (e.g. Asiimov, Redline)"
               value={catalogSearch}
               onChange={(event) => setCatalogSearch(event.target.value)}
             />
-            <button>SEARCH</button>
+            <button type="submit">SEARCH</button>
+
             <select
               aria-label="Color filter"
               value={catalogColor}
@@ -799,23 +1342,25 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                 setCatalogPage(0)
               }}
             >
-              <option value="">All colors</option>
+              <option value="">All Colors</option>
               {COLORS.map((item) => (
-                <option key={item}>{item}</option>
+                <option key={item} value={item}>{item}</option>
               ))}
             </select>
+
             <input
               type="number"
               min="0"
               step="0.01"
               aria-label="Maximum price"
-              placeholder="Max price USD"
+              placeholder="Max Price (USD)"
               value={catalogMaxPrice}
               onChange={(event) => {
                 setCatalogMaxPrice(event.target.value)
                 setCatalogPage(0)
               }}
             />
+
             {catalogKind === "skins" && (
               <>
                 <select
@@ -826,7 +1371,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                     setCatalogPage(0)
                   }}
                 >
-                  <option value="">All categories</option>
+                  <option value="">All Categories</option>
                   {[
                     "PISTOLS",
                     "RIFLES",
@@ -835,9 +1380,10 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                     "KNIVES",
                     "GLOVES",
                   ].map((item) => (
-                    <option key={item}>{item}</option>
+                    <option key={item} value={item}>{item}</option>
                   ))}
                 </select>
+
                 <select
                   aria-label="Team side filter"
                   value={catalogSide}
@@ -846,49 +1392,94 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                     setCatalogPage(0)
                   }}
                 >
-                  <option value="">All sides</option>
-                  <option value="T">T</option>
-                  <option value="CT">CT</option>
-                  <option value="BOTH">Both</option>
+                  <option value="">All Sides</option>
+                  <option value="T">T Side</option>
+                  <option value="CT">CT Side</option>
+                  <option value="BOTH">Both Sides</option>
+                </select>
+
+                {/* Skin Class Filter */}
+                <select
+                  aria-label="Skin Class filter"
+                  value={catalogSkinClass}
+                  onChange={(event) => {
+                    setCatalogSkinClass(event.target.value)
+                    setCatalogPage(0)
+                  }}
+                >
+                  <option value="">All Skin Classes</option>
+                  {SKIN_CLASSES.filter((c) => c.value !== "ANY").map((sc) => (
+                    <option key={sc.value} value={sc.value}>
+                      {sc.label}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Rarity Filter */}
+                <select
+                  aria-label="Rarity filter"
+                  value={catalogRarity}
+                  onChange={(event) => {
+                    setCatalogRarity(event.target.value)
+                    setCatalogPage(0)
+                  }}
+                >
+                  <option value="">All Rarities</option>
+                  <option value="Covert">Covert (Crimson)</option>
+                  <option value="Classified">Classified (Magenta)</option>
+                  <option value="Restricted">Restricted (Violet)</option>
+                  <option value="Mil-Spec Grade">Mil-Spec (Cobalt)</option>
+                  <option value="Industrial Grade">Industrial</option>
+                  <option value="Consumer Grade">Consumer</option>
+                  <option value="Extraordinary">Extraordinary (Gold)</option>
                 </select>
               </>
             )}
           </form>
-          {catalogBusy && <p className="lo-status">Loading catalog…</p>}
+
+          {catalogBusy && <p className="lo-status">Querying catalog database…</p>}
           {catalogError && (
             <p className="lo-error" role="alert">
               {catalogError}
             </p>
           )}
+
           {catalogData && (
             <>
-              <p className="lo-count">{catalogData.totalElements} items</p>
+              <p className="lo-count">{catalogData.totalElements} items found</p>
               <div className="lo-catalog-grid">
-                {catalogData.content.map((item) => (
-                  <button
-                    className="lo-catalog-card"
-                    key={item.id}
-                    onClick={() => {
-                      if (catalogKind === "skins") openSkin(item.id)
-                      else openSticker(item.id)
-                    }}
-                  >
-                    <div className="lo-catalog-image">
-                      <Picture url={item.imageUrl} label={item.name} />
-                    </div>
-                    <span>
-                      {item.primaryColor} · {item.rarity}
-                    </span>
-                    <strong>{item.name}</strong>
-                    <small>
-                      {money(
-                        "lowestPriceUsd" in item
-                          ? item.lowestPriceUsd
-                          : item.priceUsd,
-                      )}
-                    </small>
-                  </button>
-                ))}
+                {catalogData.content.map((item) => {
+                  const itemRarity = "rarity" in item ? item.rarity : "Standard"
+                  const rarityColor = getRarityColor(itemRarity)
+                  return (
+                    <button
+                      className="lo-catalog-card csf-cat-card"
+                      key={item.id}
+                      onClick={() => {
+                        if (catalogKind === "skins") openSkin(item.id)
+                        else openSticker(item.id)
+                      }}
+                      style={{
+                        borderTop: `3px solid ${rarityColor}`,
+                      }}
+                    >
+                      <div className="lo-catalog-image">
+                        <Picture url={item.imageUrl} label={item.name} />
+                      </div>
+                      <span style={{ color: rarityColor }}>
+                        {item.primaryColor} · {itemRarity}
+                      </span>
+                      <strong>{item.name}</strong>
+                      <small>
+                        {money(
+                          "lowestPriceUsd" in item
+                            ? item.lowestPriceUsd
+                            : item.priceUsd,
+                        )}
+                      </small>
+                    </button>
+                  )
+                })}
               </div>
               <Pager
                 page={catalogPage}
@@ -897,6 +1488,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
               />
             </>
           )}
+
           {selectedSkin && (
             <div className="lo-detail">
               <button
@@ -909,6 +1501,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
               <p>
                 {selectedSkin.weaponName} · {selectedSkin.category} ·{" "}
                 {selectedSkin.teamSide} · {selectedSkin.rarity}
+                {selectedSkin.skinClass ? ` · ${selectedSkin.skinClass}` : ""}
               </p>
               <div className="lo-prices">
                 {([
@@ -925,21 +1518,27 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
               </div>
             </div>
           )}
+
           {selectedSticker && (
             <div className="lo-detail">
-              <button className="lo-close" onClick={() => setSelectedSticker(null)}>CLOSE ×</button>
+              <button className="lo-close" onClick={() => setSelectedSticker(null)}>
+                CLOSE ×
+              </button>
               <h4>{selectedSticker.name}</h4>
               <p>{selectedSticker.primaryColor} · {selectedSticker.rarity}</p>
-              <div className="lo-prices"><span>{money(selectedSticker.priceUsd)}</span></div>
+              <div className="lo-prices">
+                <span>{money(selectedSticker.priceUsd)}</span>
+              </div>
             </div>
           )}
         </section>
       )}
 
+      {/* Community Section */}
       {tab === "community" && (
         <section className="lo-section">
           <div className="lo-section-head">
-            <h3>Community loadouts</h3>
+            <h3>Community Loadouts</h3>
             <span>Browse and upvote player builds</span>
           </div>
           <div className="lo-filters">
@@ -951,9 +1550,9 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                 setCommunityPage(0)
               }}
             >
-              <option value="">All colors</option>
+              <option value="">All Colors</option>
               {COLORS.map((item) => (
-                <option key={item}>{item}</option>
+                <option key={item} value={item}>{item}</option>
               ))}
             </select>
             <input
@@ -980,7 +1579,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
               <option value="latest">Latest</option>
             </select>
           </div>
-          {communityBusy && <p className="lo-status">Loading community…</p>}
+          {communityBusy && <p className="lo-status">Loading community builds…</p>}
           {communityError && (
             <p className="lo-error" role="alert">
               {communityError}
@@ -1045,13 +1644,16 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                     {item.stickers && item.stickers.length > 0 && (
                       <div className="lo-detail-craft-box">
                         <small className="lo-detail-craft-title">
-                          🎯 {item.stickers.length} {item.stickers.length === 1 ? "Sticker Craft" : "Sticker Crafts"}
+                          🎯 {item.stickers.length}{" "}
+                          {item.stickers.length === 1 ? "Sticker Craft" : "Sticker Crafts"}
                         </small>
                         <div className="lo-detail-stickers-list">
                           {item.stickers.map((stk, i) => (
                             <span key={i} className="lo-detail-sticker-pill">
                               Slot {stk.slotIndex + 1}
-                              {stk.wear !== undefined && stk.wear > 0 ? ` (${Math.round(stk.wear * 100)}% wear)` : ""}
+                              {stk.wear !== undefined && stk.wear > 0
+                                ? ` (${Math.round(stk.wear * 100)}% wear)`
+                                : ""}
                             </span>
                           ))}
                         </div>
@@ -1061,16 +1663,19 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                 ))}
               </div>
               <div className="lo-detail-actions">
-                <button onClick={() => navigate(`/users/${communityDetail.author.userId}`)}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/users/${communityDetail.author.userId}`)}
+                >
                   VIEW AUTHOR PROFILE
                 </button>
-                <button onClick={handleUpvote}>
+                <button type="button" onClick={handleUpvote}>
                   {communityDetail.upvotedByCurrentUser
                     ? "REMOVE UPVOTE"
                     : "UPVOTE"}{" "}
                   · {communityDetail.upvotes}
                 </button>
-                <button onClick={handleDelete} disabled={!token}>
+                <button type="button" onClick={handleDelete} disabled={!token}>
                   DELETE (AUTHOR / ADMIN)
                 </button>
               </div>
