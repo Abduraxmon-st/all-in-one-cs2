@@ -662,3 +662,532 @@
   gap: 6px;
   align-items: center;
 }
+
+
+/* ==========================================================================
+   CS2NADES.GG 2-COLUMN FULL-STACK LAYOUT & INTERACTIVE RADAR STAGE
+   ========================================================================== */
+.cs2nades-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.cs2nades-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #111613;
+  border: 1px solid #233026;
+  border-radius: 4px;
+  padding: 12px 18px;
+}
+
+.cs2nades-brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cs2nades-brand-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 14px;
+  background: radial-gradient(circle at 30% 30%, #222920 0%, #0d120f 100%);
+  border: 1.5px solid #f59e0b;
+  border-radius: 3px;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+}
+
+.cs2nades-brand-title {
+  font: 900 18px/1 "Barlow Condensed", sans-serif;
+  letter-spacing: .08em;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+}
+
+.cs2nades-brand-sub {
+  font: 800 8px/1 monospace;
+  color: #f59e0b;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.cs2nades-map-select-box {
+  position: relative;
+}
+
+.cs2nades-map-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #161e19;
+  border: 1px solid #334438;
+  color: #f1f3ec;
+  font: 800 14px "Barlow Condensed", sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 8px 30px 8px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.cs2nades-map-select:hover,
+.cs2nades-map-select:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+  outline: none;
+}
+
+.cs2nades-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cs2nades-count-pill {
+  font: 800 11px monospace;
+  color: #a3b8ad;
+  background: rgba(200, 241, 53, 0.08);
+  border: 1px solid rgba(200, 241, 53, 0.22);
+  padding: 6px 12px;
+  border-radius: 2px;
+  letter-spacing: .04em;
+}
+
+.cs2nades-submit-btn {
+  background: #1c2620 !important;
+  border: 1px solid #3a4e40 !important;
+  color: var(--lime) !important;
+  font: 800 11px "Barlow Condensed", sans-serif !important;
+  letter-spacing: .06em;
+  padding: 8px 14px !important;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.cs2nades-submit-btn:hover {
+  background: #25342b !important;
+  border-color: var(--lime) !important;
+  box-shadow: 0 0 12px rgba(200, 241, 53, 0.25);
+}
+
+/* 2-Column Responsive Layout */
+.cs2nades-2col-layout {
+  display: grid;
+  grid-template-columns: 440px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .cs2nades-2col-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* LEFT COLUMN: FILTERS & CLEAN MAP RADAR */
+.cs2nades-radar-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: sticky;
+  top: 14px;
+}
+
+.cs2nades-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #121714;
+  border: 1px solid #233026;
+  padding: 10px 12px;
+  border-radius: 4px;
+}
+
+.cs2nades-util-segment {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.cs2nades-util-btn {
+  background: #171d19;
+  border: 1px solid #2b3a30;
+  color: #94a39b;
+  font: 800 11px "Barlow Condensed", sans-serif;
+  letter-spacing: .04em;
+  padding: 7px 4px;
+  text-align: center;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.cs2nades-util-btn:hover {
+  border-color: #4c6653;
+  color: #f1f3ec;
+}
+
+.cs2nades-util-btn.active {
+  background: #1f2722;
+  font-weight: 900;
+}
+
+.cs2nades-side-segment {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.cs2nades-side-btn {
+  background: #171d19;
+  border: 1px solid #2b3a30;
+  color: #8fa397;
+  font: 800 10px "Barlow Condensed", sans-serif;
+  letter-spacing: .06em;
+  padding: 6px 4px;
+  text-align: center;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.cs2nades-side-btn:hover {
+  border-color: #4c6653;
+  color: #fff;
+}
+
+.cs2nades-side-btn.active {
+  background: #1f2722;
+  font-weight: 900;
+}
+
+/* Radar Stage */
+.cs2nades-radar-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #0b0e0c;
+  border: 1.5px solid #28372d;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.cs2nades-zoom-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(13, 18, 15, 0.92);
+  border: 1px solid #334438;
+  padding: 3px 6px;
+  border-radius: 3px;
+  z-index: 30;
+  backdrop-filter: blur(4px);
+}
+
+.cs2nades-zoom-controls button {
+  background: transparent !important;
+  border: none !important;
+  color: var(--lime) !important;
+  font: 800 13px monospace !important;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  padding: 0 !important;
+  display: grid;
+  place-items: center;
+}
+
+.cs2nades-zoom-controls button:hover {
+  color: #fff !important;
+}
+
+.cs2nades-zoom-val {
+  font: 800 10px monospace;
+  color: #a3b0a8;
+  min-width: 32px;
+  text-align: center;
+}
+
+.cs2nades-radar-viewport {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform .2s ease-out;
+}
+
+.cs2nades-radar-map-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: brightness(1.08) contrast(1.15);
+}
+
+.cs2nades-radar-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.cs2nades-traj-group {
+  transition: opacity .15s ease;
+}
+
+.cs2nades-stand-pulse {
+  animation: pulseStand 1.8s infinite ease-out;
+}
+
+@keyframes pulseStand {
+  0% { r: 2.6; opacity: 1; }
+  100% { r: 6.8; opacity: 0; }
+}
+
+.cs2nades-traj-active {
+  animation: dashTraj 1s infinite linear;
+}
+
+@keyframes dashTraj {
+  to { stroke-dashoffset: -14; }
+}
+
+/* Radar Pins */
+.cs2nades-map-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 15;
+  transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+
+.cs2nades-map-pin:hover {
+  transform: translate(-50%, -50%) scale(1.35);
+  z-index: 35;
+}
+
+.cs2nades-map-pin.active {
+  transform: translate(-50%, -50%) scale(1.4);
+  outline: 2px solid #fff;
+  z-index: 40;
+}
+
+/* Selected Lineup Quick Drawer in Left Column */
+.cs2nades-radar-selected-shelf {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  background: rgba(16, 22, 18, 0.96);
+  backdrop-filter: blur(8px);
+  border: 1px solid #3d5242;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+  padding: 10px 14px;
+  border-radius: 3px;
+  z-index: 45;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  animation: fadeIn .15s ease;
+}
+
+.cs2nades-shelf-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cs2nades-shelf-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cs2nades-shelf-title {
+  font: 800 15px "Barlow Condensed", sans-serif;
+  color: #fff;
+  letter-spacing: .03em;
+}
+
+.cs2nades-shelf-sub {
+  font-size: 10px;
+  color: #8fa397;
+}
+
+.cs2nades-shelf-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* RIGHT COLUMN: LINEUP CARDS STACK */
+.cs2nades-list-col {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.cs2nades-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cs2nades-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 3px solid #f59e0b;
+  padding-left: 10px;
+}
+
+.cs2nades-section-title {
+  font: 800 17px "Barlow Condensed", sans-serif;
+  color: #f1f3ec;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.cs2nades-section-sub {
+  font-size: 11px;
+  color: #7a8b81;
+}
+
+.cs2nades-cards-stack {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 14px;
+}
+
+.cs2nades-lineup-card {
+  background: #131815;
+  border: 1px solid #233026;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.cs2nades-lineup-card:hover {
+  border-color: #3d5242;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+}
+
+.cs2nades-lineup-card.active {
+  border-color: var(--lime);
+  box-shadow: 0 0 16px rgba(200, 241, 53, 0.2);
+}
+
+.cs2nades-card-details {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.cs2nades-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs2nades-card-title {
+  font: 800 17px "Barlow Condensed", sans-serif;
+  color: #fff;
+  margin: 0;
+  letter-spacing: .03em;
+}
+
+.cs2nades-throw-tag {
+  font: 800 9px monospace;
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cs2nades-card-desc {
+  font-size: 11px;
+  color: #94a39b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cs2nades-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 9px monospace;
+  color: #6b7d72;
+}
+
+.cs2nades-meta-chip {
+  background: #0b0e0c;
+  padding: 3px 6px;
+  border: 1px solid #1f2722;
+  border-radius: 2px;
+}
+
+.cs2nades-verified-chip {
+  color: var(--lime);
+  font-weight: 800;
+}
+
+.cs2nades-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid #1c241f;
+}
+
+.cs2nades-empty-box {
+  text-align: center;
+  padding: 40px 20px;
+  background: #121714;
+  border: 1px dashed #28372d;
+  border-radius: 4px;
+  color: #8a9b91;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.cs2nades-empty-box button {
+  background: #1f2a22 !important;
+  border-color: #394d3e !important;
+  color: var(--lime) !important;
+  font: 800 11px "Barlow Condensed" !important;
+  padding: 6px 14px !important;
+}

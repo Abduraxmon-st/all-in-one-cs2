@@ -839,3 +839,258 @@
   color: #d1d5db;
   margin: 0;
 }
+
+
+/* ==========================================================================
+   CATEGORY MEGA-BAR & EXPANDABLE WEAPON SHOWCASE CAROUSEL
+   ========================================================================== */
+
+/* Top Category Navigation Bar */
+.csf-category-megabar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 12px;
+  background: #11151b;
+  border: 1px solid var(--csf-border);
+  border-radius: 8px;
+  scrollbar-width: thin;
+}
+
+.csf-megabar-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  color: var(--csf-text-muted);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.csf-megabar-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+.csf-megabar-btn.active {
+  background: #1e2632;
+  color: var(--csf-accent-blue);
+  border-color: var(--csf-accent-blue);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+.csf-megabar-chevron {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+}
+.csf-megabar-btn.active .csf-megabar-chevron {
+  transform: rotate(180deg);
+}
+
+/* Expandable Drawer */
+.csf-showcase-drawer {
+  background: #11151b;
+  border: 1px solid var(--csf-border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Sub-Weapon Pills */
+.csf-subweapon-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.csf-subweapon-pill {
+  background: #19202a;
+  border: 1px solid #283340;
+  color: #9ca3af;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.csf-subweapon-pill:hover {
+  background: #242e3c;
+  color: #fff;
+}
+.csf-subweapon-pill.active {
+  background: var(--csf-accent-blue);
+  color: #fff;
+  border-color: var(--csf-accent-blue);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);
+}
+
+/* Horizontal Showcase Carousel */
+.csf-carousel-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.csf-carousel-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 4px 0 10px;
+  scrollbar-width: thin;
+  width: 100%;
+}
+.csf-carousel-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.csf-carousel-scroll::-webkit-scrollbar-thumb {
+  background: #2d3748;
+  border-radius: 2px;
+}
+
+.csf-carousel-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: rgba(17, 21, 27, 0.95);
+  border: 1px solid #374151;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: all 0.15s ease;
+}
+.csf-carousel-nav-btn:hover {
+  background: var(--csf-accent-blue);
+  border-color: var(--csf-accent-blue);
+}
+.csf-carousel-nav-btn.left {
+  left: -12px;
+}
+.csf-carousel-nav-btn.right {
+  right: -12px;
+}
+
+/* Showcase Cards */
+.csf-showcase-card {
+  min-width: 175px;
+  max-width: 190px;
+  height: 190px;
+  background: #141920;
+  border: 1px solid #232b36;
+  border-radius: 8px;
+  position: relative;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+.csf-showcase-card:hover {
+  transform: translateY(-3px);
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(59, 130, 246, 0.2);
+}
+
+.csf-showcase-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.csf-showcase-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+.csf-showcase-price {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.csf-showcase-img-stage {
+  position: relative;
+  width: 100%;
+  height: 95px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.csf-showcase-img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7));
+  transition: transform 0.2s ease;
+}
+.csf-showcase-card:hover .csf-showcase-img {
+  transform: scale(1.08);
+}
+
+/* Showcase View All Card */
+.csf-showcase-viewall {
+  background: linear-gradient(145deg, #161c24, #0e1217);
+  border: 1px dashed #374151;
+}
+.csf-showcase-viewall:hover {
+  border-color: var(--csf-accent-blue);
+}
+
+/* 3D Cube Button on Showcase Cards */
+.csf-showcase-3d-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(30, 58, 138, 0.85);
+  color: #60a5fa;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+  z-index: 5;
+}
+.csf-showcase-3d-btn:hover {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+.csf-showcase-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}

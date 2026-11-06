@@ -1,19 +1,17 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useAuth } from "../features/identity/AuthProvider";
 import { csfloatCatalogData, type CSFloatItem } from "../features/loadouts/csfloatCatalogData";
+import { Skin3DModal } from "../components/Skin3DModal";
+import { getWeaponSilhouetteSvg } from "../components/WeaponSilhouette";
 import {
-  createCommunityLoadout,
-  deleteCommunityLoadout,
   generateLoadout,
   getCommunity,
-  getCommunityDetail,
   toggleUpvote,
 } from "../features/loadouts/api";
 import type {
   Color,
   CommunityDetail,
   CommunityLoadout,
-  GeneratedItem,
   GeneratedLoadout,
   Page,
   SkinClassValue,
@@ -30,9 +28,70 @@ type Props = {
 type ViewTab = "all" | "stickers" | "unique" | "matrix" | "community";
 type SortOption = "deals" | "lowest_float" | "lowest_price" | "highest_price";
 
+// 13 Top Categories
+const MEGA_CATEGORIES = [
+  "Rifles",
+  "Pistols",
+  "SMGs",
+  "Heavy",
+  "Knives",
+  "Gloves",
+  "Agents",
+  "Containers",
+  "Stickers",
+  "Keychains",
+  "Patches",
+  "Collectibles",
+  "Music Kits",
+] as const;
+
+type MegaCategory = (typeof MEGA_CATEGORIES)[number];
+
+// Sub-Weapon Pills by Category
+const SUB_WEAPONS: Record<string, string[]> = {
+  Rifles: ["All", "AK-47", "AUG", "AWP", "FAMAS", "G3SG1", "Galil AR", "M4A1-S", "M4A4", "SCAR-20", "SG 553", "SSG 08"],
+  Pistols: ["All", "USP-S", "Glock-18", "Desert Eagle", "P250", "Five-SeveN", "Tec-9", "CZ75-Auto", "Dual Berettas", "P2000", "R8 Revolver"],
+  Knives: ["All", "Karambit", "Butterfly Knife", "M9 Bayonet", "Bayonet", "Skeleton Knife", "Talon Knife", "Stiletto Knife", "Nomad Knife"],
+  Gloves: ["All", "Sport Gloves", "Specialist Gloves", "Moto Gloves", "Driver Gloves", "Hand Wraps", "Bloodhound Gloves"],
+  SMGs: ["All", "MP9", "MAC-10", "MP7", "UMP-45", "P90", "MP5-SD", "PP-Bizon"],
+  Heavy: ["All", "Negev", "M249", "MAG-7", "XM1014", "Nova", "Sawed-Off"],
+  Containers: ["All", "Kilowatt Case", "Dreams & Nightmares Case", "Revolution Case", "Recoil Case", "Snakebite Case"],
+  Stickers: ["All", "Katowice 2014", "Cologne 2014", "Stockholm 2021", "Antwerp 2022", "Paris 2023"],
+};
+
+// Showcase Cards Definition
+const SHOWCASE_DATA: Record<string, { name: string; weapon: string; price: number; image: string; rarityColor: string }[]> = {
+  Rifles: [
+    { name: "AWP | Gungnir", weapon: "AWP", price: 5812.77, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#eb4b4b" },
+    { name: "AWP | Dragon Lore", weapon: "AWP", price: 4237.17, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqYaF7IfysCnWRxuF4j-B-Xxa_nBovp3Pdwtj9cC_GaAd0DZdwQu9fuhS4kNy0NePntVTbjYpCyyT_3CgY5i9j_a9cBkcCWUKV", rarityColor: "#eb4b4b" },
+    { name: "M4A4 | Howl", weapon: "M4A4", price: 4089.71, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwiFO0P_6afVSKP-EAm6extF6ueZhW2exwkl2tmTXwt39eCiUPQR2DMN4TOVetUK8xoLgM-K341eM2otDnC6okGoXufBz_TAB", rarityColor: "#eb4b4b" },
+    { name: "AK-47 | Wild Lotus", weapon: "AK-47", price: 3981.43, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwlcK3wiFO0PSneqF-JeKDC2mE_u995LZWTTuygxIYvzSCkpu3cnvFPQB2DpUkROFY4Rntw93lP7i241DbiI1BxSuviHlKunk_6-sHU71lpPMTRLyP4Q", rarityColor: "#eb4b4b" },
+    { name: "M4A1-S | Knight", weapon: "M4A1-S", price: 2429.79, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwiFO0P_6afVSKP-EAm6extF6ueZhW2exwkl2tmTXwt39eCiUPQR2DMN4TOVetUK8xoLgM-K341eM2otDnC6okGoXufBz_TAB", rarityColor: "#d32ce6" },
+    { name: "AWP | Medusa", weapon: "AWP", price: 1661.21, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#eb4b4b" },
+    { name: "AWP | The Prince", weapon: "AWP", price: 1449.42, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#eb4b4b" },
+  ],
+  Knives: [
+    { name: "★ Karambit | Gamma Doppler (Emerald)", weapon: "Karambit", price: 11450.00, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpotLu8JAllx8zJfAJH4dmklYyPqPr1Ibndk2JL7cFOhuDG_Zi73VG2qUQ_am36LNKWcwM2Ml3X_FS8wL3vhMC0vJXOn3ZkuSAl7HiOmwv3308XDHXucw", rarityColor: "#e4ae39" },
+    { name: "★ Skeleton Knife | Doppler (Ruby)", weapon: "Skeleton Knife", price: 5900.00, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf0ebcZThQ6tCvq4GGqPr1Ibndk1Rx5sB9teXI8oThxlKw-Ettam_zcNSSew86Z1vT-1W9k-y7hp65usnKzCExuCQ8pSGKFl39l6E", rarityColor: "#e4ae39" },
+    { name: "★ Butterfly Knife | Fade", weapon: "Butterfly Knife", price: 4150.00, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf0ebcZThQ6tCvq4GGqPr1Ibndk1Rx5sB9teXI8oThxlKw-Ettam_zcNSSew86Z1vT-1W9k-y7hp65usnKzCExuCQ8pSGKFl39l6E", rarityColor: "#e4ae39" },
+    { name: "★ M9 Bayonet | Gamma Doppler", weapon: "M9 Bayonet", price: 2294.80, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpotLu8JAllx8zJfAJH4dmklYyPqPr1Ibndk2JL7cFOhuDG_Zi73VG2qUQ_am36LNKWcwM2Ml3X_FS8wL3vhMC0vJXOn3ZkuSAl7HiOmwv3308XDHXucw", rarityColor: "#e4ae39" },
+    { name: "★ Talon Knife | Fade", weapon: "Talon Knife", price: 2150.00, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf0ebcZThQ6tCvq4GGqPr1Ibndk1Rx5sB9teXI8oThxlKw-Ettam_zcNSSew86Z1vT-1W9k-y7hp65usnKzCExuCQ8pSGKFl39l6E", rarityColor: "#e4ae39" },
+  ],
+  Gloves: [
+    { name: "★ Moto Gloves | Spearmint", weapon: "Moto Gloves", price: 4890.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu4r7_lb1QgTykpPf-i5U-fe9V6liNP-BDX6TzetJvehnWxanhxQmvTqJn7D1KCzPKhgnW5UmRO4DsxXrlYbhPurmtAXai98UzS73in5I6S5p4OsAU_Zx-KHWkUifZsxBQgc2", rarityColor: "#e4ae39" },
+    { name: "★ Specialist Gloves | Crimson Kimono", weapon: "Specialist Gloves", price: 3600.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Tk71ruQBH4jYLf-i5U-fe9V7d9JfOaD2uZ0vpJtuBtSha_nBovp3PQy42sdX6eagIjW5AlQOVetBXuk92xNLvg4gOMjd5AmC2ointB53w__a9cBqntWBk3", rarityColor: "#e4ae39" },
+    { name: "★ Sport Gloves | Vice", weapon: "Sport Gloves", price: 3100.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu4r7_lb1QgTykpPf-i5U-fe9V6liNP-BDX6TzetJvehnWxanhxQmvTqJn7D1KCzPKhgnW5UmRO4DsxXrlYbhPurmtAXai98UzS73in5I6S5p4OsAU_Zx-KHWkUifZsxBQgc2", rarityColor: "#e4ae39" },
+    { name: "★ Driver Gloves | King Snake", weapon: "Driver Gloves", price: 2200.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Tk71ruQBH4jYLf-i5U-fe9V7d9JfOaD2uZ0vpJtuBtSha_nBovp3PQy42sdX6eagIjW5AlQOVetBXuk92xNLvg4gOMjd5AmC2ointB53w__a9cBqntWBk3", rarityColor: "#e4ae39" },
+  ],
+  Pistols: [
+    { name: "Glock-18 | Fade", weapon: "Glock-18", price: 1980.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#d32ce6" },
+    { name: "Desert Eagle | Blaze", weapon: "Desert Eagle", price: 980.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#d32ce6" },
+    { name: "USP-S | Kill Confirmed", weapon: "USP-S", price: 650.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#eb4b4b" },
+  ],
+};
+
 const money = (val: number) => `$${val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-// 5-Color Spectrum Segment Definitions
 const SPECTRUM_SEGMENTS = [
   { wear: "FN", width: "7%", color: "#22c55e", label: "0.00 - 0.07" },
   { wear: "MW", width: "8%", color: "#84cc16", label: "0.07 - 0.15" },
@@ -54,11 +113,16 @@ function getRarityGlowColor(rarity: string, category: string): string {
 export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const { user, token } = useAuth();
 
-  // 1. Core Market Catalog State (0ms Instant Load)
+  // 1. Core State
   const [items, setItems] = useState<CSFloatItem[]>(csfloatCatalogData);
   const [viewTab, setViewTab] = useState<ViewTab>("all");
   const [sortBy, setSortBy] = useState<SortOption>("deals");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Category Mega-Bar & Showcase
+  const [activeMegaCategory, setActiveMegaCategory] = useState<MegaCategory | null>("Rifles");
+  const [selectedSubWeapon, setSelectedSubWeapon] = useState<string>("All");
+  const carouselScrollRef = useRef<HTMLDivElement>(null);
 
   // 2. Filter State
   const [searchQuery, setSearchQuery] = useState("");
@@ -99,10 +163,10 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     }
   });
 
-  // Modal / Zoom State
-  const [zoomItem, setZoomItem] = useState<CSFloatItem | null>(null);
+  // 3D Inspector Modal State
+  const [inspect3DItem, setInspect3DItem] = useState<CSFloatItem | null>(null);
 
-  // Save equipped items to localStorage
+  // Save equipped items
   useEffect(() => {
     try {
       localStorage.setItem("csf_equipped_ct", JSON.stringify(equippedCt));
@@ -110,19 +174,40 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     } catch {}
   }, [equippedCt, equippedT]);
 
-  // Generator & Matrix state for CT/T Loadout Matrix view
+  // Dynamic ByMykel API Enrichment on Client Load
+  useEffect(() => {
+    fetch("https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data || !Array.isArray(data)) return;
+        const lookup = new Map<string, string>();
+        for (const s of data) {
+          if (s.name && s.image) {
+            lookup.set(s.name.toLowerCase().trim(), s.image);
+            lookup.set(s.name.replace(/[★™\s|()]/g, "").toLowerCase(), s.image);
+          }
+        }
+        setItems((current) =>
+          current.map((item) => {
+            const clean = item.marketHashName.replace(/[★™\s|()]/g, "").toLowerCase();
+            const found = lookup.get(clean) || lookup.get(item.marketHashName.toLowerCase().trim());
+            return found ? { ...item, imageUrl: found } : item;
+          })
+        );
+      })
+      .catch(() => {});
+  }, []);
+
+  // Generator & Matrix state
   const [generatorBusy, setGeneratorBusy] = useState(false);
   const [generatorError, setGeneratorError] = useState("");
-  const [generatedLoadout, setGeneratedLoadout] = useState<GeneratedLoadout | null>(null);
   const [selectedColor, setSelectedColor] = useState<Color>("PURPLE");
   const [selectedSkinClass, setSelectedSkinClass] = useState<SkinClassValue>("ANY");
 
   // Community state
   const [communityData, setCommunityData] = useState<Page<CommunityLoadout> | null>(null);
   const [communityBusy, setCommunityBusy] = useState(false);
-  const [communityDetail, setCommunityDetail] = useState<CommunityDetail | null>(null);
 
-  // Equipment toggle
   function toggleEquip(item: CSFloatItem, side: "CT" | "T") {
     if (side === "CT") {
       setEquippedCt((prev) => {
@@ -149,7 +234,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     }
   }
 
-  // Favorite toggle
   function toggleFavorite(id: string) {
     setFavorites((prev) => {
       const next = new Set(prev);
@@ -159,7 +243,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     });
   }
 
-  // Wear tier toggle
   function toggleTier(tier: Wear) {
     setSelectedTiers((prev) => {
       const next = new Set(prev);
@@ -169,21 +252,24 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     });
   }
 
-  // Copy inspect link
   function copyInspect(item: CSFloatItem) {
-    const link = item.inspectLink || `steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20S76561198000000000A${item.paintSeed}D0`;
+    const link =
+      item.inspectLink ||
+      `steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20S76561198000000000A${item.paintSeed}D${Math.floor(
+        item.floatValue * 1000000
+      )}`;
     navigator.clipboard.writeText(link).then(
-      () => notify(`Copied inspect link for ${item.skinName}!`),
+      () => notify(`Copied CS2 inspect link for ${item.skinName}!`),
       () => notify("Unable to access clipboard")
     );
   }
 
-  // In-Game Preview
-  function previewInGame(item: CSFloatItem) {
-    notify(`Triggering CS2 server inspect for ${item.marketHashName}...`);
+  function scrollCarousel(direction: "left" | "right") {
+    if (!carouselScrollRef.current) return;
+    const offset = direction === "left" ? -350 : 350;
+    carouselScrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
   }
 
-  // Reset Filters
   function resetFilters() {
     setSearchQuery("");
     setPriceMin("");
@@ -195,6 +281,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     setFilterNormal(false);
     setFilterSeed("");
     setMinFade(80);
+    setSelectedSubWeapon("All");
     notify("Market filters reset");
   }
 
@@ -204,14 +291,13 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     setGeneratorBusy(true);
     setGeneratorError("");
     try {
-      const result = await generateLoadout({
+      await generateLoadout({
         budgetUsd: budget,
         themeColor: selectedColor,
         preferredCtRifle: "weapon_m4a1_silencer",
         includeKnifeAndGloves: true,
         skinClass: selectedSkinClass !== "ANY" ? selectedSkinClass : undefined,
       });
-      setGeneratedLoadout(result);
       notify("Generated optimized CSFloat loadout!");
     } catch (err) {
       setGeneratorError(err instanceof Error ? err.message : "Loadout generation failed");
@@ -220,7 +306,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     }
   }
 
-  // Community Loadouts loader
   useEffect(() => {
     if (viewTab !== "community") return;
     setCommunityBusy(true);
@@ -242,6 +327,15 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
             item.weaponName.toLowerCase().includes(q) ||
             item.skinName.toLowerCase().includes(q);
           if (!matches) return false;
+        }
+
+        // Sub-Weapon Filter
+        if (selectedSubWeapon !== "All") {
+          const wepClean = item.weaponName.replace(/[★™\s]/g, "").toLowerCase();
+          const targetClean = selectedSubWeapon.replace(/[★™\s]/g, "").toLowerCase();
+          if (!wepClean.includes(targetClean) && !targetClean.includes(wepClean)) {
+            return false;
+          }
         }
 
         // View Tabs
@@ -277,7 +371,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         return true;
       })
       .sort((a, b) => {
-        if (sortBy === "deals") return a.discountPercent - b.discountPercent; // more negative = bigger discount
+        if (sortBy === "deals") return a.discountPercent - b.discountPercent;
         if (sortBy === "lowest_float") return a.floatValue - b.floatValue;
         if (sortBy === "lowest_price") return a.priceUsd - b.priceUsd;
         if (sortBy === "highest_price") return b.priceUsd - a.priceUsd;
@@ -286,6 +380,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   }, [
     items,
     searchQuery,
+    selectedSubWeapon,
     viewTab,
     priceMin,
     priceMax,
@@ -302,9 +397,162 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const totalCtValue = equippedCt.reduce((acc, i) => acc + i.priceUsd, 0);
   const totalTValue = equippedT.reduce((acc, i) => acc + i.priceUsd, 0);
 
+  const currentShowcaseItems = activeMegaCategory ? SHOWCASE_DATA[activeMegaCategory] || [] : [];
+  const currentSubWeapons = activeMegaCategory ? SUB_WEAPONS[activeMegaCategory] || [] : [];
+
   return (
     <div className="csf-page">
-      {/* 1. Top Toolbar */}
+      {/* 1. TOP CATEGORY MEGA-BAR */}
+      <nav className="csf-category-megabar" aria-label="Weapon Categories">
+        {MEGA_CATEGORIES.map((cat) => {
+          const isActive = activeMegaCategory === cat;
+          return (
+            <button
+              key={cat}
+              type="button"
+              className={`csf-megabar-btn ${isActive ? "active" : ""}`}
+              onClick={() => {
+                if (isActive) {
+                  setActiveMegaCategory(null);
+                  setSelectedSubWeapon("All");
+                } else {
+                  setActiveMegaCategory(cat);
+                  setSelectedSubWeapon("All");
+                }
+              }}
+            >
+              <span>{cat}</span>
+              <span className="csf-megabar-chevron">⌄</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* 2. EXPANDABLE SUB-WEAPON DRAWER & SHOWCASE CAROUSEL */}
+      {activeMegaCategory && (
+        <section className="csf-showcase-drawer">
+          {/* Sub-Weapon Pills */}
+          {currentSubWeapons.length > 0 && (
+            <div className="csf-subweapon-pills">
+              {currentSubWeapons.map((wep) => (
+                <button
+                  key={wep}
+                  type="button"
+                  className={`csf-subweapon-pill ${selectedSubWeapon === wep ? "active" : ""}`}
+                  onClick={() => setSelectedSubWeapon(wep)}
+                >
+                  {wep}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Horizontal Showcase Carousel */}
+          {currentShowcaseItems.length > 0 && (
+            <div className="csf-carousel-wrapper">
+              <button
+                type="button"
+                className="csf-carousel-nav-btn left"
+                onClick={() => scrollCarousel("left")}
+                aria-label="Scroll left"
+              >
+                ‹
+              </button>
+
+              <div className="csf-carousel-scroll" ref={carouselScrollRef}>
+                {/* First Card: Category / View All */}
+                <div
+                  className="csf-showcase-card csf-showcase-viewall"
+                  onClick={() => setSelectedSubWeapon("All")}
+                >
+                  <div className="csf-showcase-header">
+                    <h5 className="csf-showcase-title">{activeMegaCategory}</h5>
+                    <span className="csf-showcase-price">View All Listings</span>
+                  </div>
+                  <div className="csf-showcase-img-stage">
+                    <img
+                      src={getWeaponSilhouetteSvg(activeMegaCategory)}
+                      alt="View All"
+                      className="csf-showcase-img"
+                      style={{ opacity: 0.6 }}
+                    />
+                  </div>
+                  <span style={{ fontSize: 10, color: "#3b82f6", fontWeight: 800 }}>EXPLORE →</span>
+                </div>
+
+                {/* Showcase Cards */}
+                {currentShowcaseItems.map((sc, scIdx) => {
+                  const matchingItem =
+                    items.find((i) => i.skinName.toLowerCase().includes(sc.name.split("|")[1]?.trim().toLowerCase() || "")) ||
+                    items[0];
+
+                  return (
+                    <div
+                      key={scIdx}
+                      className="csf-showcase-card"
+                      onClick={() => setInspect3DItem(matchingItem)}
+                      title={`Inspect ${sc.name} in 3D`}
+                    >
+                      <div className="csf-showcase-header">
+                        <h5 className="csf-showcase-title" title={sc.name}>
+                          {sc.name.split("|")[1]?.trim() || sc.name}
+                        </h5>
+                        <span className="csf-showcase-price">from {money(sc.price)}</span>
+                      </div>
+
+                      <div className="csf-showcase-img-stage">
+                        <img
+                          src={sc.image}
+                          alt={sc.name}
+                          className="csf-showcase-img"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = getWeaponSilhouetteSvg(sc.weapon);
+                          }}
+                          loading="eager"
+                        />
+                      </div>
+
+                      {/* 🧊 3D Button in bottom-right corner */}
+                      <button
+                        type="button"
+                        className="csf-showcase-3d-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setInspect3DItem(matchingItem);
+                        }}
+                        title="Open Interactive 3D Inspector"
+                      >
+                        🧊 3D
+                      </button>
+
+                      {/* Bottom Rarity Glow Accent */}
+                      <div
+                        className="csf-showcase-glow"
+                        style={{
+                          backgroundColor: sc.rarityColor,
+                          boxShadow: `0 0 10px ${sc.rarityColor}`,
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                className="csf-carousel-nav-btn right"
+                onClick={() => scrollCarousel("right")}
+                aria-label="Scroll right"
+              >
+                ›
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* 3. TOP TOOLBAR */}
       <header className="csf-toolbar">
         <div className="csf-toolbar-left">
           <button
@@ -388,7 +636,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         </div>
       </header>
 
-      {/* 2. CT / T Loadout Summary Drawer Bar */}
+      {/* 4. CT / T LOADOUT SUMMARY DRAWER BAR */}
       <div className="csf-loadout-drawer-bar">
         <div className="csf-side-badge-group">
           <div className="csf-side-indicator">
@@ -417,13 +665,12 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         )}
       </div>
 
-      {/* 3. Main Market Layout (Sidebar + Cards Grid) */}
+      {/* 5. MAIN MARKET LAYOUT (SIDEBAR + CARDS GRID) */}
       {viewTab !== "matrix" && viewTab !== "community" && (
         <div className="csf-market-layout">
           {/* Left Sidebar (260px) */}
           {sidebarOpen && (
             <aside className="csf-sidebar">
-              {/* Search with '/' Badge */}
               <div className="csf-search-box">
                 <input
                   type="text"
@@ -436,7 +683,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                 <span className="csf-search-badge">/</span>
               </div>
 
-              {/* Price Collapsible Section */}
+              {/* Price Section */}
               <div className="csf-filter-section">
                 <button
                   type="button"
@@ -517,7 +764,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                 )}
               </div>
 
-              {/* Wear Collapsible Section */}
+              {/* Wear Section */}
               <div className="csf-filter-section">
                 <button
                   type="button"
@@ -556,7 +803,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                 )}
               </div>
 
-              {/* Special Collapsible Section */}
+              {/* Special Section */}
               <div className="csf-filter-section">
                 <button
                   type="button"
@@ -606,7 +853,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                 )}
               </div>
 
-              {/* Patterns Collapsible Section */}
+              {/* Patterns Section */}
               <div className="csf-filter-section">
                 <button
                   type="button"
@@ -646,7 +893,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                 )}
               </div>
 
-              {/* Reset Filters Button */}
               <button
                 type="button"
                 className="csf-price-chip"
@@ -658,7 +904,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
             </aside>
           )}
 
-          {/* Right Market Stage: Responsive CSFloat Card Grid */}
+          {/* Right Market Stage */}
           <main className="csf-market-content">
             {filteredItems.length === 0 ? (
               <div className="csf-empty-state">
@@ -701,7 +947,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
 
                       {/* Image Area */}
                       <div className="csf-card-stage">
-                        {/* Orange Fade % Badge */}
                         {item.fadePercentage !== undefined && (
                           <div className="csf-fade-badge">
                             {item.fadePercentage}% Fade
@@ -721,27 +966,38 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                           <button
                             type="button"
                             className="csf-stage-icon-btn"
-                            onClick={() => previewInGame(item)}
-                            title="In-Game Preview"
+                            onClick={() => {
+                              const inspectUrl =
+                                item.inspectLink ||
+                                `steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20S76561198000000000A${item.paintSeed}D0`;
+                              navigator.clipboard.writeText(inspectUrl).catch(() => {});
+                              window.location.href = inspectUrl;
+                              notify(`Launching CS2 inspect for ${item.skinName}...`);
+                            }}
+                            title="Inspect in CS2 Game"
                           >
                             🎮
                           </button>
                           <button
                             type="button"
                             className="csf-stage-icon-btn"
-                            onClick={() => setZoomItem(item)}
-                            title="Zoom & Details Modal"
+                            onClick={() => setInspect3DItem(item)}
+                            title="Open 3D Inspector Modal"
                           >
-                            🔍
+                            🧊
                           </button>
                         </div>
 
-                        {/* Main Skin PNG */}
+                        {/* Main Skin PNG with fallback SVG */}
                         <img
                           src={item.imageUrl}
-                          alt={item.marketHashName}
+                          alt={item.skinName}
                           className="csf-card-img"
-                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = getWeaponSilhouetteSvg(item.weaponName);
+                          }}
+                          loading="eager"
                         />
 
                         {/* Bottom-Left Applied Sticker Icons */}
@@ -754,6 +1010,9 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                                 alt={st.name}
                                 title={st.name}
                                 className="csf-mini-sticker"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
                               />
                             ))}
                           </div>
@@ -771,7 +1030,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
 
                       {/* Telemetry Body */}
                       <div className="csf-card-telemetry">
-                        {/* Row 1: Price + Discount */}
                         <div className="csf-tele-row-1">
                           <div className="csf-price-val">{money(item.priceUsd)}</div>
                           <span className="csf-discount-pill">
@@ -779,7 +1037,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                           </span>
                         </div>
 
-                        {/* Row 2: 5-Color Spectrum Bar with White Needle */}
+                        {/* 5-Color Spectrum Bar with Needle */}
                         <div className="csf-wear-spectrum-wrapper">
                           {SPECTRUM_SEGMENTS.map((s) => (
                             <div
@@ -795,7 +1053,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                           />
                         </div>
 
-                        {/* Row 3: 12-Decimal Float + Paint Seed + Rank */}
                         <div className="csf-tele-row-3">
                           <span className="csf-float-text" title={item.floatFormatted}>
                             {item.floatFormatted.slice(0, 10)} (#{item.paintSeed})
@@ -805,7 +1062,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                           )}
                         </div>
 
-                        {/* Row 4: Status Indicator + Star Favorite */}
                         <div className="csf-tele-row-4">
                           <span
                             className={`csf-delivery-status ${item.deliveryType.toLowerCase()}`}
@@ -822,7 +1078,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                           </button>
                         </div>
 
-                        {/* Row 5: Countdown + Quick Equip Button */}
                         <div className="csf-tele-row-5">
                           <span>Expires in {item.expiresIn}</span>
                           <div className="csf-equip-btn-group">
@@ -854,10 +1109,9 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         </div>
       )}
 
-      {/* 4. CT / T Loadout Matrix View (When selected) */}
+      {/* 6. CT / T LOADOUT MATRIX VIEW */}
       {viewTab === "matrix" && (
         <section className="csf-matrix-layout" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {/* Generator Bar */}
           <form
             onSubmit={handleGenerate}
             style={{
@@ -907,7 +1161,6 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
 
           {generatorError && <p style={{ color: "#ef4444" }}>{generatorError}</p>}
 
-          {/* 4-Column Matrix */}
           <div className="csf-matrix-grid">
             {(["PISTOLS", "SMGS & HEAVY", "RIFLES", "KNIVES & GLOVES"] as const).map((col) => {
               const colItems = items.filter((i) => {
@@ -937,6 +1190,10 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                         <img
                           src={item.imageUrl}
                           alt={item.skinName}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = getWeaponSilhouetteSvg(item.weaponName);
+                          }}
                           style={{ width: 48, height: 36, objectFit: "contain" }}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -962,7 +1219,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         </section>
       )}
 
-      {/* 5. Community Builds View */}
+      {/* 7. COMMUNITY BUILDS VIEW */}
       {viewTab === "community" && (
         <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {communityBusy && <p style={{ color: "#9ca3af" }}>Loading community crafts...</p>}
@@ -1011,80 +1268,14 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         </section>
       )}
 
-      {/* 6. Zoom & Item Details Modal */}
-      {zoomItem && (
-        <div className="csf-modal-overlay" onClick={() => setZoomItem(null)}>
-          <div className="csf-zoom-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="csf-modal-header">
-              <div>
-                <h3 style={{ margin: 0, fontSize: 16 }}>{zoomItem.marketHashName}</h3>
-                <span style={{ color: "#9ca3af", fontSize: 11 }}>
-                  {zoomItem.category} · {zoomItem.rarity}
-                </span>
-              </div>
-              <button
-                type="button"
-                className="csf-modal-close-btn"
-                onClick={() => setZoomItem(null)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="csf-modal-stage">
-              <img src={zoomItem.imageUrl} alt={zoomItem.marketHashName} />
-            </div>
-
-            <div className="csf-modal-specs-grid">
-              <div className="csf-spec-item">
-                <span>PRICE</span>
-                <strong>{money(zoomItem.priceUsd)}</strong>
-              </div>
-              <div className="csf-spec-item">
-                <span>FLOAT VALUE</span>
-                <strong>{zoomItem.floatFormatted}</strong>
-              </div>
-              <div className="csf-spec-item">
-                <span>PAINT SEED</span>
-                <strong>#{zoomItem.paintSeed}</strong>
-              </div>
-              <div className="csf-spec-item">
-                <span>PATTERN RANK</span>
-                <strong>#{zoomItem.patternRank ?? "N/A"}</strong>
-              </div>
-              <div className="csf-spec-item">
-                <span>DELIVERY</span>
-                <strong style={{ color: zoomItem.deliveryType === "INSTANT" ? "#22c55e" : "#9ca3af" }}>
-                  {zoomItem.deliveryType}
-                </strong>
-              </div>
-              <div className="csf-spec-item">
-                <span>DISCOUNT</span>
-                <strong style={{ color: "#22c55e" }}>{zoomItem.discountPercent.toFixed(1)}%</strong>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button
-                type="button"
-                className="csf-sidebar-toggle-btn"
-                onClick={() => copyInspect(zoomItem)}
-              >
-                📋 Copy Inspect Link
-              </button>
-              <button
-                type="button"
-                className="csf-tab-btn active"
-                onClick={() => {
-                  toggleEquip(zoomItem, "CT");
-                  setZoomItem(null);
-                }}
-              >
-                Equip to Loadout
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* 8. INTERACTIVE 3D SKIN INSPECTOR MODAL */}
+      {inspect3DItem && (
+        <Skin3DModal
+          item={inspect3DItem}
+          onClose={() => setInspect3DItem(null)}
+          notify={notify}
+          onEquip={(side) => toggleEquip(inspect3DItem, side)}
+        />
       )}
     </div>
   );

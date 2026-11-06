@@ -1,0 +1,145 @@
+.cs2nades-dual-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #0b0e0c;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #1f2a23;
+  cursor: pointer;
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.cs2nades-dual-thumb:hover {
+  border-color: #3b5042;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+.cs2nades-thumb-header {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.cs2nades-util-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 800 9px "Barlow Condensed", sans-serif;
+  letter-spacing: .06em;
+  padding: 3px 7px;
+  border-radius: 2px;
+  background: rgba(11, 14, 12, 0.92);
+  border: 1px solid;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.cs2nades-views-pill {
+  font: 700 9px/1 monospace;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid #334155;
+  padding: 3px 6px;
+  border-radius: 2px;
+  letter-spacing: .02em;
+}
+
+.cs2nades-side-pill {
+  font: 800 9px "Barlow Condensed", sans-serif;
+  letter-spacing: .05em;
+  padding: 3px 6px;
+  border-radius: 2px;
+  background: rgba(11, 14, 12, 0.92);
+  border: 1px solid;
+}
+.cs2nades-side-pill.t {
+  color: #fbbf24;
+  border-color: #78350f;
+}
+.cs2nades-side-pill.ct {
+  color: #38bdf8;
+  border-color: #0369a1;
+}
+
+.cs2nades-split-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.cs2nades-thumb-half {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cs2nades-thumb-bg {
+  position: absolute;
+  inset: 0;
+  transition: transform .3s ease;
+}
+
+.cs2nades-dual-thumb:hover .cs2nades-thumb-bg {
+  transform: scale(1.06);
+}
+
+.cs2nades-divider-blade {
+  width: 2px;
+  background: linear-gradient(180deg, rgba(200, 241, 53, 0) 0%, rgba(200, 241, 53, 0.8) 50%, rgba(200, 241, 53, 0) 100%);
+  z-index: 5;
+  box-shadow: 0 0 8px rgba(200, 241, 53, 0.4);
+}
+
+.cs2nades-reticle-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.cs2nades-bloom-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.cs2nades-bloom-svg {
+  width: 75%;
+  height: 75%;
+}
+
+.cs2nades-split-label {
+  position: absolute;
+  bottom: 6px;
+  font: 700 8px "Barlow Condensed", sans-serif;
+  letter-spacing: .08em;
+  background: rgba(11, 14, 12, 0.85);
+  color: #cbd5e1;
+  padding: 2px 5px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 5;
+  pointer-events: none;
+}
+.cs2nades-split-label.throw-label {
+  left: 6px;
+}
+.cs2nades-split-label.landing-label {
+  right: 6px;
+}
