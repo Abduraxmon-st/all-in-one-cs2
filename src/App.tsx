@@ -112,7 +112,7 @@ export default function App() {
             >
               <Icon name="bolt" size={14} /> <span>GIVEAWAYS &amp; DEALS</span>
             </a>
-            <button className="steam-button" onClick={() => setAuthOpen(true)}>{authLoading ? "Loading…" : user ? user.username : "Sign In / Connect"} <Icon name="arrow" size={16} /></button>
+            <button className="steam-button" onClick={() => setAuthOpen(true)}>{user ? user.username : "Sign In / Connect"} <Icon name="arrow" size={16} /></button>
             {user && (
               <button
                 className="topbar-signout-btn"
