@@ -1260,3 +1260,98 @@
   color: #111;
   border-color: #fbbf24;
 }
+
+
+/* 13-Color Swatches Filter Bar */
+.csg-color-swatches-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  background: #141916;
+  border: 1px solid #27372d;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border-radius: 3px;
+}
+.csg-swatch-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin-right: 6px;
+}
+.csg-swatch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #19211c;
+  border: 1px solid #2b3a30;
+  color: var(--paper);
+  padding: 4px 9px;
+  border-radius: 12px;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.csg-swatch-chip:hover {
+  background: #222d27;
+  transform: translateY(-1px);
+}
+.csg-swatch-chip.active {
+  background: #25332a;
+  color: #fff;
+  border-color: var(--lime);
+}
+.csg-swatch-chip.all.active {
+  background: var(--lime);
+  color: #111;
+  border-color: var(--lime);
+}
+.csg-swatch-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.csg-swatch-name {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* Rarity Ribbon (csgoskins.gg style) */
+.csg-card-rarity-ribbon {
+  display: flex;
+  align-items: center;
+  padding: 3px 8px;
+  margin: -6px -14px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.csg-ribbon-text {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Non-blocking sync indicator */
+.lo-sync-pill-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #18221c;
+  border: 1px solid #2e4335;
+  color: #a4b4ab;
+  padding: 6px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  border-radius: 2px;
+}
+.lo-sync-indicator {
+  color: var(--lime);
+  animation: pulseMarker 1.4s infinite ease-in-out;
+}

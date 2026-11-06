@@ -67,8 +67,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const controller = new AbortController();
+    const timeoutSignal = typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(8000) : null;
+    const onTimeout = () => controller.abort(new Error("Auth request timed out"));
+    if (timeoutSignal) {
+      timeoutSignal.addEventListener("abort", onTimeout);
+    }
+    const fallbackTimer = setTimeout(onTimeout, 8000);
+
     setLoading(true);
-    getCurrentUser(token)
+    getCurrentUser(token, controller.signal)
       .then((profile) => {
         if (!controller.signal.aborted) {
           setUser(profile);
@@ -89,9 +96,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        clearTimeout(fallbackTimer);
+        if (timeoutSignal) timeoutSignal.removeEventListener("abort", onTimeout);
+        setLoading(false);
       });
-    return () => controller.abort();
+    return () => {
+      clearTimeout(fallbackTimer);
+      if (timeoutSignal) timeoutSignal.removeEventListener("abort", onTimeout);
+      controller.abort();
+    };
   }, [token]);
 
   async function signInWithSteam() {

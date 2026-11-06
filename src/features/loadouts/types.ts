@@ -1,14 +1,17 @@
 export const COLORS = [
   "RED",
-  "BLUE",
-  "PURPLE",
-  "GREEN",
-  "YELLOW",
   "ORANGE",
-  "WHITE",
-  "BLACK",
-  "PINK",
+  "YELLOW",
   "GOLD",
+  "GREEN",
+  "BLUE",
+  "CYAN",
+  "PURPLE",
+  "PINK",
+  "BROWN",
+  "BLACK",
+  "GRAY",
+  "WHITE",
 ] as const
 export type Color = typeof COLORS[number]
 export type TeamSide = "T" | "CT" | "BOTH"
@@ -53,6 +56,8 @@ export interface Skin {
   imageUrl: string | null
   minFloat: number | null
   maxFloat: number | null
+  collectionName?: string
+  statTrakAvailable?: boolean
   priceFn: number | null
   priceMw: number | null
   priceFt: number | null

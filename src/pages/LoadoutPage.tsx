@@ -30,6 +30,7 @@ import {
   type TeamSide,
   type Wear,
 } from "../features/loadouts/types"
+import { fallbackCatalog, type CatalogItem } from "../features/loadouts/fallbackCatalog"
 import "./LoadoutPage.css"
 
 type Props = {
@@ -263,18 +264,101 @@ function getDefaultPattern(slot: string): number {
   return 555
 }
 
-const MEGA_CATEGORIES = [
+export const MEGA_CATEGORIES = [
   { label: "All Skins", kind: "skins" as const, category: "" },
   { label: "🔪 Knives", kind: "skins" as const, category: "KNIVES" },
   { label: "🧤 Gloves", kind: "skins" as const, category: "GLOVES" },
   { label: "🎯 Rifles", kind: "skins" as const, category: "RIFLES" },
+  { label: "🔭 Sniper Rifles", kind: "skins" as const, category: "SNIPERS" },
   { label: "🔫 Pistols", kind: "skins" as const, category: "PISTOLS" },
   { label: "⚡ SMGs", kind: "skins" as const, category: "SMGS" },
   { label: "🛡️ Heavy", kind: "skins" as const, category: "HEAVY" },
   { label: "✨ Stickers", kind: "stickers" as const, category: "" },
 ] as const;
 
+export const COLOR_SWATCHES = [
+  { name: "Red", value: "RED", hex: "#ef4444" },
+  { name: "Orange", value: "ORANGE", hex: "#f97316" },
+  { name: "Yellow", value: "YELLOW", hex: "#eab308" },
+  { name: "Gold", value: "GOLD", hex: "#e4ae39" },
+  { name: "Green", value: "GREEN", hex: "#22c55e" },
+  { name: "Blue", value: "BLUE", hex: "#3b82f6" },
+  { name: "Cyan", value: "CYAN", hex: "#06b6d4" },
+  { name: "Purple", value: "PURPLE", hex: "#a855f7" },
+  { name: "Pink", value: "PINK", hex: "#ec4899" },
+  { name: "Brown", value: "BROWN", hex: "#854d0e" },
+  { name: "Black", value: "BLACK", hex: "#1e293b" },
+  { name: "Gray", value: "GRAY", hex: "#64748b" },
+  { name: "White", value: "WHITE", hex: "#f8fafc" },
+] as const;
+
+export function getFallbackPage(options: {
+  category?: string;
+  color?: string;
+  side?: string;
+  skinClass?: string;
+  rarity?: string;
+  maxPrice?: number;
+  query?: string;
+  page?: number;
+  size?: number;
+}): Page<Skin> {
+  let list: Skin[] = [...fallbackCatalog];
+  const q = (options.query || "").toLowerCase().trim();
+  if (q) {
+    list = list.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.weaponName.toLowerCase().includes(q) ||
+        (s.collectionName && s.collectionName.toLowerCase().includes(q))
+    );
+  }
+  if (options.category) {
+    if (options.category === "SNIPERS") {
+      list = list.filter((s) => {
+        const wn = s.weaponName.toLowerCase();
+        return wn.includes("awp") || wn.includes("ssg") || wn.includes("scar") || wn.includes("g3sg1");
+      });
+    } else {
+      list = list.filter((s) => s.category === options.category);
+    }
+  }
+  if (options.color) {
+    list = list.filter((s) => s.primaryColor === options.color);
+  }
+  if (options.side && options.side !== "BOTH") {
+    list = list.filter((s) => !s.teamSide || s.teamSide === "BOTH" || s.teamSide === options.side);
+  }
+  if (options.skinClass && options.skinClass !== "ANY") {
+    list = list.filter((s) => s.skinClass === options.skinClass);
+  }
+  if (options.rarity) {
+    list = list.filter((s) => (s.rarity || "").toLowerCase() === options.rarity!.toLowerCase());
+  }
+  if (options.maxPrice && options.maxPrice > 0) {
+    list = list.filter((s) => (s.lowestPriceUsd || 0) <= options.maxPrice!);
+  }
+
+  const page = options.page || 0;
+  const size = options.size || 20;
+  const totalElements = list.length;
+  const totalPages = Math.max(1, Math.ceil(totalElements / size));
+  const start = page * size;
+  const content = list.slice(start, start + size);
+
+  return {
+    content,
+    totalElements,
+    totalPages,
+    pageable: {
+      pageNumber: page,
+      pageSize: size,
+    },
+  };
+}
+
 function getSkinCollection(skin: Skin): string {
+  if (skin.collectionName) return skin.collectionName;
   const name = skin.name.toLowerCase();
   if (name.includes("asiimov")) return "📦 Phoenix Case";
   if (name.includes("printstream")) return "📦 Fracture Case";
@@ -407,13 +491,15 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const [catalogSearch, setCatalogSearch] = useState("")
   const [catalogQuery, setCatalogQuery] = useState("")
   const [catalogColor, setCatalogColor] = useState<Color | "">("")
-  const [catalogCategory, setCatalogCategory] = useState<Category | "">("")
+  const [catalogCategory, setCatalogCategory] = useState<Category | "SNIPERS" | "">("")
   const [catalogSide, setCatalogSide] = useState<TeamSide | "">("")
   const [catalogSkinClass, setCatalogSkinClass] = useState<string>("")
   const [catalogRarity, setCatalogRarity] = useState<string>("")
   const [catalogMaxPrice, setCatalogMaxPrice] = useState("")
   const [catalogPage, setCatalogPage] = useState(0)
-  const [catalogData, setCatalogData] = useState<Page<Skin | Sticker> | null>(null)
+  const [catalogData, setCatalogData] = useState<Page<Skin | Sticker>>(() =>
+    getFallbackPage({ page: 0, size: 20 })
+  )
   const [catalogBusy, setCatalogBusy] = useState(false)
   const [catalogError, setCatalogError] = useState("")
   const [selectedSkin, setSelectedSkin] = useState<Skin | null>(null)
@@ -435,8 +521,26 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     if (tab !== "catalog") return
     const controller = new AbortController()
     setCatalogBusy(true)
-    setCatalogData(null)
     setCatalogError("")
+
+    // 0ms instant display from fallback catalog
+    if (catalogKind === "skins") {
+      const immediate = getFallbackPage({
+        category: catalogCategory || undefined,
+        color: catalogColor || undefined,
+        side: catalogSide || undefined,
+        skinClass: catalogSkinClass || undefined,
+        rarity: catalogRarity || undefined,
+        maxPrice: catalogMaxPrice ? Number(catalogMaxPrice) : undefined,
+        query: catalogQuery || undefined,
+        page: catalogPage,
+        size: 20,
+      });
+      if (immediate.content.length > 0) {
+        setCatalogData(immediate);
+      }
+    }
+
     const common = {
       color: catalogColor || undefined,
       maxPrice: catalogMaxPrice ? Number(catalogMaxPrice) : undefined,
@@ -444,12 +548,13 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
       page: catalogPage,
       size: 20,
     }
+    const backendCategory = catalogCategory === "SNIPERS" ? "RIFLES" : (catalogCategory || undefined);
     const call =
       catalogKind === "skins"
         ? getSkins(
             {
               ...common,
-              category: catalogCategory || undefined,
+              category: backendCategory as Category | undefined,
               teamSide: catalogSide || undefined,
               skinClass: catalogSkinClass || undefined,
               rarity: catalogRarity || undefined,
@@ -458,12 +563,15 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
           )
         : getStickers(common, controller.signal)
     call
-      .then((data) => setCatalogData(data))
+      .then((data) => {
+        if (!controller.signal.aborted && data && data.content && data.content.length > 0) {
+          setCatalogData(data);
+        }
+      })
       .catch((cause: unknown) => {
-        if (!controller.signal.aborted)
-          setCatalogError(
-            cause instanceof Error ? cause.message : "Could not load catalog",
-          )
+        if (!controller.signal.aborted) {
+          console.warn("Backend catalog sync notice:", cause);
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setCatalogBusy(false)
@@ -1498,7 +1606,9 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
             {MEGA_CATEGORIES.map((cat) => {
               const isActive =
                 cat.kind === catalogKind &&
-                (cat.kind === "stickers" || catalogCategory === cat.category);
+                (cat.kind === "stickers"
+                  ? catalogKind === "stickers"
+                  : catalogCategory === cat.category);
               return (
                 <button
                   key={cat.label}
@@ -1506,13 +1616,49 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                   className={`csg-mega-pill ${isActive ? "active" : ""}`}
                   onClick={() => {
                     setCatalogKind(cat.kind);
-                    setCatalogCategory(cat.category as Category | "");
+                    setCatalogCategory(cat.category as Category | "SNIPERS" | "");
                     setCatalogPage(0);
                     setSelectedSkin(null);
                     setSelectedSticker(null);
                   }}
                 >
                   {cat.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 13-Color Swatches filter bar */}
+          <div className="csg-color-swatches-bar">
+            <span className="csg-swatches-label">🎨 Filter by Color:</span>
+            <button
+              type="button"
+              className={`csg-swatch-chip ${!catalogColor ? "active" : ""}`}
+              onClick={() => {
+                setCatalogColor("");
+                setCatalogPage(0);
+              }}
+            >
+              All Colors
+            </button>
+            {COLOR_SWATCHES.map((sw) => {
+              const isSelected = catalogColor === sw.value;
+              return (
+                <button
+                  key={sw.value}
+                  type="button"
+                  className={`csg-swatch-chip ${isSelected ? "active" : ""}`}
+                  onClick={() => {
+                    setCatalogColor(isSelected ? "" : (sw.value as Color));
+                    setCatalogPage(0);
+                  }}
+                  title={sw.name}
+                >
+                  <span
+                    className="csg-swatch-dot"
+                    style={{ backgroundColor: sw.hex }}
+                  />
+                  <span>{sw.name}</span>
                 </button>
               );
             })}
@@ -1666,7 +1812,11 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
             )}
           </form>
 
-          {catalogBusy && <p className="lo-status">Querying catalog database…</p>}
+          {catalogBusy && (
+            <div className="lo-sync-pill-bar">
+              <span className="lo-sync-dot">●</span> Syncing live market catalog from backend…
+            </div>
+          )}
           {catalogError && (
             <p className="lo-error" role="alert">
               {catalogError}
@@ -1726,6 +1876,14 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                             boxShadow: `0 0 10px ${rarityColor}88`,
                           }}
                         />
+
+                        {/* Rarity Ribbon (csgoskins.gg style corner ribbon) */}
+                        <div
+                          className="csg-card-rarity-ribbon"
+                          style={{ backgroundColor: rarityColor }}
+                        >
+                          {getRarityLabel(skin.rarity, skin.category)}
+                        </div>
 
                         {/* 2. Top Pill Row: skinClass badge + StatTrak / Souvenir tags */}
                         <div className="csg-card-top-pills">

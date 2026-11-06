@@ -578,3 +578,87 @@
 .strat-radar-pin svg {
   display: block;
 }
+
+
+/* Permanent High-Contrast Strat Board Map Radar & Interactive csnades.gg Pins */
+.strat-svg-blueprint {
+  z-index: 1 !important;
+  opacity: 1 !important;
+}
+.strat-radar-map-image.loaded {
+  opacity: 0.85 !important;
+  filter: contrast(1.12) brightness(1.08) !important;
+}
+.strat-radar-grid-overlay {
+  opacity: 0.12 !important;
+}
+.strat-board-nades-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+.strat-board-nade-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border: 2px solid;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 8px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 12;
+  transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.strat-board-nade-pin:hover {
+  transform: translate(-50%, -50%) scale(1.35);
+  box-shadow: 0 0 14px currentColor;
+  z-index: 25;
+}
+.strat-board-nade-pin.active {
+  transform: translate(-50%, -50%) scale(1.4);
+  outline: 2px solid #fff;
+  z-index: 30;
+}
+.strat-board-active-card {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  background: rgba(18, 24, 20, 0.96);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--lime);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  z-index: 40;
+  border-radius: 3px;
+  animation: fadeIn .15s ease;
+}
+.strat-board-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.strat-board-card-info strong {
+  font: 700 16px "Barlow Condensed";
+  color: var(--paper);
+  letter-spacing: .04em;
+}
+.strat-board-card-info small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.strat-board-card-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
