@@ -10,7 +10,7 @@ export const RadarBlueprint: FC<Props> = ({ mapName }) => {
 
   return (
     <svg
-      className="strat-svg-blueprint"
+      className="radar-blueprint strat-svg-blueprint"
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
       xmlns="http://www.w3.org/2000/svg"
