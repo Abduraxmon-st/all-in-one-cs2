@@ -6,27 +6,28 @@ interface Props {
 }
 
 export const RadarMapLayer: FC<Props> = ({ mapName }) => {
+  const normMap = `de_${(mapName || "").toLowerCase().replace(/^de_/, "")}`;
   const [tier, setTier] = useState<1 | 2 | 3>(1);
   const [imgLoaded, setImgLoaded] = useState(false);
 
   useEffect(() => {
     setTier(1);
     setImgLoaded(false);
-  }, [mapName]);
+  }, [normMap]);
 
-  const localSrc = `/maps/${mapName}.png`;
-  const cdnSrc = `https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/maps/${mapName}.png`;
+  const localSrc = `/maps/${normMap}.png`;
+  const cdnSrc = `https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/maps/${normMap}.png`;
 
   return (
     <div className="strat-radar-map-layer">
       {/* SVG Blueprint is always active as base vector blueprint */}
-      <RadarBlueprint mapName={mapName} />
+      <RadarBlueprint mapName={normMap} />
 
       {tier === 1 && (
         <img
-          key={`tier1-${mapName}`}
+          key={`tier1-${normMap}`}
           src={localSrc}
-          alt={mapName}
+          alt={normMap}
           className={`strat-radar-map-image ${imgLoaded ? "loaded" : "loading"}`}
           onLoad={() => setImgLoaded(true)}
           onError={() => {
@@ -38,9 +39,9 @@ export const RadarMapLayer: FC<Props> = ({ mapName }) => {
 
       {tier === 2 && (
         <img
-          key={`tier2-${mapName}`}
+          key={`tier2-${normMap}`}
           src={cdnSrc}
-          alt={mapName}
+          alt={normMap}
           className={`strat-radar-map-image ${imgLoaded ? "loaded" : "loading"}`}
           onLoad={() => setImgLoaded(true)}
           onError={() => {

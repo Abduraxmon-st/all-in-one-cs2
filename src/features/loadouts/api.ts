@@ -33,6 +33,28 @@ function query(params: object): string {
   return search.size ? `?${search}` : ""
 }
 
+function createTimeoutSignal(ms = 8000): AbortSignal {
+  if (typeof AbortSignal.timeout === "function") {
+    return AbortSignal.timeout(ms);
+  }
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(new Error(`Request timed out after ${ms}ms`)), ms);
+  return controller.signal;
+}
+
+function mergeSignal(userSignal?: AbortSignal | null, ms = 8000): AbortSignal {
+  const timeoutSignal = createTimeoutSignal(ms);
+  if (!userSignal) return timeoutSignal;
+  if (typeof AbortSignal.any === "function") {
+    return AbortSignal.any([userSignal, timeoutSignal]);
+  }
+  const controller = new AbortController();
+  const onAbort = () => controller.abort(userSignal.reason || timeoutSignal.reason);
+  userSignal.addEventListener("abort", onAbort);
+  timeoutSignal.addEventListener("abort", onAbort);
+  return controller.signal;
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -41,9 +63,11 @@ async function request<T>(
   const headers = new Headers(options.headers)
   if (options.body) headers.set("Content-Type", "application/json")
   if (token) headers.set("Authorization", `Bearer ${token}`)
+  const signal = mergeSignal(options.signal, 8000)
   const response = await fetch(`${API_BASE_URL}${PREFIX}${path}`, {
     ...options,
     headers,
+    signal,
   })
   const payload = (await response
     .json()
