@@ -37,6 +37,99 @@ import LineupDetailModal from "../components/LineupDetailModal";
 import { navigate, routeHref } from "../routes";
 import "./StratBoardPage.css";
 
+
+const MAP_CALLOUTS: Record<string, { name: string; x: number; y: number }[]> = {
+  mirage: [
+    { name: "A Site", x: 60, y: 58 },
+    { name: "B Site", x: 22, y: 45 },
+    { name: "Window", x: 48, y: 46 },
+    { name: "Top Mid", x: 42, y: 62 },
+    { name: "Connector", x: 53, y: 52 },
+    { name: "Stairs", x: 59, y: 50 },
+    { name: "Jungle", x: 52, y: 42 },
+    { name: "Palace", x: 65, y: 68 },
+    { name: "A Ramp", x: 45, y: 70 },
+    { name: "B Apts", x: 24, y: 36 },
+    { name: "T Spawn", x: 34, y: 82 },
+    { name: "CT Spawn", x: 52, y: 32 },
+    { name: "Catwalk", x: 36, y: 52 },
+    { name: "Underpass", x: 42, y: 54 },
+  ],
+  inferno: [
+    { name: "A Site", x: 62, y: 44 },
+    { name: "B Site", x: 24, y: 34 },
+    { name: "Banana", x: 30, y: 64 },
+    { name: "Coffin", x: 22, y: 30 },
+    { name: "CT Spawn", x: 28, y: 22 },
+    { name: "Pit", x: 72, y: 38 },
+    { name: "Apps", x: 52, y: 48 },
+    { name: "Mid", x: 48, y: 62 },
+    { name: "T Spawn", x: 46, y: 88 },
+  ],
+  dust2: [
+    { name: "A Site", x: 72, y: 32 },
+    { name: "B Site", x: 24, y: 28 },
+    { name: "Long A", x: 78, y: 58 },
+    { name: "Catwalk", x: 60, y: 38 },
+    { name: "Mid Doors", x: 48, y: 48 },
+    { name: "Xbox", x: 46, y: 54 },
+    { name: "T Spawn", x: 44, y: 85 },
+    { name: "CT Spawn", x: 52, y: 32 },
+    { name: "Tunnels", x: 28, y: 46 },
+  ],
+  nuke: [
+    { name: "A Site", x: 50, y: 48 },
+    { name: "B Site", x: 50, y: 58 },
+    { name: "Ramp", x: 66, y: 58 },
+    { name: "Hut", x: 44, y: 52 },
+    { name: "Outside", x: 32, y: 42 },
+    { name: "Garage", x: 26, y: 36 },
+    { name: "Lobby", x: 50, y: 72 },
+  ],
+  ancient: [
+    { name: "A Site", x: 64, y: 42 },
+    { name: "B Site", x: 32, y: 44 },
+    { name: "Mid", x: 48, y: 52 },
+    { name: "Donut", x: 56, y: 48 },
+    { name: "Cheetah", x: 38, y: 52 },
+    { name: "Red Room", x: 46, y: 40 },
+    { name: "T Spawn", x: 48, y: 82 },
+  ],
+  anubis: [
+    { name: "A Site", x: 68, y: 38 },
+    { name: "B Site", x: 28, y: 42 },
+    { name: "Mid", x: 48, y: 52 },
+    { name: "Canal", x: 44, y: 64 },
+    { name: "Bridge", x: 48, y: 44 },
+    { name: "Ruins", x: 34, y: 56 },
+    { name: "T Spawn", x: 48, y: 84 },
+  ],
+  overpass: [
+    { name: "A Site", x: 62, y: 44 },
+    { name: "B Site", x: 38, y: 34 },
+    { name: "Monster", x: 34, y: 52 },
+    { name: "Bathrooms", x: 56, y: 54 },
+    { name: "Fountain", x: 52, y: 68 },
+    { name: "T Spawn", x: 50, y: 86 },
+  ],
+  train: [
+    { name: "A Site", x: 52, y: 48 },
+    { name: "B Site", x: 38, y: 58 },
+    { name: "Ivy", x: 74, y: 44 },
+    { name: "Pop Dog", x: 48, y: 54 },
+    { name: "Z Connector", x: 46, y: 48 },
+    { name: "T Spawn", x: 48, y: 85 },
+  ],
+  vertigo: [
+    { name: "A Site", x: 62, y: 46 },
+    { name: "B Site", x: 28, y: 44 },
+    { name: "A Ramp", x: 60, y: 64 },
+    { name: "Mid", x: 48, y: 56 },
+    { name: "Generator", x: 46, y: 48 },
+    { name: "T Spawn", x: 48, y: 82 },
+  ]
+};
+
 const CS2_MAP_OPTIONS = [
   { id: "de_mirage", name: "MIRAGE" },
   { id: "de_inferno", name: "INFERNO" },
@@ -146,7 +239,7 @@ function applyEvent(room: RoomSnapshot, event: BoardEvent): RoomSnapshot {
 export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
   const { token, user } = useAuth();
   const [tab, setTab] = useState<Tab>("board");
-  const [mapName, setMapName] = useState("de_inferno");
+  const [mapName, setMapName] = useState("de_mirage");
   const [teamSide, setTeamSide] = useState<TeamSide>("T");
   const [displayName, setDisplayName] = useState(user?.username ?? "Guest");
   const [joinCode, setJoinCode] = useState("");
@@ -163,7 +256,7 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
   // Instant Fallback Lineups (0ms resilience)
   const cleanMap = mapName.toLowerCase().replace(/^de_/, "");
   const [lineups, setLineups] = useState<UtilityLineup[]>(() =>
-    fallbackLineups.filter((l) => l.mapName.toLowerCase().replace(/^de_/, "") === "inferno")
+    fallbackLineups.filter((l) => l.mapName.toLowerCase().replace(/^de_/, "") === "mirage")
   );
 
   const [utilityType, setUtilityType] = useState<UtilityType | "">("");
@@ -187,6 +280,12 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTargetCallout, setSelectedTargetCallout] = useState<string | null>(null);
   const [selectedDetailLineup, setSelectedDetailLineup] = useState<UtilityLineup | null>(null);
+  const [showCallouts, setShowCallouts] = useState(true);
+  const [isSimpleRadar, setIsSimpleRadar] = useState(false);
+  const [showCommunityNades, setShowCommunityNades] = useState(true);
+  const [recommendedOnly, setRecommendedOnly] = useState(false);
+  const [favouritesOnly, setFavouritesOnly] = useState(false);
+  const [favouriteIds, setFavouriteIds] = useState<Set<string>>(() => new Set());
 
   // Tactics
   const [tactics, setTactics] = useState<TacticSummary[]>([]);
@@ -627,12 +726,31 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
     return counts;
   }, []);
 
+  const mapLineups = useMemo(() => {
+    const clean = mapName.toLowerCase().replace(/^de_/, "");
+    return lineups.filter((l) => l.mapName.toLowerCase().replace(/^de_/, "") === clean);
+  }, [lineups, mapName]);
+
+  const utilCounts = useMemo(() => {
+    const counts = { SMOKE: 0, MOLOTOV: 0, FLASH: 0, HE: 0, COMBOS: 0 };
+    for (const l of mapLineups) {
+      if (l.utilityType === "SMOKE") counts.SMOKE++;
+      else if (l.utilityType === "MOLOTOV") counts.MOLOTOV++;
+      else if (l.utilityType === "FLASH") counts.FLASH++;
+      else if (l.utilityType === "HE") counts.HE++;
+    }
+    counts.COMBOS = Math.max(4, Math.floor(counts.SMOKE / 6));
+    return counts;
+  }, [mapLineups]);
+
   const filteredLineups = useMemo(() => {
-    return lineups.filter((l) => {
+    return mapLineups.filter((l) => {
       if (lineupSideFilter === "T" && l.teamSide !== "T") return false;
       if (lineupSideFilter === "CT" && l.teamSide !== "CT") return false;
       if (lineupSideFilter === "PRO" && !l.isVerified && !l.isPro) return false;
       if (lineupUtility !== "ALL" && l.utilityType !== lineupUtility) return false;
+      if (recommendedOnly && !l.isVerified && !l.isPro) return false;
+      if (favouritesOnly && !favouriteIds.has(l.id)) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchTitle = (l.title || "").toLowerCase().includes(q);
@@ -643,7 +761,7 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
       }
       return true;
     });
-  }, [lineups, lineupSideFilter, lineupUtility, searchQuery]);
+  }, [mapLineups, lineupSideFilter, lineupUtility, recommendedOnly, favouritesOnly, favouriteIds, searchQuery]);
 
   // Target Pin Clustering
   interface TargetCluster {
@@ -1245,698 +1363,604 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
 
       {/* LINEUPS TAB (CS2NADES 2-COLUMN LAYOUT WITH TARGET CLUSTERING) */}
       {tab === "lineups" && (
-        <section className="cs2nades-container">
-          {/* TOP HEADER: Map Pills Switcher + Search + Submit */}
-          <div className="cs2nades-top-header">
-            <div className="cs2nades-brand-wrap">
-              <div className="cs2nades-brand-badge">
-                <span className="cs2nades-brand-title">CS2NADES</span>
-                <span className="cs2nades-brand-sub">PRO TACTICS</span>
+        <section className="csnades-authentic-layout">
+          {/* 1. LEFT SIDEBAR (270px width, clean dark #121316 panel) */}
+          <aside className="csnades-authentic-sidebar">
+            {/* Map Header & Switcher */}
+            <div className="csnades-sb-header">
+              <div className="csnades-sb-map-select-wrap">
+                <select
+                  aria-label="Select CS2 Map"
+                  className="csnades-sb-map-dropdown"
+                  value={normalizeMap(mapName)}
+                  onChange={(e) => changeMap(e.target.value, teamSide)}
+                >
+                  {CS2_MAP_OPTIONS.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="csnades-sb-dropdown-chevron">▼</span>
               </div>
+              <p className="csnades-sb-subtitle">
+                Find the best {cleanMap.charAt(0).toUpperCase() + cleanMap.slice(1)} smokes, molotovs, flashbangs, and HE grenades for Counter-Strike 2.
+              </p>
+            </div>
 
-              {/* 9 MAP SELECTOR PILLS */}
-              <div className="cs2nades-map-pills-bar">
-                {CS2_MAP_OPTIONS.map((m) => {
-                  const clean = m.id.replace(/^de_/, "");
-                  const isCurrent = normalizeMap(mapName) === m.id;
-                  const count = mapLineupCounts[clean] || 0;
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      className={`cs2nades-map-pill ${isCurrent ? "active" : ""}`}
-                      onClick={() => changeMap(m.id, teamSide)}
-                    >
-                      <span>{m.name}</span>
-                      <span className="cs2nades-pill-count">{count}</span>
-                    </button>
-                  );
-                })}
+            {/* Guide Links & Community Toggle */}
+            <div className="csnades-sb-guides-block">
+              <button
+                type="button"
+                className="csnades-sb-guide-link"
+                onClick={() => notify(`Opened ${cleanMap.toUpperCase()} guide`)}
+              >
+                <span className="guide-icon">📘</span>
+                <span>View our {cleanMap.charAt(0).toUpperCase() + cleanMap.slice(1)} guide</span>
+              </button>
+              <button
+                type="button"
+                className="csnades-sb-guide-link"
+                onClick={() => notify("Opened instant window smokes guide")}
+              >
+                <span className="guide-icon">📘</span>
+                <span>View our instant window smokes guide</span>
+              </button>
+
+              <label className="csnades-sb-toggle-row">
+                <span className="toggle-label">Show community nades</span>
+                <input
+                  type="checkbox"
+                  checked={showCommunityNades}
+                  onChange={(e) => setShowCommunityNades(e.target.checked)}
+                />
+                <span className="toggle-slider" />
+              </label>
+            </div>
+
+            {/* NADES Vertical List with Icons & Live Counts */}
+            <div className="csnades-sb-section">
+              <span className="csnades-sb-section-heading">NADES</span>
+              <div className="csnades-sb-nav-list">
+                <button
+                  type="button"
+                  className={`csnades-sb-nav-item ${lineupUtility === "SMOKE" ? "active" : ""}`}
+                  onClick={() => {
+                    setLineupUtility("SMOKE");
+                    setSelectedTargetCallout(null);
+                  }}
+                >
+                  <div className="nav-item-left">
+                    <span className="nav-item-icon">☁️</span>
+                    <span className="nav-item-label">Smokes</span>
+                  </div>
+                  <span className="nav-item-count">{utilCounts.SMOKE}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`csnades-sb-nav-item ${lineupUtility === "MOLOTOV" ? "active" : ""}`}
+                  onClick={() => {
+                    setLineupUtility("MOLOTOV");
+                    setSelectedTargetCallout(null);
+                  }}
+                >
+                  <div className="nav-item-left">
+                    <span className="nav-item-icon">🔥</span>
+                    <span className="nav-item-label">Molotovs</span>
+                  </div>
+                  <span className="nav-item-count">{utilCounts.MOLOTOV}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`csnades-sb-nav-item ${lineupUtility === "FLASH" ? "active" : ""}`}
+                  onClick={() => {
+                    setLineupUtility("FLASH");
+                    setSelectedTargetCallout(null);
+                  }}
+                >
+                  <div className="nav-item-left">
+                    <span className="nav-item-icon">⚡</span>
+                    <span className="nav-item-label">Flashbangs</span>
+                  </div>
+                  <span className="nav-item-count">{utilCounts.FLASH}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`csnades-sb-nav-item ${lineupUtility === "HE" ? "active" : ""}`}
+                  onClick={() => {
+                    setLineupUtility("HE");
+                    setSelectedTargetCallout(null);
+                  }}
+                >
+                  <div className="nav-item-left">
+                    <span className="nav-item-icon">💣</span>
+                    <span className="nav-item-label">HE Grenades</span>
+                  </div>
+                  <span className="nav-item-count">{utilCounts.HE}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`csnades-sb-nav-item ${lineupUtility === "ALL" ? "active" : ""}`}
+                  onClick={() => {
+                    setLineupUtility("ALL");
+                    setSelectedTargetCallout(null);
+                  }}
+                >
+                  <div className="nav-item-left">
+                    <span className="nav-item-icon">🔗</span>
+                    <span className="nav-item-label">Solo Combinations</span>
+                  </div>
+                  <span className="nav-item-count">{utilCounts.COMBOS}</span>
+                </button>
               </div>
             </div>
 
-            <div className="cs2nades-header-meta">
-              {/* Callout Search Bar */}
-              <div className="cs2nades-search-box">
-                <Icon name="crosshair" size={14} />
-                <input
-                  type="text"
-                  placeholder="Search callouts (e.g. Window, Banana, CT)..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    className="cs2nades-search-clear"
-                    onClick={() => setSearchQuery("")}
-                    title="Clear search"
-                  >
-                    ✕
-                  </button>
-                )}
+            {/* TEAMS Segmented 3-Button Row */}
+            <div className="csnades-sb-section">
+              <span className="csnades-sb-section-heading">TEAMS</span>
+              <div className="csnades-sb-teams-row">
+                <button
+                  type="button"
+                  className={`csnades-team-pill ${lineupSideFilter === "ALL" ? "active" : ""}`}
+                  onClick={() => setLineupSideFilter("ALL")}
+                >
+                  Any
+                </button>
+                <button
+                  type="button"
+                  className={`csnades-team-pill ${lineupSideFilter === "CT" ? "active" : ""}`}
+                  onClick={() => setLineupSideFilter("CT")}
+                >
+                  🛡️ CT
+                </button>
+                <button
+                  type="button"
+                  className={`csnades-team-pill ${lineupSideFilter === "T" ? "active" : ""}`}
+                  onClick={() => setLineupSideFilter("T")}
+                >
+                  ⭐ T
+                </button>
               </div>
+            </div>
 
-              <span className="cs2nades-count-pill">
-                {filteredLineups.length} LINEUP{filteredLineups.length === 1 ? "" : "S"}
-              </span>
+            {/* FILTERS Section */}
+            <div className="csnades-sb-section">
+              <span className="csnades-sb-section-heading">FILTERS</span>
+              <div className="csnades-sb-filter-btn-grid">
+                <button
+                  type="button"
+                  className={`csnades-filter-box-btn ${recommendedOnly ? "active" : ""}`}
+                  onClick={() => setRecommendedOnly((v) => !v)}
+                >
+                  📖 Recommended
+                </button>
+                <button
+                  type="button"
+                  className={`csnades-filter-box-btn ${favouritesOnly ? "active" : ""}`}
+                  onClick={() => setFavouritesOnly((v) => !v)}
+                >
+                  ⭐ Favourites
+                </button>
+              </div>
 
               <button
                 type="button"
-                className="cs2nades-submit-btn"
+                className="csnades-sb-submit-btn"
                 onClick={() => setShowLineupForm((v) => !v)}
               >
-                + SUBMIT
+                + Submit nade
               </button>
             </div>
-          </div>
+          </aside>
 
-          {showLineupForm && (
-            <form className="strat-lineup-form" onSubmit={submitNewLineup}>
-              <input
-                value={lineupDraft.title}
-                onChange={(event) => setLineupDraft({ ...lineupDraft, title: event.target.value })}
-                placeholder="Lineup title (e.g. Coffin Smoke from Banana)"
-                required
-              />
-              <select
-                value={lineupDraft.utilityType}
-                onChange={(event) =>
-                  setLineupDraft({ ...lineupDraft, utilityType: event.target.value as UtilityType })
-                }
-              >
-                {["SMOKE", "FLASH", "MOLOTOV", "HE"].map((item) => (
-                  <option key={item}>{item}</option>
+          {/* 2. MAIN CENTER STAGE (Full-Height Centered Architectural CS2 Radar Map) */}
+          <main className="csnades-authentic-stage">
+            {showLineupForm && (
+              <form className="strat-lineup-form" onSubmit={submitNewLineup}>
+                <input
+                  value={lineupDraft.title}
+                  onChange={(event) => setLineupDraft({ ...lineupDraft, title: event.target.value })}
+                  placeholder="Lineup title (e.g. Coffin Smoke from Banana)"
+                  required
+                />
+                <select
+                  value={lineupDraft.utilityType}
+                  onChange={(event) =>
+                    setLineupDraft({ ...lineupDraft, utilityType: event.target.value as UtilityType })
+                  }
+                >
+                  {["SMOKE", "FLASH", "MOLOTOV", "HE"].map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+                <input
+                  value={lineupDraft.throwType}
+                  onChange={(event) => setLineupDraft({ ...lineupDraft, throwType: event.target.value })}
+                  placeholder="Throw type (e.g. Jumpthrow, Left-Click)"
+                  required
+                />
+                {(["standX", "standY", "landX", "landY"] as const).map((field) => (
+                  <label key={field}>
+                    {field}
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={lineupDraft[field]}
+                      onChange={(event) =>
+                        setLineupDraft({ ...lineupDraft, [field]: Number(event.target.value) })
+                      }
+                      required
+                    />
+                  </label>
                 ))}
-              </select>
-              <input
-                value={lineupDraft.throwType}
-                onChange={(event) => setLineupDraft({ ...lineupDraft, throwType: event.target.value })}
-                placeholder="Throw type (e.g. Jumpthrow, Left-Click)"
-                required
-              />
-              {(["standX", "standY", "landX", "landY"] as const).map((field) => (
-                <label key={field}>
-                  {field}
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={lineupDraft[field]}
-                    onChange={(event) =>
-                      setLineupDraft({ ...lineupDraft, [field]: Number(event.target.value) })
-                    }
-                    required
-                  />
-                </label>
-              ))}
-              <input
-                type="url"
-                value={lineupDraft.videoUrl ?? ""}
-                onChange={(event) => setLineupDraft({ ...lineupDraft, videoUrl: event.target.value })}
-                placeholder="Video URL"
-              />
-              <textarea
-                value={lineupDraft.description ?? ""}
-                onChange={(event) =>
-                  setLineupDraft({ ...lineupDraft, description: event.target.value })
-                }
-                placeholder="Description"
-              />
-              <button disabled={busy || !token}>SUBMIT LINEUP</button>
-            </form>
-          )}
+                <input
+                  type="url"
+                  value={lineupDraft.videoUrl ?? ""}
+                  onChange={(event) => setLineupDraft({ ...lineupDraft, videoUrl: event.target.value })}
+                  placeholder="Video URL"
+                />
+                <textarea
+                  value={lineupDraft.description ?? ""}
+                  onChange={(event) =>
+                    setLineupDraft({ ...lineupDraft, description: event.target.value })
+                  }
+                  placeholder="Description"
+                />
+                <button disabled={busy || !token}>SUBMIT LINEUP</button>
+              </form>
+            )}
 
-          {/* MAIN 2-COLUMN WORKSPACE */}
-          <div className="cs2nades-2col-layout">
-            {/* LEFT COLUMN: FILTERS + CLEAN MAP RADAR */}
-            <div className="cs2nades-radar-col">
-              <div className="cs2nades-filter-bar">
-                {/* 4 Utility Segment Filter: Smoke (orange/gold), Molotov, Flash, HE */}
-                <div className="cs2nades-util-segment">
-                  {(
-                    [
-                      { type: "SMOKE", label: "Smoke ☁️", color: "#f59e0b" },
-                      { type: "MOLOTOV", label: "Molotov 🔥", color: "#f97316" },
-                      { type: "FLASH", label: "Flashbang ⚡", color: "#facc15" },
-                      { type: "HE", label: "HE 💣", color: "#ef4444" },
-                    ] as const
-                  ).map((item) => {
-                    const isActive = lineupUtility === item.type;
-                    return (
-                      <button
-                        key={item.type}
-                        type="button"
-                        className={`cs2nades-util-btn ${isActive ? "active" : ""}`}
-                        style={{
-                          borderColor: isActive ? item.color : undefined,
-                          color: isActive ? item.color : undefined,
-                          boxShadow: isActive ? `0 0 12px ${item.color}40` : undefined,
-                        }}
-                        onClick={() => {
-                          setLineupUtility(isActive ? "ALL" : item.type);
-                          setSelectedTargetCallout(null);
-                        }}
-                      >
-                        {item.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* 3 Side Buttons: T SIDE, PRO, CT SIDE */}
-                <div className="cs2nades-side-segment">
-                  {(
-                    [
-                      { key: "T", label: "T SIDE", color: "#fbbf24" },
-                      { key: "PRO", label: "★ PRO", color: "#a855f7" },
-                      { key: "CT", label: "CT SIDE", color: "#38bdf8" },
-                    ] as const
-                  ).map((side) => {
-                    const isActive = lineupSideFilter === side.key;
-                    return (
-                      <button
-                        key={side.key}
-                        type="button"
-                        className={`cs2nades-side-btn ${isActive ? "active" : ""}`}
-                        style={{
-                          borderColor: isActive ? side.color : undefined,
-                          color: isActive ? side.color : undefined,
-                        }}
-                        onClick={() => {
-                          setLineupSideFilter(isActive ? "ALL" : side.key);
-                          setSelectedTargetCallout(null);
-                        }}
-                      >
-                        {side.label}
-                      </button>
-                    );
-                  })}
-                </div>
+            <div className="csnades-radar-centerpiece">
+              {/* Top-Right Radar Controls */}
+              <div className="csnades-radar-top-controls">
+                <button
+                  type="button"
+                  onClick={() => setRadarZoom((z) => Math.min(2.5, +(z + 0.25).toFixed(2)))}
+                  title="Zoom In"
+                >
+                  +
+                </button>
+                <span className="csnades-radar-zoom-display">{(radarZoom * 100).toFixed(0)}%</span>
+                <button
+                  type="button"
+                  onClick={() => setRadarZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))}
+                  title="Zoom Out"
+                >
+                  −
+                </button>
+                {radarZoom > 1 && (
+                  <button type="button" onClick={() => setRadarZoom(1)} title="Reset Zoom">
+                    ↺
+                  </button>
+                )}
               </div>
 
-              {/* Clean Radar Map Stage */}
-              <div className="cs2nades-radar-stage">
-                <div className="cs2nades-zoom-controls">
-                  <button
-                    type="button"
-                    onClick={() => setRadarZoom((z) => Math.min(2.2, +(z + 0.25).toFixed(2)))}
-                    title="Zoom In"
-                  >
-                    +
-                  </button>
-                  <span className="cs2nades-zoom-val">{(radarZoom * 100).toFixed(0)}%</span>
-                  <button
-                    type="button"
-                    onClick={() => setRadarZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))}
-                    title="Zoom Out"
-                  >
-                    −
-                  </button>
-                  {radarZoom > 1 && (
-                    <button type="button" onClick={() => setRadarZoom(1)} title="Reset Zoom">
-                      ↺
-                    </button>
-                  )}
-                </div>
-
-                <div
-                  className="cs2nades-radar-viewport"
-                  style={{
-                    transform: `scale(${radarZoom})`,
-                    transformOrigin: "center center",
-                  }}
+              {/* Bottom-Right Radar Controls */}
+              <div className="csnades-radar-bottom-controls">
+                <button
+                  type="button"
+                  className={`csnades-radar-control-pill ${showCallouts ? "active" : ""}`}
+                  onClick={() => setShowCallouts((v) => !v)}
+                  title="Toggle map callouts"
                 >
-                  <img
-                    src={`/maps/de_${cleanMap}.png`}
-                    alt={cleanMap}
-                    className="cs2nades-radar-map-img"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = `https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/maps/de_${cleanMap}.png`;
-                    }}
-                  />
+                  📍 {showCallouts ? "Disable callouts" : "Enable callouts"}
+                </button>
+                <button
+                  type="button"
+                  className={`csnades-radar-control-pill ${isSimpleRadar ? "active" : ""}`}
+                  onClick={() => setIsSimpleRadar((v) => !v)}
+                  title="Toggle SimpleRadar theme"
+                >
+                  ⇄ {isSimpleRadar ? "Game Radar" : "SimpleRadar"}
+                </button>
+              </div>
 
-                  {/* High-Tech Vector Trajectory Overlay */}
-                  <svg className="cs2nades-radar-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <defs>
-                      <marker id="nades-marker-smoke" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                        <path d="M 0 0 L 6 3 L 0 6 Z" fill="#f59e0b" />
-                      </marker>
-                      <marker id="nades-marker-flash" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                        <path d="M 0 0 L 6 3 L 0 6 Z" fill="#facc15" />
-                      </marker>
-                      <marker id="nades-marker-molotov" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                        <path d="M 0 0 L 6 3 L 0 6 Z" fill="#f97316" />
-                      </marker>
-                      <marker id="nades-marker-he" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                        <path d="M 0 0 L 6 3 L 0 6 Z" fill="#ef4444" />
-                      </marker>
-                    </defs>
-
-                    {/* Scenario A: Selected Target Cluster with Fan-Out Trajectories */}
-                    {activeTargetCluster &&
-                      activeTargetCluster.lineups.map((l) => {
-                        const isHovered = hoveredRadarLineupId === l.id;
-                        const color = utilityColors[l.utilityType] ?? "#f59e0b";
-                        const markerId = `nades-marker-${l.utilityType.toLowerCase()}`;
-
-                        return (
-                          <g key={`cluster-traj-${l.id}`} className={`cs2nades-traj-group active ${isHovered ? "hovered" : ""}`}>
-                            <circle
-                              cx={l.standX}
-                              cy={l.standY}
-                              r="2.4"
-                              fill={color}
-                              stroke="#ffffff"
-                              strokeWidth="0.8"
-                            />
-                            <circle
-                              cx={l.standX}
-                              cy={l.standY}
-                              r="4.8"
-                              fill="none"
-                              stroke={color}
-                              strokeWidth="0.8"
-                              className="cs2nades-stand-pulse"
-                            />
-                            <text
-                              x={l.standX}
-                              y={l.standY - 3}
-                              textAnchor="middle"
-                              fill={color}
-                              fontSize="2.4"
-                              fontWeight="bold"
-                            >
-                              {l.fromCallout || "STAND"}
-                            </text>
-                            <line
-                              x1={l.standX}
-                              y1={l.standY}
-                              x2={activeTargetCluster.landX}
-                              y2={activeTargetCluster.landY}
-                              stroke={color}
-                              strokeWidth={isHovered ? "2.6" : "1.8"}
-                              strokeDasharray="4,3"
-                              className="cs2nades-traj-active"
-                              markerEnd={`url(#${markerId})`}
-                            />
-                          </g>
-                        );
-                      })}
-
-                    {/* Scenario B: Normal View with Individual Trajectories */}
-                    {!activeTargetCluster &&
-                      filteredLineups.map((l) => {
-                        const isSelected = selectedRadarLineupId === l.id;
-                        const isHovered = hoveredRadarLineupId === l.id;
-                        const isActive = isSelected || isHovered;
-                        if (!isActive) return null;
-                        const color = utilityColors[l.utilityType] ?? "#f59e0b";
-                        const markerId = `nades-marker-${l.utilityType.toLowerCase()}`;
-
-                        return (
-                          <g key={`traj-${l.id}`} className="cs2nades-traj-group active">
-                            <circle
-                              cx={l.standX}
-                              cy={l.standY}
-                              r="2.6"
-                              fill={color}
-                              stroke="#ffffff"
-                              strokeWidth="1"
-                            />
-                            <circle
-                              cx={l.standX}
-                              cy={l.standY}
-                              r="4.8"
-                              fill="none"
-                              stroke={color}
-                              strokeWidth="0.8"
-                              className="cs2nades-stand-pulse"
-                            />
-                            <text
-                              x={l.standX}
-                              y={l.standY - 3}
-                              textAnchor="middle"
-                              fill={color}
-                              fontSize="2.4"
-                              fontWeight="bold"
-                            >
-                              {l.fromCallout || "STAND"}
-                            </text>
-                            <line
-                              x1={l.standX}
-                              y1={l.standY}
-                              x2={l.landX}
-                              y2={l.landY}
-                              stroke={color}
-                              strokeWidth="2.2"
-                              strokeDasharray="4,3"
-                              className="cs2nades-traj-active"
-                              markerEnd={`url(#${markerId})`}
-                            />
-                          </g>
-                        );
-                      })}
+              {/* Interactive Radar Stage Viewport */}
+              <div
+                className="csnades-radar-canvas-viewport"
+                style={{
+                  transform: `scale(${radarZoom})`,
+                  transformOrigin: "center center",
+                }}
+              >
+                {/* Guaranteed Visible Grey/Tan Architectural CS2 Radar Layer */}
+                <div className={`csnades-radar-floor-layer ${isSimpleRadar ? "simpleradar" : ""}`}>
+                  {/* Fallback Grey/Tan Architectural SVG Base */}
+                  <svg className="csnades-arch-base-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <rect width="100" height="100" fill="#1b1e24" />
+                    {/* CS2 Walkways & Corridors */}
+                    <path d="M 18 36 L 42 36 L 42 62 L 18 62 Z" fill="#363c48" stroke="#48505e" strokeWidth="0.8" />
+                    <path d="M 38 45 L 68 45 L 68 58 L 38 58 Z" fill="#3b424f" stroke="#48505e" strokeWidth="0.8" />
+                    <path d="M 54 32 L 78 32 L 78 72 L 54 72 Z" fill="#363c48" stroke="#48505e" strokeWidth="0.8" />
+                    <path d="M 28 65 L 52 65 L 52 92 L 28 92 Z" fill="#2d323c" stroke="#444b57" strokeWidth="0.8" />
+                    {/* Bombsite A Marker */}
+                    <circle cx="62" cy="52" r="5.5" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" strokeWidth="1.2" />
+                    <text x="62" y="54" textAnchor="middle" fill="#ef4444" fontSize="5.5" fontWeight="bold">A</text>
+                    {/* Bombsite B Marker */}
+                    <circle cx="25" cy="46" r="5.5" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" strokeWidth="1.2" />
+                    <text x="25" y="48" textAnchor="middle" fill="#ef4444" fontSize="5.5" fontWeight="bold">B</text>
                   </svg>
 
-                  {/* RADAR TARGET PINS (Clustered Landing Spots) */}
-                  {targetClusters.map((cluster) => {
-                    const isSelected = selectedTargetCallout === cluster.toCallout;
-                    const color = utilityColors[cluster.utilityType] ?? "#f59e0b";
-                    const iconName: IconName =
-                      cluster.utilityType === "SMOKE"
-                        ? "smoke"
-                        : cluster.utilityType === "FLASH"
-                          ? "flash"
-                          : cluster.utilityType === "MOLOTOV"
-                            ? "molotov"
-                            : "he";
+                  {/* Real Official csnades.gg Radar Image */}
+                  <img
+                    src={`/maps/de_${cleanMap}.png`}
+                    alt={`${cleanMap} radar`}
+                    className="csnades-authentic-map-img"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      if (!target.src.endsWith('.webp')) {
+                        target.src = `/maps/de_${cleanMap}.webp`;
+                      }
+                    }}
+                  />
+                </div>
 
-                    return (
-                      <button
-                        key={`target-${cluster.toCallout}`}
-                        type="button"
-                        className={`cs2nades-map-pin cluster ${isSelected ? "active" : ""}`}
-                        style={{
-                          left: `${cluster.landX}%`,
-                          top: `${cluster.landY}%`,
-                          borderColor: color,
-                          color: isSelected ? "#0b0e0c" : color,
-                          backgroundColor: isSelected ? color : "rgba(11, 14, 12, 0.9)",
-                          boxShadow: isSelected ? `0 0 18px ${color}` : undefined,
-                        }}
-                        onClick={() => {
-                          setSelectedTargetCallout(isSelected ? null : cluster.toCallout);
-                          setSelectedRadarLineupId(null);
-                        }}
-                        title={`Target: ${cluster.toCallout} (${cluster.count} lineup${cluster.count === 1 ? "" : "s"})`}
-                      >
-                        <Icon name={iconName} size={15} />
-                        {cluster.count > 1 && (
-                          <span className="cs2nades-cluster-count-badge">{cluster.count}</span>
-                        )}
-                      </button>
-                    );
-                  })}
+                {/* CS2 Map Callout Text Labels (Toggled by [📍 Enable callouts]) */}
+                {showCallouts &&
+                  (MAP_CALLOUTS[cleanMap] || []).map((c) => (
+                    <div
+                      key={c.name}
+                      className="csnades-callout-label-chip"
+                      style={{ left: `${c.x}%`, top: `${c.y}%` }}
+                    >
+                      {c.name}
+                    </div>
+                  ))}
 
-                  {/* FAN-OUT THROW ORIGIN PINS (Shown when a target cluster is selected) */}
+                {/* Trajectory SVG Layer */}
+                <svg className="csnades-radar-traj-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <defs>
+                    <marker id="csnades-arrow-smoke" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                      <path d="M 0 0 L 6 3 L 0 6 Z" fill="#ffeba6" />
+                    </marker>
+                    <marker id="csnades-arrow-molo" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                      <path d="M 0 0 L 6 3 L 0 6 Z" fill="#f97316" />
+                    </marker>
+                    <marker id="csnades-arrow-flash" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                      <path d="M 0 0 L 6 3 L 0 6 Z" fill="#facc15" />
+                    </marker>
+                  </defs>
+
+                  {/* Fan-Out Trajectories for Selected Cloud Pin */}
                   {activeTargetCluster &&
                     activeTargetCluster.lineups.map((l) => {
                       const isHovered = hoveredRadarLineupId === l.id;
+                      const color = l.utilityType === "MOLOTOV" ? "#f97316" : (l.utilityType === "FLASH" ? "#facc15" : "#ffeba6");
                       return (
-                        <button
-                          key={`origin-${l.id}`}
-                          type="button"
-                          className={`cs2nades-origin-pin ${isHovered ? "hovered" : ""}`}
-                          style={{
-                            left: `${l.standX}%`,
-                            top: `${l.standY}%`,
-                          }}
-                          onMouseEnter={() => setHoveredRadarLineupId(l.id)}
-                          onMouseLeave={() => setHoveredRadarLineupId(null)}
-                          onClick={() => setSelectedDetailLineup(l)}
-                          title={`Throw from ${l.fromCallout || "Stand"} (${l.technique || l.throwType}) - Click to inspect detail`}
-                        >
-                          <Icon name="crosshair" size={11} />
-                          <span className="cs2nades-origin-label">{l.fromCallout || "Stand"}</span>
-                        </button>
+                        <g key={`fan-${l.id}`} className={`csnades-traj-group active ${isHovered ? "hovered" : ""}`}>
+                          <circle
+                            cx={l.standX}
+                            cy={l.standY}
+                            r="2.2"
+                            fill={color}
+                            stroke="#ffffff"
+                            strokeWidth="0.8"
+                          />
+                          <circle
+                            cx={l.standX}
+                            cy={l.standY}
+                            r="4.8"
+                            fill="none"
+                            stroke={color}
+                            strokeWidth="0.8"
+                            className="csnades-stand-pulse"
+                          />
+                          <line
+                            x1={l.standX}
+                            y1={l.standY}
+                            x2={activeTargetCluster.landX}
+                            y2={activeTargetCluster.landY}
+                            stroke={color}
+                            strokeWidth={isHovered ? "2.6" : "1.8"}
+                            strokeDasharray="4,3"
+                            className="csnades-traj-active"
+                            markerEnd="url(#csnades-arrow-smoke)"
+                          />
+                        </g>
                       );
                     })}
-                </div>
+                </svg>
 
-                {/* Selected Quick Shelf */}
-                {activeRadarLineup && (
-                  <div className="cs2nades-radar-selected-shelf">
-                    <div className="cs2nades-shelf-info">
-                      <div className="cs2nades-shelf-badges">
-                        <span
-                          className="strat-badge"
-                          style={{
-                            borderColor: utilityColors[activeRadarLineup.utilityType],
-                            color: utilityColors[activeRadarLineup.utilityType],
-                          }}
-                        >
-                          {activeRadarLineup.utilityType}
-                        </span>
-                        <span className="strat-throw-badge">{activeRadarLineup.throwType}</span>
-                        <span className="strat-badge team">{activeRadarLineup.teamSide} SIDE</span>
-                        {(activeRadarLineup.isVerified || activeRadarLineup.isPro) && (
-                          <span className="strat-badge-verified">✓ PRO VERIFIED</span>
-                        )}
-                      </div>
-                      <strong className="cs2nades-shelf-title">
-                        {activeRadarLineup.fromCallout && activeRadarLineup.toCallout
-                          ? `${activeRadarLineup.fromCallout} → ${activeRadarLineup.toCallout}`
-                          : formatRouteTitle(activeRadarLineup.title)}
-                      </strong>
-                      <small className="cs2nades-shelf-sub">
-                        Stand ({activeRadarLineup.standX}, {activeRadarLineup.standY}) → Land (
-                        {activeRadarLineup.landX}, {activeRadarLineup.landY})
-                        {activeRadarLineup.description ? ` · ${activeRadarLineup.description}` : ""}
-                      </small>
-                    </div>
-                    <div className="cs2nades-shelf-actions">
-                      <button
-                        type="button"
-                        className="strat-video-action-btn"
-                        onClick={() => setSelectedDetailLineup(activeRadarLineup)}
-                      >
-                        🔍 INSPECT DETAIL
-                      </button>
-                      <button
-                        type="button"
-                        className="strat-place-action-btn"
-                        onClick={() => placeLineup(activeRadarLineup)}
-                      >
-                        + Place on Board
-                      </button>
-                      {selectedTargetCallout && (
-                        <button
-                          type="button"
-                          className="strat-radar-close-btn"
-                          onClick={() => {
-                            setSelectedTargetCallout(null);
-                            setSelectedRadarLineupId(null);
-                          }}
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+                {/* SCALLOPED PUFFY SMOKE CLOUD PINS (Signature csnades.gg Pins) */}
+                {targetClusters.map((cluster) => {
+                  const isSelected = selectedTargetCallout === cluster.toCallout;
+                  const isSmoke = cluster.utilityType === "SMOKE";
+                  const isMolo = cluster.utilityType === "MOLOTOV";
+                  const isFlash = cluster.utilityType === "FLASH";
 
-            {/* RIGHT COLUMN: LINEUP CARDS STACK */}
-            <div className="cs2nades-list-col">
-              {/* TARGET CLUSTER FILTER BANNER */}
-              {selectedTargetCallout && (
-                <div className="cs2nades-cluster-filter-banner">
-                  <div>
-                    <span className="cs2nades-cfb-tag">TARGET CALLOUT</span>{" "}
-                    <strong>{selectedTargetCallout}</strong>
-                    <span className="cs2nades-cfb-count">
-                      {" "}· {displayedLineups.length} setup{displayedLineups.length === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="cs2nades-cfb-clear"
-                    onClick={() => setSelectedTargetCallout(null)}
-                  >
-                    ✕ View All Targets
-                  </button>
-                </div>
-              )}
+                  let fillColor = cluster.teamSide === "CT" ? "#B8D4F2" : "#FFEBA6";
+                  let strokeColor = cluster.teamSide === "CT" ? "#7AA7D8" : "#E2CE82";
+                  if (isMolo) {
+                    fillColor = "#FED7AA";
+                    strokeColor = "#F97316";
+                  } else if (isFlash) {
+                    fillColor = "#FEF08A";
+                    strokeColor = "#EAB308";
+                  } else if (!isSmoke) {
+                    fillColor = "#FECACA";
+                    strokeColor = "#EF4444";
+                  }
 
-              {/* EDITOR'S CHOICE SECTION */}
-              {editorsChoice.length > 0 && !selectedTargetCallout && (
-                <div className="cs2nades-section">
-                  <div className="cs2nades-section-header">
-                    <span className="cs2nades-section-title">
-                      ★ EDITOR'S CHOICE
-                    </span>
-                    <span className="cs2nades-section-sub">
-                      Iconic verified lineups curated for {cleanMap.toUpperCase()}
-                    </span>
-                  </div>
-
-                  <div className="cs2nades-cards-stack">
-                    {editorsChoice.map((l) => (
-                      <article
-                        key={l.id}
-                        className={`cs2nades-lineup-card ${
-                          (selectedRadarLineupId === l.id || hoveredRadarLineupId === l.id) ? "active" : ""
-                        }`}
-                        onMouseEnter={() => setHoveredRadarLineupId(l.id)}
-                        onMouseLeave={() => setHoveredRadarLineupId(null)}
-                      >
-                        <LineupDualThumbnail
-                          lineup={l}
-                          mapName={mapName}
-                          onClick={() => setSelectedDetailLineup(l)}
-                        />
-                        <div className="cs2nades-card-details">
-                          <div className="cs2nades-card-top-row">
-                            <h4 className="cs2nades-card-title">
-                              {l.fromCallout && l.toCallout
-                                ? `${l.fromCallout} → ${l.toCallout}`
-                                : formatRouteTitle(l.title)}
-                            </h4>
-                            <span className="cs2nades-throw-tag">{l.technique || l.throwType}</span>
-                          </div>
-                          <p className="cs2nades-card-desc">{l.description || l.title}</p>
-                          <div className="cs2nades-card-meta">
-                            <span className="cs2nades-meta-chip">
-                              Stand ({l.standX}, {l.standY}) → Land ({l.landX}, {l.landY})
-                            </span>
-                            {(l.isVerified || l.isPro) && (
-                              <span className="cs2nades-verified-chip">✓ PRO VERIFIED</span>
-                            )}
-                            {l.viewsCount && (
-                              <span className="cs2nades-meta-chip">
-                                👁 {l.viewsCount.toLocaleString()}
-                              </span>
-                            )}
-                          </div>
-                          <div className="cs2nades-card-actions">
-                            <button
-                              type="button"
-                              className="strat-video-action-btn"
-                              onClick={() => setSelectedDetailLineup(l)}
-                            >
-                              🔍 INSPECT LINEUP
-                            </button>
-                            <button
-                              type="button"
-                              className="strat-place-action-btn"
-                              onClick={() => placeLineup(l)}
-                            >
-                              + PLACE ON BOARD
-                            </button>
-                            {token && l.createdByUserId === user?.id && (
-                              <button
-                                type="button"
-                                className="strat-delete-btn"
-                                onClick={() => removeLineup(l.id)}
-                              >
-                                DELETE
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* POPULAR LINEUPS SECTION */}
-              <div className="cs2nades-section">
-                <div className="cs2nades-section-header">
-                  <span className="cs2nades-section-title">
-                    {selectedTargetCallout
-                      ? `LINEUPS FOR ${selectedTargetCallout.toUpperCase()}`
-                      : "ALL LINEUPS"}
-                  </span>
-                  <span className="cs2nades-section-sub">
-                    {displayedLineups.length} tactical utility setups on {cleanMap.toUpperCase()}
-                  </span>
-                </div>
-
-                {displayedLineups.length === 0 ? (
-                  <div className="cs2nades-empty-box">
-                    <p>No lineups found matching this filter criteria.</p>
+                  return (
                     <button
+                      key={`cluster-${cluster.toCallout}`}
                       type="button"
-                      onClick={() => {
-                        setLineupUtility("ALL");
-                        setLineupSideFilter("ALL");
-                        setSelectedTargetCallout(null);
-                        setSearchQuery("");
+                      className={`csnades-cloud-pin-btn ${isSelected ? "selected" : ""}`}
+                      style={{
+                        left: `${cluster.landX}%`,
+                        top: `${cluster.landY}%`,
                       }}
+                      onClick={() => setSelectedTargetCallout(isSelected ? null : cluster.toCallout)}
+                      title={`Target: ${cluster.toCallout} (${cluster.count} setups)`}
                     >
-                      Reset All Filters
-                    </button>
-                  </div>
-                ) : (
-                  <div className="cs2nades-cards-stack">
-                    {displayedLineups.map((l) => (
-                      <article
-                        key={l.id}
-                        className={`cs2nades-lineup-card ${
-                          (selectedRadarLineupId === l.id || hoveredRadarLineupId === l.id) ? "active" : ""
-                        }`}
-                        onMouseEnter={() => setHoveredRadarLineupId(l.id)}
-                        onMouseLeave={() => setHoveredRadarLineupId(null)}
+                      <svg
+                        viewBox="0 0 101 100"
+                        className="csnades-cloud-pin-svg"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
-                        <LineupDualThumbnail
-                          lineup={l}
-                          mapName={mapName}
-                          onClick={() => setSelectedDetailLineup(l)}
+                        <path
+                          d="M50.0859 0C56.9811 0 65.1892 9.25689 65.1892 9.25689C65.1892 9.25689 77.3554 7.5062 82.6374 11.9925C87.9195 16.4788 88.3288 28.9105 88.3288 28.9105C88.3288 28.9105 98.7604 35.4852 99.9577 42.3585C101.155 49.2319 93.5741 59.0215 93.5741 59.0215C93.5741 59.0215 97.39 70.8452 93.9424 76.8895C90.4948 82.9339 78.4708 85.5007 78.4708 85.5007C78.4708 85.5007 73.8856 97.041 67.4062 99.4281C60.9269 101.815 50.0859 95.9581 50.0859 95.9581C50.0859 95.9581 39.245 101.815 32.7657 99.4281C26.2863 97.0409 21.7011 85.5007 21.7011 85.5007C21.7011 85.5007 9.67706 82.9339 6.22946 76.8895C2.78186 70.8452 6.59778 59.0215 6.59778 59.0215C6.59778 59.0215 -0.983148 49.2319 0.21419 42.3585C1.41153 35.4852 11.8431 28.9105 11.8431 28.9105C11.8431 28.9105 12.2524 16.4788 17.5345 11.9925C22.8165 7.5062 34.9827 9.25689 34.9827 9.25689C34.9827 9.25689 43.1907 0 50.0859 0Z"
+                          fill={fillColor}
+                          stroke={strokeColor}
+                          strokeWidth="3.2"
                         />
-                        <div className="cs2nades-card-details">
-                          <div className="cs2nades-card-top-row">
-                            <h4 className="cs2nades-card-title">
-                              {l.fromCallout && l.toCallout
-                                ? `${l.fromCallout} → ${l.toCallout}`
-                                : formatRouteTitle(l.title)}
-                            </h4>
-                            <span className="cs2nades-throw-tag">{l.technique || l.throwType}</span>
-                          </div>
-                          <p className="cs2nades-card-desc">{l.description || l.title}</p>
-                          <div className="cs2nades-card-meta">
-                            <span className="cs2nades-meta-chip">
-                              Stand ({l.standX}, {l.standY}) → Land ({l.landX}, {l.landY})
-                            </span>
-                            {(l.isVerified || l.isPro) && (
-                              <span className="cs2nades-verified-chip">✓ PRO VERIFIED</span>
-                            )}
-                            {l.viewsCount && (
-                              <span className="cs2nades-meta-chip">
-                                👁 {l.viewsCount.toLocaleString()}
-                              </span>
-                            )}
-                          </div>
-                          <div className="cs2nades-card-actions">
-                            <button
-                              type="button"
-                              className="strat-video-action-btn"
-                              onClick={() => setSelectedDetailLineup(l)}
-                            >
-                              🔍 INSPECT LINEUP
-                            </button>
-                            <button
-                              type="button"
-                              className="strat-place-action-btn"
-                              onClick={() => placeLineup(l)}
-                            >
-                              + PLACE ON BOARD
-                            </button>
-                            {token && l.createdByUserId === user?.id && (
-                              <button
-                                type="button"
-                                className="strat-delete-btn"
-                                onClick={() => removeLineup(l.id)}
-                              >
-                                DELETE
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
+                        <text
+                          x="50.5"
+                          y="54"
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize="36"
+                          fontWeight="900"
+                          fill="#181a1f"
+                        >
+                          {cluster.count}
+                        </text>
+                      </svg>
+                    </button>
+                  );
+                })}
+
+                {/* FAN-OUT THROW ORIGIN PINS (Shown when a cloud pin is clicked) */}
+                {activeTargetCluster &&
+                  activeTargetCluster.lineups.map((l) => (
+                    <button
+                      key={`origin-${l.id}`}
+                      type="button"
+                      className="csnades-fan-origin-dot"
+                      style={{
+                        left: `${l.standX}%`,
+                        top: `${l.standY}%`,
+                      }}
+                      onMouseEnter={() => setHoveredRadarLineupId(l.id)}
+                      onMouseLeave={() => setHoveredRadarLineupId(null)}
+                      onClick={() => setSelectedDetailLineup(l)}
+                      title={`Throw from ${l.fromCallout || "Stand"} (${l.technique || l.throwType})`}
+                    >
+                      <span className="origin-dot-core" />
+                      <span className="origin-dot-callout">{l.fromCallout || "Stand"}</span>
+                    </button>
+                  ))}
               </div>
             </div>
-          </div>
-        </section>
-      )}
+          </main>
 
-      {/* TACTICS TAB */}
+          {/* 3. SLIDE-OVER LINEUP PREVIEW DRAWER (Opens when a cloud pin is clicked) */}
+          {selectedTargetCallout && activeTargetCluster && (
+            <aside className="csnades-preview-drawer">
+              <div className="csnades-drawer-header">
+                <div className="csnades-drawer-title-group">
+                  <div className="csnades-drawer-badge-row">
+                    <span className="csnades-drawer-type-pill">
+                      {activeTargetCluster.utilityType}
+                    </span>
+                    <span className="csnades-drawer-team-pill">
+                      {activeTargetCluster.teamSide} SIDE
+                    </span>
+                  </div>
+                  <h3 className="csnades-drawer-heading">
+                    Target: {selectedTargetCallout}
+                  </h3>
+                  <span className="csnades-drawer-count">
+                    {activeTargetCluster.lineups.length} verified setups available
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="csnades-drawer-close-btn"
+                  onClick={() => setSelectedTargetCallout(null)}
+                  title="Close preview drawer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="csnades-drawer-cards-stack">
+                {activeTargetCluster.lineups.map((lineup) => {
+                  const ytMatch = (lineup.videoUrl || "").match(/watch\?v=([a-zA-Z0-9_-]+)/);
+                  const ytId = ytMatch ? ytMatch[1] : null;
+                  const thumbUrl = ytId
+                    ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`
+                    : `/maps/de_${cleanMap}.png`;
+
+                  return (
+                    <article key={lineup.id} className="csnades-drawer-card">
+                      <div
+                        className="csnades-card-thumb-wrap"
+                        onClick={() => setSelectedDetailLineup(lineup)}
+                      >
+                        <img
+                          src={thumbUrl}
+                          alt={lineup.title}
+                          className="csnades-card-thumb-img"
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = `/maps/de_${cleanMap}.png`;
+                          }}
+                        />
+                        <span className="csnades-play-overlay">▶ Watch Guide</span>
+                        <span className="csnades-tech-badge">{lineup.technique || lineup.throwType}</span>
+                      </div>
+
+                      <div className="csnades-card-info">
+                        <h4 className="csnades-card-route-title">
+                          {lineup.fromCallout} → {lineup.toCallout}
+                        </h4>
+
+                        <div className="csnades-card-tags">
+                          <span className="csnades-tag-key">[SPACE] Jumpthrow</span>
+                          <span className="csnades-tag-neutral">{lineup.movement || "Stationary"}</span>
+                          <span className="csnades-tag-pro">★ PRO</span>
+                        </div>
+
+                        <p className="csnades-card-description">{lineup.description}</p>
+
+                        <div className="csnades-card-actions-row">
+                          <button
+                            type="button"
+                            className="csnades-btn-view"
+                            onClick={() => setSelectedDetailLineup(lineup)}
+                          >
+                            🔍 Step-by-Step
+                          </button>
+                          <button
+                            type="button"
+                            className="csnades-btn-setpos"
+                            onClick={() => {
+                              navigator.clipboard.writeText(lineup.setposCommand || "setpos 0 0 0");
+                              notify("Copied setpos console command!");
+                            }}
+                            title="Copy CS2 setpos command"
+                          >
+                            📋 setpos
+                          </button>
+                          <button
+                            type="button"
+                            className="csnades-btn-pin"
+                            onClick={() => {
+                              placeLineup(lineup);
+                              notify(`Pinned ${lineup.title} to Tactical Whiteboard`);
+                            }}
+                            title="Place on Whiteboard"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </aside>
+          )}
+        </section>
+      )}{/* TACTICS TAB */}
       {tab === "tactics" && (
         <section className="strat-list">
           <div className="panel-title">
