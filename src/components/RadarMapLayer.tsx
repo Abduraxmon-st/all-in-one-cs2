@@ -1,56 +1,58 @@
 import { useState, useEffect, type FC } from "react";
-import RadarBlueprint from "./RadarBlueprint";
+import { getRadarSources } from "../features/stratboard/radarMapUrls";
 
 interface Props {
   mapName: string;
+  className?: string;
 }
 
-export const RadarMapLayer: FC<Props> = ({ mapName }) => {
-  const normMap = `de_${(mapName || "").toLowerCase().replace(/^de_/, "")}`;
-  const [tier, setTier] = useState<1 | 2 | 3>(1);
-  const [imgLoaded, setImgLoaded] = useState(false);
+/**
+ * Renders the REAL official CS2 radar map image with bulletproof multi-source
+ * fallback. NO fake SVG blueprints — ever.
+ *
+ * Fallback chain:
+ *   1. /maps/de_{map}.webp  (committed to public/maps/)
+ *   2. /maps/de_{map}.png   (committed to public/maps/)
+ *   3. Official csnades.gg CDN webp (100% verified HTTP 200)
+ */
+export const RadarMapLayer: FC<Props> = ({ mapName, className }) => {
+  const sources = getRadarSources(mapName);
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setTier(1);
-    setImgLoaded(false);
-  }, [normMap]);
+    setSourceIndex(0);
+    setLoaded(false);
+  }, [mapName]);
 
-  const localSrc = `/maps/${normMap}.png`;
-  const cdnSrc = `https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/maps/${normMap}.png`;
+  const currentSource = sources[Math.min(sourceIndex, sources.length - 1)];
+  const cleanMap = (mapName || "mirage").toLowerCase().replace(/^de_/, "");
 
   return (
-    <div className="strat-radar-map-layer">
-      {/* SVG Blueprint is always active as base vector blueprint */}
-      <RadarBlueprint mapName={normMap} />
-
-      {tier === 1 && (
-        <img
-          key={`tier1-${normMap}`}
-          src={localSrc}
-          alt={normMap}
-          className={`strat-radar-map-image ${imgLoaded ? "loaded" : "loading"}`}
-          onLoad={() => setImgLoaded(true)}
-          onError={() => {
-            setTier(2);
-            setImgLoaded(false);
-          }}
-        />
-      )}
-
-      {tier === 2 && (
-        <img
-          key={`tier2-${normMap}`}
-          src={cdnSrc}
-          alt={normMap}
-          className={`strat-radar-map-image ${imgLoaded ? "loaded" : "loading"}`}
-          onLoad={() => setImgLoaded(true)}
-          onError={() => {
-            setTier(3);
-            setImgLoaded(false);
-          }}
-        />
-      )}
-    </div>
+    <img
+      key={`radar-${cleanMap}-${sourceIndex}`}
+      src={currentSource.url}
+      alt={`${cleanMap} radar`}
+      className={`strat-radar-map-image csnades-authentic-map-img ${loaded ? "loaded" : "loading"} ${className || ""}`}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        objectFit: "contain",
+        zIndex: 1,
+        opacity: 1,
+        display: "block",
+        pointerEvents: "none",
+      }}
+      onLoad={() => setLoaded(true)}
+      onError={() => {
+        if (sourceIndex < sources.length - 1) {
+          console.warn(`Radar map load failed for ${currentSource.url}, falling back to ${sources[sourceIndex + 1].url}`);
+          setSourceIndex((i) => i + 1);
+        }
+      }}
+    />
   );
 };
 

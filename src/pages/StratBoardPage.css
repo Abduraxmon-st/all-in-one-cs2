@@ -586,8 +586,10 @@
   opacity: 1 !important;
 }
 .strat-radar-map-image.loaded {
-  opacity: 0.85 !important;
-  filter: contrast(1.12) brightness(1.08) !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
+  object-fit: contain !important;
+  filter: contrast(1.08) brightness(1.05) !important;
 }
 .strat-radar-grid-overlay {
   opacity: 0.12 !important;

@@ -27,10 +27,10 @@ import type {
   UtilityLineup,
   UtilityType,
 } from "../features/stratboard/types";
+import { getRadarSources } from "../features/stratboard/radarMapUrls";
 import { fallbackLineups } from "../features/stratboard/fallbackLineups";
 import ClipPlayer from "../components/ClipPlayer";
 import Icon, { type IconName } from "../components/Icon";
-import RadarBlueprint from "../components/RadarBlueprint";
 import LineupDualThumbnail from "../components/LineupDualThumbnail";
 import RadarMapLayer from "../components/RadarMapLayer";
 import LineupDetailModal from "../components/LineupDetailModal";
@@ -823,7 +823,7 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
       <div className="page-intro">
         <div>
           <p className="eyebrow">LIVE TACTICAL ROOMS & CSNADES DATABASE</p>
-          <h2>Strat Board & Radar Blueprints</h2>
+          <h2>Strat Board</h2>
           <p>
             Create a live tactical room, draw architectural routes with teammates, inspect high-contrast radar maps, and browse verified CS2 utility lineups.
           </p>
@@ -1038,12 +1038,8 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
               onMouseMove={moveCursor}
               role="presentation"
             >
-              {/* Permanent High-Contrast Architectural Radar Blueprint */}
-              <RadarBlueprint mapName={mapName} />
               <RadarMapLayer mapName={mapName} />
-              <div className="strat-radar-grid-overlay" />
-              <span className="strat-site a">A</span>
-              <span className="strat-site b">B</span>
+              
 
               {/* Interactive csnades.gg Trajectory on Whiteboard */}
               {showBoardNades && (
@@ -1671,34 +1667,9 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
               >
                 {/* Guaranteed Visible Grey/Tan Architectural CS2 Radar Layer */}
                 <div className={`csnades-radar-floor-layer ${isSimpleRadar ? "simpleradar" : ""}`}>
-                  {/* Fallback Grey/Tan Architectural SVG Base */}
-                  <svg className="csnades-arch-base-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <rect width="100" height="100" fill="#1b1e24" />
-                    {/* CS2 Walkways & Corridors */}
-                    <path d="M 18 36 L 42 36 L 42 62 L 18 62 Z" fill="#363c48" stroke="#48505e" strokeWidth="0.8" />
-                    <path d="M 38 45 L 68 45 L 68 58 L 38 58 Z" fill="#3b424f" stroke="#48505e" strokeWidth="0.8" />
-                    <path d="M 54 32 L 78 32 L 78 72 L 54 72 Z" fill="#363c48" stroke="#48505e" strokeWidth="0.8" />
-                    <path d="M 28 65 L 52 65 L 52 92 L 28 92 Z" fill="#2d323c" stroke="#444b57" strokeWidth="0.8" />
-                    {/* Bombsite A Marker */}
-                    <circle cx="62" cy="52" r="5.5" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" strokeWidth="1.2" />
-                    <text x="62" y="54" textAnchor="middle" fill="#ef4444" fontSize="5.5" fontWeight="bold">A</text>
-                    {/* Bombsite B Marker */}
-                    <circle cx="25" cy="46" r="5.5" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" strokeWidth="1.2" />
-                    <text x="25" y="48" textAnchor="middle" fill="#ef4444" fontSize="5.5" fontWeight="bold">B</text>
-                  </svg>
 
-                  {/* Real Official csnades.gg Radar Image */}
-                  <img
-                    src={`/maps/de_${cleanMap}.png`}
-                    alt={`${cleanMap} radar`}
-                    className="csnades-authentic-map-img"
-                    onError={(e) => {
-                      const target = e.currentTarget as HTMLImageElement;
-                      if (!target.src.endsWith('.webp')) {
-                        target.src = `/maps/de_${cleanMap}.webp`;
-                      }
-                    }}
-                  />
+                  {/* Real Official CS2 Radar Image (multi-source fallback) */}
+                  <RadarMapLayer mapName={mapName} />
                 </div>
 
                 {/* CS2 Map Callout Text Labels (Toggled by [📍 Enable callouts]) */}
