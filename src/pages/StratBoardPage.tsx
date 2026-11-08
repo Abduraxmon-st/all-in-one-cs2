@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { useAuth } from "../features/identity/AuthProvider";
 import {
   createRoom,
@@ -33,6 +33,7 @@ import Icon, { type IconName } from "../components/Icon";
 import RadarBlueprint from "../components/RadarBlueprint";
 import LineupDualThumbnail from "../components/LineupDualThumbnail";
 import RadarMapLayer from "../components/RadarMapLayer";
+import LineupDetailModal from "../components/LineupDetailModal";
 import { navigate, routeHref } from "../routes";
 import "./StratBoardPage.css";
 
@@ -181,6 +182,11 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
   // Board tab interactive csnades.gg nade pins & trajectory lines
   const [showBoardNades, setShowBoardNades] = useState(true);
   const [activeBoardLineupId, setActiveBoardLineupId] = useState<string | null>(null);
+
+  // CSNADES Target Clustering & Search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTargetCallout, setSelectedTargetCallout] = useState<string | null>(null);
+  const [selectedDetailLineup, setSelectedDetailLineup] = useState<UtilityLineup | null>(null);
 
   // Tactics
   const [tactics, setTactics] = useState<TacticSummary[]>([]);
@@ -428,6 +434,9 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
     setTeamSide(nextSide);
     setArrowStart(null);
     setTacticPage(0);
+    setSelectedTargetCallout(null);
+    setSelectedRadarLineupId(null);
+    setHoveredRadarLineupId(null);
     setSelectedRadarLineupId(null);
     setHoveredRadarLineupId(null);
     setActiveBoardLineupId(null);
@@ -608,19 +617,86 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
     notify(`Pinned "${lineup.title}" to whiteboard`);
   }
 
-  const filteredLineups = lineups.filter((l) => {
-    if (lineupSideFilter === "T" && l.teamSide !== "T") return false;
-    if (lineupSideFilter === "CT" && l.teamSide !== "CT") return false;
-    if (lineupSideFilter === "PRO" && !l.isVerified) return false;
-    if (lineupUtility !== "ALL" && l.utilityType !== lineupUtility) return false;
-    return true;
-  });
+  // Map lineup counts across all maps
+  const mapLineupCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const l of fallbackLineups) {
+      const clean = l.mapName.toLowerCase().replace(/^de_/, "");
+      counts[clean] = (counts[clean] || 0) + 1;
+    }
+    return counts;
+  }, []);
 
-  const editorsChoice = filteredLineups.slice(0, 3);
-  const popularLineups = filteredLineups.slice(3);
+  const filteredLineups = useMemo(() => {
+    return lineups.filter((l) => {
+      if (lineupSideFilter === "T" && l.teamSide !== "T") return false;
+      if (lineupSideFilter === "CT" && l.teamSide !== "CT") return false;
+      if (lineupSideFilter === "PRO" && !l.isVerified && !l.isPro) return false;
+      if (lineupUtility !== "ALL" && l.utilityType !== lineupUtility) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchTitle = (l.title || "").toLowerCase().includes(q);
+        const matchTo = (l.toCallout || "").toLowerCase().includes(q);
+        const matchFrom = (l.fromCallout || "").toLowerCase().includes(q);
+        const matchDesc = (l.description || "").toLowerCase().includes(q);
+        if (!matchTitle && !matchTo && !matchFrom && !matchDesc) return false;
+      }
+      return true;
+    });
+  }, [lineups, lineupSideFilter, lineupUtility, searchQuery]);
+
+  // Target Pin Clustering
+  interface TargetCluster {
+    toCallout: string;
+    landX: number;
+    landY: number;
+    utilityType: UtilityType;
+    teamSide: TeamSide;
+    count: number;
+    lineups: UtilityLineup[];
+  }
+
+  const targetClusters = useMemo(() => {
+    const map = new Map<string, UtilityLineup[]>();
+    for (const l of filteredLineups) {
+      const key = l.toCallout || l.title || `${l.landX.toFixed(1)},${l.landY.toFixed(1)}`;
+      const list = map.get(key) || [];
+      list.push(l);
+      map.set(key, list);
+    }
+    const clusters: TargetCluster[] = [];
+    map.forEach((clusterLineups, key) => {
+      const first = clusterLineups[0];
+      clusters.push({
+        toCallout: key,
+        landX: first.landX,
+        landY: first.landY,
+        utilityType: first.utilityType,
+        teamSide: first.teamSide,
+        count: clusterLineups.length,
+        lineups: clusterLineups,
+      });
+    });
+    return clusters;
+  }, [filteredLineups]);
+
+  const activeTargetCluster = useMemo(() => {
+    if (!selectedTargetCallout) return null;
+    return targetClusters.find((c) => c.toCallout === selectedTargetCallout) || null;
+  }, [targetClusters, selectedTargetCallout]);
+
+  const displayedLineups = useMemo(() => {
+    if (!selectedTargetCallout) return filteredLineups;
+    return filteredLineups.filter(
+      (l) => (l.toCallout || l.title || `${l.landX.toFixed(1)},${l.landY.toFixed(1)}`) === selectedTargetCallout
+    );
+  }, [filteredLineups, selectedTargetCallout]);
+
+  const editorsChoice = displayedLineups.slice(0, 3);
+  const popularLineups = displayedLineups.slice(3);
   const activeRadarLineup =
-    filteredLineups.find((l) => l.id === (hoveredRadarLineupId ?? selectedRadarLineupId)) ??
-    filteredLineups[0] ??
+    displayedLineups.find((l) => l.id === (hoveredRadarLineupId ?? selectedRadarLineupId)) ??
+    displayedLineups[0] ??
     null;
   const activeBoardLineup = lineups.find((l) => l.id === activeBoardLineupId) ?? null;
 
@@ -1167,42 +1243,70 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
         </>
       )}
 
-      {/* LINEUPS TAB (CS2NADES 2-COLUMN LAYOUT) */}
+      {/* LINEUPS TAB (CS2NADES 2-COLUMN LAYOUT WITH TARGET CLUSTERING) */}
       {tab === "lineups" && (
         <section className="cs2nades-container">
-          {/* TOP HEADER: CS2NADES Badge + < MIRAGE ⌄ Dropdown + Stats + Submit */}
+          {/* TOP HEADER: Map Pills Switcher + Search + Submit */}
           <div className="cs2nades-top-header">
             <div className="cs2nades-brand-wrap">
               <div className="cs2nades-brand-badge">
                 <span className="cs2nades-brand-title">CS2NADES</span>
                 <span className="cs2nades-brand-sub">PRO TACTICS</span>
               </div>
-              <div className="cs2nades-map-select-box">
-                <select
-                  aria-label="Select CS2 Map"
-                  className="cs2nades-map-select"
-                  value={mapName}
-                  onChange={(e) => setMapName(e.target.value)}
-                >
-                  {CS2_MAP_OPTIONS.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      &lt; {m.name} ⌄
-                    </option>
-                  ))}
-                </select>
+
+              {/* 9 MAP SELECTOR PILLS */}
+              <div className="cs2nades-map-pills-bar">
+                {CS2_MAP_OPTIONS.map((m) => {
+                  const clean = m.id.replace(/^de_/, "");
+                  const isCurrent = normalizeMap(mapName) === m.id;
+                  const count = mapLineupCounts[clean] || 0;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      className={`cs2nades-map-pill ${isCurrent ? "active" : ""}`}
+                      onClick={() => changeMap(m.id, teamSide)}
+                    >
+                      <span>{m.name}</span>
+                      <span className="cs2nades-pill-count">{count}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             <div className="cs2nades-header-meta">
+              {/* Callout Search Bar */}
+              <div className="cs2nades-search-box">
+                <Icon name="crosshair" size={14} />
+                <input
+                  type="text"
+                  placeholder="Search callouts (e.g. Window, Banana, CT)..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="cs2nades-search-clear"
+                    onClick={() => setSearchQuery("")}
+                    title="Clear search"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
               <span className="cs2nades-count-pill">
-                {filteredLineups.length} LINEUP{filteredLineups.length === 1 ? "" : "S"} FOUND
+                {filteredLineups.length} LINEUP{filteredLineups.length === 1 ? "" : "S"}
               </span>
+
               <button
                 type="button"
                 className="cs2nades-submit-btn"
                 onClick={() => setShowLineupForm((v) => !v)}
               >
-                + SUBMIT LINEUP
+                + SUBMIT
               </button>
             </div>
           </div>
@@ -1290,7 +1394,10 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                           color: isActive ? item.color : undefined,
                           boxShadow: isActive ? `0 0 12px ${item.color}40` : undefined,
                         }}
-                        onClick={() => setLineupUtility(isActive ? "ALL" : item.type)}
+                        onClick={() => {
+                          setLineupUtility(isActive ? "ALL" : item.type);
+                          setSelectedTargetCallout(null);
+                        }}
                       >
                         {item.label}
                       </button>
@@ -1317,7 +1424,10 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                           borderColor: isActive ? side.color : undefined,
                           color: isActive ? side.color : undefined,
                         }}
-                        onClick={() => setLineupSideFilter(isActive ? "ALL" : side.key)}
+                        onClick={() => {
+                          setLineupSideFilter(isActive ? "ALL" : side.key);
+                          setSelectedTargetCallout(null);
+                        }}
                       >
                         {side.label}
                       </button>
@@ -1326,7 +1436,7 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                 </div>
               </div>
 
-              {/* Clean Radar Map Stage (Crisp /maps/*.png, NO dark green grid overlay) */}
+              {/* Clean Radar Map Stage */}
               <div className="cs2nades-radar-stage">
                 <div className="cs2nades-zoom-controls">
                   <button
@@ -1384,106 +1494,178 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                       </marker>
                     </defs>
 
-                    {filteredLineups.map((l) => {
-                      const isSelected = selectedRadarLineupId === l.id;
-                      const isHovered = hoveredRadarLineupId === l.id;
-                      const isActive = isSelected || isHovered;
-                      const color = utilityColors[l.utilityType] ?? "#f59e0b";
-                      const markerId = `nades-marker-${l.utilityType.toLowerCase()}`;
+                    {/* Scenario A: Selected Target Cluster with Fan-Out Trajectories */}
+                    {activeTargetCluster &&
+                      activeTargetCluster.lineups.map((l) => {
+                        const isHovered = hoveredRadarLineupId === l.id;
+                        const color = utilityColors[l.utilityType] ?? "#f59e0b";
+                        const markerId = `nades-marker-${l.utilityType.toLowerCase()}`;
 
-                      return (
-                        <g key={`traj-${l.id}`} className={`cs2nades-traj-group ${isActive ? "active" : ""}`}>
-                          {/* Stand Coordinate Dot */}
-                          <circle
-                            cx={l.standX}
-                            cy={l.standY}
-                            r={isActive ? "2.6" : "1.4"}
-                            fill={isActive ? color : "none"}
-                            stroke={color}
-                            strokeWidth={isActive ? "1" : "0.7"}
-                            opacity={isActive ? 1 : 0.55}
-                          />
-                          {isActive && (
-                            <>
-                              <circle
-                                cx={l.standX}
-                                cy={l.standY}
-                                r="4.8"
-                                fill="none"
-                                stroke={color}
-                                strokeWidth="0.8"
-                                className="cs2nades-stand-pulse"
-                              />
-                              <text
-                                x={l.standX}
-                                y={l.standY - 3}
-                                textAnchor="middle"
-                                fill={color}
-                                fontSize="2.4"
-                                fontWeight="bold"
-                              >
-                                STAND
-                              </text>
-                            </>
-                          )}
-                          {/* Trajectory Dashed Line */}
-                          <line
-                            x1={l.standX}
-                            y1={l.standY}
-                            x2={l.landX}
-                            y2={l.landY}
-                            stroke={color}
-                            strokeWidth={isActive ? "2.2" : "0.9"}
-                            strokeDasharray={isActive ? "4,3" : "2,2"}
-                            opacity={isActive ? 1 : 0.5}
-                            className={isActive ? "cs2nades-traj-active" : undefined}
-                            markerEnd={`url(#${markerId})`}
-                          />
-                        </g>
-                      );
-                    })}
+                        return (
+                          <g key={`cluster-traj-${l.id}`} className={`cs2nades-traj-group active ${isHovered ? "hovered" : ""}`}>
+                            <circle
+                              cx={l.standX}
+                              cy={l.standY}
+                              r="2.4"
+                              fill={color}
+                              stroke="#ffffff"
+                              strokeWidth="0.8"
+                            />
+                            <circle
+                              cx={l.standX}
+                              cy={l.standY}
+                              r="4.8"
+                              fill="none"
+                              stroke={color}
+                              strokeWidth="0.8"
+                              className="cs2nades-stand-pulse"
+                            />
+                            <text
+                              x={l.standX}
+                              y={l.standY - 3}
+                              textAnchor="middle"
+                              fill={color}
+                              fontSize="2.4"
+                              fontWeight="bold"
+                            >
+                              {l.fromCallout || "STAND"}
+                            </text>
+                            <line
+                              x1={l.standX}
+                              y1={l.standY}
+                              x2={activeTargetCluster.landX}
+                              y2={activeTargetCluster.landY}
+                              stroke={color}
+                              strokeWidth={isHovered ? "2.6" : "1.8"}
+                              strokeDasharray="4,3"
+                              className="cs2nades-traj-active"
+                              markerEnd={`url(#${markerId})`}
+                            />
+                          </g>
+                        );
+                      })}
+
+                    {/* Scenario B: Normal View with Individual Trajectories */}
+                    {!activeTargetCluster &&
+                      filteredLineups.map((l) => {
+                        const isSelected = selectedRadarLineupId === l.id;
+                        const isHovered = hoveredRadarLineupId === l.id;
+                        const isActive = isSelected || isHovered;
+                        if (!isActive) return null;
+                        const color = utilityColors[l.utilityType] ?? "#f59e0b";
+                        const markerId = `nades-marker-${l.utilityType.toLowerCase()}`;
+
+                        return (
+                          <g key={`traj-${l.id}`} className="cs2nades-traj-group active">
+                            <circle
+                              cx={l.standX}
+                              cy={l.standY}
+                              r="2.6"
+                              fill={color}
+                              stroke="#ffffff"
+                              strokeWidth="1"
+                            />
+                            <circle
+                              cx={l.standX}
+                              cy={l.standY}
+                              r="4.8"
+                              fill="none"
+                              stroke={color}
+                              strokeWidth="0.8"
+                              className="cs2nades-stand-pulse"
+                            />
+                            <text
+                              x={l.standX}
+                              y={l.standY - 3}
+                              textAnchor="middle"
+                              fill={color}
+                              fontSize="2.4"
+                              fontWeight="bold"
+                            >
+                              {l.fromCallout || "STAND"}
+                            </text>
+                            <line
+                              x1={l.standX}
+                              y1={l.standY}
+                              x2={l.landX}
+                              y2={l.landY}
+                              stroke={color}
+                              strokeWidth="2.2"
+                              strokeDasharray="4,3"
+                              className="cs2nades-traj-active"
+                              markerEnd={`url(#${markerId})`}
+                            />
+                          </g>
+                        );
+                      })}
                   </svg>
 
-                  {/* Glowing Orange & Cyan Utility Pins */}
-                  {filteredLineups.map((l) => {
-                    const isSelected = selectedRadarLineupId === l.id;
-                    const isHovered = hoveredRadarLineupId === l.id;
-                    const isActive = isSelected || isHovered;
-                    const color = l.teamSide === "CT" ? "#38bdf8" : (utilityColors[l.utilityType] ?? "#f59e0b");
+                  {/* RADAR TARGET PINS (Clustered Landing Spots) */}
+                  {targetClusters.map((cluster) => {
+                    const isSelected = selectedTargetCallout === cluster.toCallout;
+                    const color = utilityColors[cluster.utilityType] ?? "#f59e0b";
                     const iconName: IconName =
-                      l.utilityType === "SMOKE"
+                      cluster.utilityType === "SMOKE"
                         ? "smoke"
-                        : l.utilityType === "FLASH"
+                        : cluster.utilityType === "FLASH"
                           ? "flash"
-                          : l.utilityType === "MOLOTOV"
+                          : cluster.utilityType === "MOLOTOV"
                             ? "molotov"
                             : "he";
 
                     return (
                       <button
-                        key={`pin-${l.id}`}
+                        key={`target-${cluster.toCallout}`}
                         type="button"
-                        className={`cs2nades-map-pin ${isActive ? "active" : ""} side-${l.teamSide.toLowerCase()}`}
+                        className={`cs2nades-map-pin cluster ${isSelected ? "active" : ""}`}
                         style={{
-                          left: `${l.landX}%`,
-                          top: `${l.landY}%`,
+                          left: `${cluster.landX}%`,
+                          top: `${cluster.landY}%`,
                           borderColor: color,
-                          color: isActive ? "#0b0e0c" : color,
-                          backgroundColor: isActive ? color : "rgba(11, 14, 12, 0.9)",
-                          boxShadow: isActive ? `0 0 16px ${color}` : undefined,
+                          color: isSelected ? "#0b0e0c" : color,
+                          backgroundColor: isSelected ? color : "rgba(11, 14, 12, 0.9)",
+                          boxShadow: isSelected ? `0 0 18px ${color}` : undefined,
                         }}
-                        onMouseEnter={() => setHoveredRadarLineupId(l.id)}
-                        onMouseLeave={() => setHoveredRadarLineupId(null)}
-                        onClick={() => setSelectedRadarLineupId(isSelected ? null : l.id)}
-                        title={`${formatRouteTitle(l.title)} (${l.utilityType} · ${l.throwType})`}
+                        onClick={() => {
+                          setSelectedTargetCallout(isSelected ? null : cluster.toCallout);
+                          setSelectedRadarLineupId(null);
+                        }}
+                        title={`Target: ${cluster.toCallout} (${cluster.count} lineup${cluster.count === 1 ? "" : "s"})`}
                       >
-                        <Icon name={iconName} size={14} />
+                        <Icon name={iconName} size={15} />
+                        {cluster.count > 1 && (
+                          <span className="cs2nades-cluster-count-badge">{cluster.count}</span>
+                        )}
                       </button>
                     );
                   })}
+
+                  {/* FAN-OUT THROW ORIGIN PINS (Shown when a target cluster is selected) */}
+                  {activeTargetCluster &&
+                    activeTargetCluster.lineups.map((l) => {
+                      const isHovered = hoveredRadarLineupId === l.id;
+                      return (
+                        <button
+                          key={`origin-${l.id}`}
+                          type="button"
+                          className={`cs2nades-origin-pin ${isHovered ? "hovered" : ""}`}
+                          style={{
+                            left: `${l.standX}%`,
+                            top: `${l.standY}%`,
+                          }}
+                          onMouseEnter={() => setHoveredRadarLineupId(l.id)}
+                          onMouseLeave={() => setHoveredRadarLineupId(null)}
+                          onClick={() => setSelectedDetailLineup(l)}
+                          title={`Throw from ${l.fromCallout || "Stand"} (${l.technique || l.throwType}) - Click to inspect detail`}
+                        >
+                          <Icon name="crosshair" size={11} />
+                          <span className="cs2nades-origin-label">{l.fromCallout || "Stand"}</span>
+                        </button>
+                      );
+                    })}
                 </div>
 
-                {/* Selected Lineup Quick Shelf */}
+                {/* Selected Quick Shelf */}
                 {activeRadarLineup && (
                   <div className="cs2nades-radar-selected-shelf">
                     <div className="cs2nades-shelf-info">
@@ -1499,12 +1681,14 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                         </span>
                         <span className="strat-throw-badge">{activeRadarLineup.throwType}</span>
                         <span className="strat-badge team">{activeRadarLineup.teamSide} SIDE</span>
-                        {activeRadarLineup.isVerified && (
+                        {(activeRadarLineup.isVerified || activeRadarLineup.isPro) && (
                           <span className="strat-badge-verified">✓ PRO VERIFIED</span>
                         )}
                       </div>
                       <strong className="cs2nades-shelf-title">
-                        {formatRouteTitle(activeRadarLineup.title)}
+                        {activeRadarLineup.fromCallout && activeRadarLineup.toCallout
+                          ? `${activeRadarLineup.fromCallout} → ${activeRadarLineup.toCallout}`
+                          : formatRouteTitle(activeRadarLineup.title)}
                       </strong>
                       <small className="cs2nades-shelf-sub">
                         Stand ({activeRadarLineup.standX}, {activeRadarLineup.standY}) → Land (
@@ -1513,19 +1697,13 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                       </small>
                     </div>
                     <div className="cs2nades-shelf-actions">
-                      {safeHttpUrl(activeRadarLineup.videoUrl) ? (
-                        <button
-                          type="button"
-                          className="strat-video-action-btn"
-                          onClick={() => setActiveVideoLineup(activeRadarLineup)}
-                        >
-                          ▶ Watch Video Guide
-                        </button>
-                      ) : (
-                        <button type="button" className="strat-video-action-btn" disabled>
-                          No Video
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className="strat-video-action-btn"
+                        onClick={() => setSelectedDetailLineup(activeRadarLineup)}
+                      >
+                        🔍 INSPECT DETAIL
+                      </button>
                       <button
                         type="button"
                         className="strat-place-action-btn"
@@ -1533,13 +1711,13 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                       >
                         + Place on Board
                       </button>
-                      {selectedRadarLineupId && (
+                      {selectedTargetCallout && (
                         <button
                           type="button"
                           className="strat-radar-close-btn"
                           onClick={() => {
+                            setSelectedTargetCallout(null);
                             setSelectedRadarLineupId(null);
-                            setHoveredRadarLineupId(null);
                           }}
                         >
                           ✕
@@ -1551,10 +1729,30 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
               </div>
             </div>
 
-            {/* RIGHT COLUMN: EDITOR'S CHOICE & POPULAR LINEUPS */}
+            {/* RIGHT COLUMN: LINEUP CARDS STACK */}
             <div className="cs2nades-list-col">
+              {/* TARGET CLUSTER FILTER BANNER */}
+              {selectedTargetCallout && (
+                <div className="cs2nades-cluster-filter-banner">
+                  <div>
+                    <span className="cs2nades-cfb-tag">TARGET CALLOUT</span>{" "}
+                    <strong>{selectedTargetCallout}</strong>
+                    <span className="cs2nades-cfb-count">
+                      {" "}· {displayedLineups.length} setup{displayedLineups.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="cs2nades-cfb-clear"
+                    onClick={() => setSelectedTargetCallout(null)}
+                  >
+                    ✕ View All Targets
+                  </button>
+                </div>
+              )}
+
               {/* EDITOR'S CHOICE SECTION */}
-              {editorsChoice.length > 0 && (
+              {editorsChoice.length > 0 && !selectedTargetCallout && (
                 <div className="cs2nades-section">
                   <div className="cs2nades-section-header">
                     <span className="cs2nades-section-title">
@@ -1578,33 +1776,39 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                         <LineupDualThumbnail
                           lineup={l}
                           mapName={mapName}
-                          onClick={() => {
-                            setSelectedRadarLineupId(l.id);
-                            if (safeHttpUrl(l.videoUrl)) setActiveVideoLineup(l);
-                          }}
+                          onClick={() => setSelectedDetailLineup(l)}
                         />
                         <div className="cs2nades-card-details">
                           <div className="cs2nades-card-top-row">
-                            <h4 className="cs2nades-card-title">{formatRouteTitle(l.title)}</h4>
-                            <span className="cs2nades-throw-tag">{l.throwType}</span>
+                            <h4 className="cs2nades-card-title">
+                              {l.fromCallout && l.toCallout
+                                ? `${l.fromCallout} → ${l.toCallout}`
+                                : formatRouteTitle(l.title)}
+                            </h4>
+                            <span className="cs2nades-throw-tag">{l.technique || l.throwType}</span>
                           </div>
                           <p className="cs2nades-card-desc">{l.description || l.title}</p>
                           <div className="cs2nades-card-meta">
                             <span className="cs2nades-meta-chip">
                               Stand ({l.standX}, {l.standY}) → Land ({l.landX}, {l.landY})
                             </span>
-                            {l.isVerified && <span className="cs2nades-verified-chip">✓ VERIFIED</span>}
+                            {(l.isVerified || l.isPro) && (
+                              <span className="cs2nades-verified-chip">✓ PRO VERIFIED</span>
+                            )}
+                            {l.viewsCount && (
+                              <span className="cs2nades-meta-chip">
+                                👁 {l.viewsCount.toLocaleString()}
+                              </span>
+                            )}
                           </div>
                           <div className="cs2nades-card-actions">
-                            {safeHttpUrl(l.videoUrl) && (
-                              <button
-                                type="button"
-                                className="strat-video-action-btn"
-                                onClick={() => setActiveVideoLineup(l)}
-                              >
-                                ▶ WATCH VIDEO
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              className="strat-video-action-btn"
+                              onClick={() => setSelectedDetailLineup(l)}
+                            >
+                              🔍 INSPECT LINEUP
+                            </button>
                             <button
                               type="button"
                               className="strat-place-action-btn"
@@ -1633,14 +1837,16 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
               <div className="cs2nades-section">
                 <div className="cs2nades-section-header">
                   <span className="cs2nades-section-title">
-                    POPULAR LINEUPS
+                    {selectedTargetCallout
+                      ? `LINEUPS FOR ${selectedTargetCallout.toUpperCase()}`
+                      : "ALL LINEUPS"}
                   </span>
                   <span className="cs2nades-section-sub">
-                    {filteredLineups.length} tactical utility setups on {cleanMap.toUpperCase()}
+                    {displayedLineups.length} tactical utility setups on {cleanMap.toUpperCase()}
                   </span>
                 </div>
 
-                {filteredLineups.length === 0 ? (
+                {displayedLineups.length === 0 ? (
                   <div className="cs2nades-empty-box">
                     <p>No lineups found matching this filter criteria.</p>
                     <button
@@ -1648,14 +1854,16 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                       onClick={() => {
                         setLineupUtility("ALL");
                         setLineupSideFilter("ALL");
+                        setSelectedTargetCallout(null);
+                        setSearchQuery("");
                       }}
                     >
-                      Reset Filters
+                      Reset All Filters
                     </button>
                   </div>
                 ) : (
                   <div className="cs2nades-cards-stack">
-                    {(popularLineups.length > 0 ? popularLineups : filteredLineups).map((l) => (
+                    {displayedLineups.map((l) => (
                       <article
                         key={l.id}
                         className={`cs2nades-lineup-card ${
@@ -1667,33 +1875,39 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                         <LineupDualThumbnail
                           lineup={l}
                           mapName={mapName}
-                          onClick={() => {
-                            setSelectedRadarLineupId(l.id);
-                            if (safeHttpUrl(l.videoUrl)) setActiveVideoLineup(l);
-                          }}
+                          onClick={() => setSelectedDetailLineup(l)}
                         />
                         <div className="cs2nades-card-details">
                           <div className="cs2nades-card-top-row">
-                            <h4 className="cs2nades-card-title">{formatRouteTitle(l.title)}</h4>
-                            <span className="cs2nades-throw-tag">{l.throwType}</span>
+                            <h4 className="cs2nades-card-title">
+                              {l.fromCallout && l.toCallout
+                                ? `${l.fromCallout} → ${l.toCallout}`
+                                : formatRouteTitle(l.title)}
+                            </h4>
+                            <span className="cs2nades-throw-tag">{l.technique || l.throwType}</span>
                           </div>
                           <p className="cs2nades-card-desc">{l.description || l.title}</p>
                           <div className="cs2nades-card-meta">
                             <span className="cs2nades-meta-chip">
                               Stand ({l.standX}, {l.standY}) → Land ({l.landX}, {l.landY})
                             </span>
-                            {l.isVerified && <span className="cs2nades-verified-chip">✓ VERIFIED</span>}
+                            {(l.isVerified || l.isPro) && (
+                              <span className="cs2nades-verified-chip">✓ PRO VERIFIED</span>
+                            )}
+                            {l.viewsCount && (
+                              <span className="cs2nades-meta-chip">
+                                👁 {l.viewsCount.toLocaleString()}
+                              </span>
+                            )}
                           </div>
                           <div className="cs2nades-card-actions">
-                            {safeHttpUrl(l.videoUrl) && (
-                              <button
-                                type="button"
-                                className="strat-video-action-btn"
-                                onClick={() => setActiveVideoLineup(l)}
-                              >
-                                ▶ WATCH VIDEO
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              className="strat-video-action-btn"
+                              onClick={() => setSelectedDetailLineup(l)}
+                            >
+                              🔍 INSPECT LINEUP
+                            </button>
                             <button
                               type="button"
                               className="strat-place-action-btn"
@@ -1796,100 +2010,20 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
         </section>
       )}
 
-      {/* In-App Video Modal Dialog */}
+      {/* Authentic csnades.gg Lineup Detail Modal (Video, Stand Position, Aim Magnifier & Setpos) */}
+      {selectedDetailLineup && (
+        <LineupDetailModal
+          lineup={selectedDetailLineup}
+          onClose={() => setSelectedDetailLineup(null)}
+          onPlaceLineup={placeLineup}
+        />
+      )}
       {activeVideoLineup && (
-        <div className="strat-video-modal-backdrop" onClick={() => setActiveVideoLineup(null)}>
-          <div className="strat-video-modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="strat-video-modal-header">
-              <div className="strat-video-modal-title-group">
-                <div className="strat-badge-row">
-                  <span
-                    className="strat-badge"
-                    style={{
-                      borderColor: utilityColors[activeVideoLineup.utilityType],
-                      color: utilityColors[activeVideoLineup.utilityType],
-                    }}
-                  >
-                    {activeVideoLineup.utilityType}
-                  </span>
-                  <span className="strat-badge map">
-                    {activeVideoLineup.mapName.replace(/^de_/, "").toUpperCase()}
-                  </span>
-                  <span className="strat-badge team">{activeVideoLineup.teamSide} SIDE</span>
-                  <span className="strat-throw-badge">{activeVideoLineup.throwType}</span>
-                </div>
-                <h3>{activeVideoLineup.title}</h3>
-              </div>
-              <button
-                className="strat-modal-close-btn"
-                onClick={() => setActiveVideoLineup(null)}
-                aria-label="Close modal"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="strat-video-modal-body">
-              {activeVideoLineup.videoUrl ? (
-                <div className="strat-modal-player-wrap">
-                  <ClipPlayer
-                    videoUrl={activeVideoLineup.videoUrl}
-                    title={activeVideoLineup.title}
-                    mapName={activeVideoLineup.mapName}
-                    autoplay={true}
-                  />
-                </div>
-              ) : (
-                <div className="strat-no-video">No video embed available for this lineup.</div>
-              )}
-
-              <div className="strat-modal-meta">
-                <div className="strat-coords-chips">
-                  <span>
-                    Stand Position:{" "}
-                    <strong>
-                      X: {activeVideoLineup.standX} · Y: {activeVideoLineup.standY}
-                    </strong>
-                  </span>
-                  <span>
-                    Landing Target:{" "}
-                    <strong>
-                      X: {activeVideoLineup.landX} · Y: {activeVideoLineup.landY}
-                    </strong>
-                  </span>
-                </div>
-                {activeVideoLineup.description && (
-                  <p className="strat-modal-desc">{activeVideoLineup.description}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="strat-video-modal-footer">
-              <button
-                className="strat-modal-place-btn"
-                onClick={() => {
-                  placeLineup(activeVideoLineup);
-                  setActiveVideoLineup(null);
-                }}
-              >
-                + PLACE ON WHITEBOARD CANVAS
-              </button>
-              {safeHttpUrl(activeVideoLineup.videoUrl) && (
-                <a
-                  href={safeHttpUrl(activeVideoLineup.videoUrl) ?? undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="strat-modal-ext-link"
-                >
-                  OPEN LINK ↗
-                </a>
-              )}
-              <button className="strat-modal-cancel-btn" onClick={() => setActiveVideoLineup(null)}>
-                CLOSE
-              </button>
-            </div>
-          </div>
-        </div>
+        <LineupDetailModal
+          lineup={activeVideoLineup}
+          onClose={() => setActiveVideoLineup(null)}
+          onPlaceLineup={placeLineup}
+        />
       )}
     </div>
   );

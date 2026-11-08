@@ -18,6 +18,16 @@ export interface UtilityLineup {
   createdByUserId: string | null;
   isVerified: boolean;
   createdAt: string;
+  fromCallout?: string;
+  toCallout?: string;
+  movement?: string;
+  technique?: string;
+  precision?: string;
+  difficulty?: string;
+  isPro?: boolean;
+  viewsCount?: number;
+  setposCommand?: string;
+  airTimeSeconds?: number;
 }
 
 export interface TacticSummary {
