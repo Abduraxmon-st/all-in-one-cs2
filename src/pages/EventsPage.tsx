@@ -2,6 +2,7 @@ import { useEffect, useState, type FC } from "react";
 import { API_BASE_URL } from "../config/api";
 import { useAuth } from "../features/identity/AuthProvider";
 import Icon from "../components/Icon";
+import { getWeaponSilhouetteSvg } from "../components/WeaponSilhouette";
 import "./EventsPage.css";
 
 interface Props {
@@ -37,6 +38,19 @@ export interface FlashDeal {
   badgeText?: string;
 }
 
+export interface SteamGameDeal {
+  id: string;
+  appId: number;
+  title: string;
+  category: string;
+  originalPriceUsd: number;
+  salePriceUsd: number;
+  discountPercent: number;
+  reviewRating: string;
+  headerImageUrl: string;
+  storeUrl: string;
+}
+
 export interface MajorEvent {
   id: string;
   title: string;
@@ -51,6 +65,8 @@ export interface MajorEvent {
   officialUrl?: string;
 }
 
+type EventsTab = "ALL" | "GIVEAWAYS" | "STEAM_GAMES" | "SKIN_DEALS" | "CALENDAR";
+
 const FALLBACK_GIVEAWAYS: GiveawayItem[] = [
   {
     id: "giveaway-1",
@@ -60,7 +76,8 @@ const FALLBACK_GIVEAWAYS: GiveawayItem[] = [
     wearCondition: "Factory New",
     rarity: "Covert",
     valueUsd: 3450.0,
-    imageUrl: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/weapon_knife_butterfly_am_fade.png",
+    imageUrl:
+      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Z-ua6bbZrLOmsD2avx-9ytd5lRi67gVNwsDvSwtqqc3iXZg4kCZYjReYLtRbum9XgYuvm5wbWjtgUzCn3iSsf8G81tFEeH9rw",
     endsAt: new Date(Date.now() + 2 * 24 * 3600 * 1000 + 14 * 3600 * 1000).toISOString(),
     entriesCount: 4128,
     winnerCount: 1,
@@ -74,7 +91,8 @@ const FALLBACK_GIVEAWAYS: GiveawayItem[] = [
     wearCondition: "Field-Tested",
     rarity: "Covert",
     valueUsd: 820.0,
-    imageUrl: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/weapon_ak47_cu_fireserpent_ak47_bravo.png",
+    imageUrl:
+      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLzho_f_jFl-_WfUq1vL6KWHmSRzO0mtu5pSHrglEl25jSGnNr8IHuTPlF4WcEkR_sLshK_lYHuPu_gtVON3YxInyTqhStAuv9rsb4BU6a24vjG",
     endsAt: new Date(Date.now() + 1 * 24 * 3600 * 1000 + 6 * 3600 * 1000).toISOString(),
     entriesCount: 2840,
     winnerCount: 1,
@@ -88,7 +106,8 @@ const FALLBACK_GIVEAWAYS: GiveawayItem[] = [
     wearCondition: "Factory New",
     rarity: "Covert",
     valueUsd: 1950.0,
-    imageUrl: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/weapon_awp_gs_awp_desert_hydra.png",
+    imageUrl:
+      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3",
     endsAt: new Date(Date.now() + 4 * 24 * 3600 * 1000 + 8 * 3600 * 1000).toISOString(),
     entriesCount: 5310,
     winnerCount: 1,
@@ -102,7 +121,8 @@ const FALLBACK_GIVEAWAYS: GiveawayItem[] = [
     wearCondition: "Minimal Wear",
     rarity: "Extraordinary",
     valueUsd: 2100.0,
-    imageUrl: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/slick_gloves_slick_vice.png",
+    imageUrl:
+      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Tk5UvzWCL2kpn2-DFk_OKherB0H_KfG2Kv0ed4u95lRi67gVNx4T-Bw434IHyVb1QlAsd1FOUDthG4xNznMu3m4QXXg90Wzn_33C1I8G81tLaDi_rK",
     endsAt: new Date(Date.now() + 3 * 24 * 3600 * 1000 + 18 * 3600 * 1000).toISOString(),
     entriesCount: 3890,
     winnerCount: 1,
@@ -118,7 +138,8 @@ const FALLBACK_DEALS: FlashDeal[] = [
     originalPriceUsd: 16.0,
     salePriceUsd: 12.0,
     discountPercent: 25,
-    imageUrl: "https://community.cloudflare.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXX7gNPRV454wtRRFzVTej24eDYVkZ4LRFpv7y3LgJh3vn3cTB94M63l4XdwvWhY7-JkzME7pwpjLiUpY2hjAW3qUtrNW3xcoWcIwc6YguD8VPqku_n0MW8vcmamnZq6XUi53zcnEa-1RtLauZxxavJ4L0w7V4/360fx360f",
+    imageUrl:
+      "https://community.cloudflare.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXX7gNPRV454wtRRFzVTej24eDYVkZ4LRFpv7y3LgJh3vn3cTB94M63l4XdwvWhY7-JkzME7pwpjLiUpY2hjAW3qUtrNW3xcoWcIwc6YguD8VPqku_n0MW8vcmamnZq6XUi53zcnEa-1RtLauZxxavJ4L0w7V4/360fx360f",
     storeName: "Steam Store",
     storeUrl: "https://store.steampowered.com/app/730/CounterStrike_2/",
     badgeText: "OFFICIAL PASS",
@@ -130,7 +151,8 @@ const FALLBACK_DEALS: FlashDeal[] = [
     originalPriceUsd: 195.0,
     salePriceUsd: 126.75,
     discountPercent: 35,
-    imageUrl: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/weapon_m4a1_silencer_cu_m4a1_s_printstream.png",
+    imageUrl:
+      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6jIb9-Tdt-fGqfL9uJfadAmPsz-h7tN44S3zmkU5yuTvUwtqkIH6XZg4kCZYjReYLtRbum9XgYuvm41WB24gSrvHz37VLyqH0nJ8",
     storeName: "CSFloat Market",
     storeUrl: "https://csfloat.com",
     badgeText: "HOT FLASH DEAL",
@@ -142,7 +164,8 @@ const FALLBACK_DEALS: FlashDeal[] = [
     originalPriceUsd: 95.0,
     salePriceUsd: 57.0,
     discountPercent: 40,
-    imageUrl: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/skins/weapon_deagle_cu_deag_oceandrive.png",
+    imageUrl:
+      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL7m4jf_Td95_erfffvI-KDGmetzu1_u9s-HX3m0kgw4T_QwtqkIH6XZg4kCZYjReYLtRbum9XgYur26QSF241-S_fz37VLjZ32-uM",
     storeName: "Skinport",
     storeUrl: "https://skinport.com",
     badgeText: "LOWEST 30-DAY",
@@ -158,6 +181,129 @@ const FALLBACK_DEALS: FlashDeal[] = [
     storeName: "Steam Store",
     storeUrl: "https://store.steampowered.com/app/546560/HalfLife_Alyx/",
     badgeText: "VALVE HIGHLIGHT",
+  },
+];
+
+const STEAM_GAME_DISCOUNTS: SteamGameDeal[] = [
+  {
+    id: "steam-cs2-prime",
+    appId: 730,
+    title: "Counter-Strike 2: Prime Status Upgrade",
+    category: "Tactical FPS / Competitive",
+    originalPriceUsd: 14.99,
+    salePriceUsd: 11.99,
+    discountPercent: 20,
+    reviewRating: "Very Positive (8.2M+)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/730/CounterStrike_2/",
+  },
+  {
+    id: "steam-r6s",
+    appId: 359550,
+    title: "Tom Clancy's Rainbow Six® Siege",
+    category: "Tactical Hero Shooter",
+    originalPriceUsd: 19.99,
+    salePriceUsd: 7.99,
+    discountPercent: 60,
+    reviewRating: "Very Positive (1.1M+)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/359550/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/359550/",
+  },
+  {
+    id: "steam-rust",
+    appId: 252490,
+    title: "Rust",
+    category: "Survival / Multiplayer",
+    originalPriceUsd: 39.99,
+    salePriceUsd: 19.99,
+    discountPercent: 50,
+    reviewRating: "Very Positive (940K+)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/252490/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/252490/",
+  },
+  {
+    id: "steam-cyberpunk",
+    appId: 1091500,
+    title: "Cyberpunk 2077",
+    category: "Open World RPG",
+    originalPriceUsd: 59.99,
+    salePriceUsd: 29.99,
+    discountPercent: 50,
+    reviewRating: "Very Positive (740K+)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1091500/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/1091500/",
+  },
+  {
+    id: "steam-eldenring",
+    appId: 1245620,
+    title: "ELDEN RING",
+    category: "Action RPG / Souls-like",
+    originalPriceUsd: 59.99,
+    salePriceUsd: 35.99,
+    discountPercent: 40,
+    reviewRating: "Very Positive (880K+)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/1245620/",
+  },
+  {
+    id: "steam-bg3",
+    appId: 1086940,
+    title: "Baldur's Gate 3",
+    category: "Turn-Based RPG / D&D",
+    originalPriceUsd: 59.99,
+    salePriceUsd: 47.99,
+    discountPercent: 20,
+    reviewRating: "Overwhelmingly Positive (660K+)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1086940/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/1086940/",
+  },
+  {
+    id: "steam-apex",
+    appId: 1172470,
+    title: "Apex Legends™ - Champion Bundle",
+    category: "Battle Royale / Movement FPS",
+    originalPriceUsd: 39.99,
+    salePriceUsd: 15.99,
+    discountPercent: 60,
+    reviewRating: "Mostly Positive (900K+)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1172470/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/1172470/",
+  },
+  {
+    id: "steam-bo6",
+    appId: 1938090,
+    title: "Call of Duty®: Black Ops 6",
+    category: "Fast-Paced Military FPS",
+    originalPriceUsd: 69.99,
+    salePriceUsd: 48.99,
+    discountPercent: 30,
+    reviewRating: "Mostly Positive (120K+)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1938090/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/1938090/",
+  },
+  {
+    id: "steam-insurgency",
+    appId: 412020,
+    title: "Insurgency: Sandstorm",
+    category: "Hardcore Tactical CQC",
+    originalPriceUsd: 29.99,
+    salePriceUsd: 9.89,
+    discountPercent: 67,
+    reviewRating: "Very Positive (115K+)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/412020/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/412020/",
+  },
+  {
+    id: "steam-readyornot",
+    appId: 782330,
+    title: "Ready or Not",
+    category: "Tactical SWAT Simulation",
+    originalPriceUsd: 49.99,
+    salePriceUsd: 33.49,
+    discountPercent: 33,
+    reviewRating: "Very Positive (160K+)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/782330/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/782330/",
   },
 ];
 
@@ -215,8 +361,10 @@ function formatCountdown(targetIso: string): string {
 
 export const EventsPage: FC<Props> = ({ notify }) => {
   const { token } = useAuth();
+  const [filter, setFilter] = useState<EventsTab>("ALL");
   const [giveaways, setGiveaways] = useState<GiveawayItem[]>(FALLBACK_GIVEAWAYS);
   const [deals, setDeals] = useState<FlashDeal[]>(FALLBACK_DEALS);
+  const [steamGames] = useState<SteamGameDeal[]>(STEAM_GAME_DISCOUNTS);
   const [events, setEvents] = useState<MajorEvent[]>(FALLBACK_EVENTS);
   const [loading, setLoading] = useState(false);
   const [enteredMap, setEnteredMap] = useState<Record<string, boolean>>(() => {
@@ -305,216 +453,341 @@ export const EventsPage: FC<Props> = ({ notify }) => {
       <div className="page-intro">
         <div>
           <p className="eyebrow">COMMUNITY REWARDS &amp; DEALS</p>
-          <h2>Giveaways, Deals &amp; Major Calendar</h2>
+          <h2>Giveaways, Steam Sales &amp; Major Calendar</h2>
           <p>
-            Enter verified community skin giveaways, explore flash steam discounts, and track the
-            live competitive CS2 Major tournament calendar.
+            Enter verified community skin giveaways, explore Steam store game discounts, and track
+            the competitive CS2 Major tournament calendar.
           </p>
         </div>
+      </div>
+
+      {/* FILTER NAVIGATION TABS */}
+      <div className="events-filter-bar">
+        <button
+          type="button"
+          className={`events-filter-pill ${filter === "ALL" ? "active" : ""}`}
+          onClick={() => setFilter("ALL")}
+        >
+          🌐 ALL OFFERS &amp; EVENTS
+        </button>
+        <button
+          type="button"
+          className={`events-filter-pill ${filter === "GIVEAWAYS" ? "active" : ""}`}
+          onClick={() => setFilter("GIVEAWAYS")}
+        >
+          🎁 CS2 SKIN GIVEAWAYS ({giveaways.length})
+        </button>
+        <button
+          type="button"
+          className={`events-filter-pill ${filter === "STEAM_GAMES" ? "active" : ""}`}
+          onClick={() => setFilter("STEAM_GAMES")}
+        >
+          🎮 STEAM GAME DISCOUNTS ({steamGames.length})
+        </button>
+        <button
+          type="button"
+          className={`events-filter-pill ${filter === "SKIN_DEALS" ? "active" : ""}`}
+          onClick={() => setFilter("SKIN_DEALS")}
+        >
+          🔥 CS2 SKIN FLASH DEALS ({deals.length})
+        </button>
+        <button
+          type="button"
+          className={`events-filter-pill ${filter === "CALENDAR" ? "active" : ""}`}
+          onClick={() => setFilter("CALENDAR")}
+        >
+          🏆 TOURNAMENT CALENDAR ({events.length})
+        </button>
       </div>
 
       {loading && <div className="events-loader-bar">Syncing live event streams…</div>}
 
       {/* SECTION 1: Live CS2 Skin & Steam Giveaways */}
-      <section className="events-section">
-        <div className="events-section-header">
-          <div>
-            <h3>🎁 LIVE CS2 SKIN &amp; STEAM GIVEAWAYS</h3>
-            <p>100% free community raffles sponsored by verified market partners. One click to enter.</p>
+      {(filter === "ALL" || filter === "GIVEAWAYS") && (
+        <section className="events-section">
+          <div className="events-section-header">
+            <div>
+              <h3>🎁 LIVE CS2 SKIN &amp; STEAM GIVEAWAYS</h3>
+              <p>100% free community raffles sponsored by verified market partners. One click to enter.</p>
+            </div>
+            <span className="events-live-pill">
+              <span className="pulse-dot" /> {giveaways.length} ACTIVE RAFFLES
+            </span>
           </div>
-          <span className="events-live-pill">
-            <span className="pulse-dot" /> {giveaways.length} ACTIVE RAFFLES
-          </span>
-        </div>
 
-        <div className="events-giveaways-grid">
-          {giveaways.map((item) => {
-            const isEntered = !!enteredMap[item.id];
-            const rarityColor =
-              item.rarity.toLowerCase().includes("extra")
-                ? "#e4ae39"
-                : item.rarity.toLowerCase().includes("covert")
-                  ? "#eb4b4b"
-                  : "#d32ce6";
+          <div className="events-giveaways-grid">
+            {giveaways.map((item) => {
+              const isEntered = !!enteredMap[item.id];
+              const rarityColor =
+                item.rarity.toLowerCase().includes("extra")
+                  ? "#e4ae39"
+                  : item.rarity.toLowerCase().includes("covert")
+                    ? "#eb4b4b"
+                    : "#d32ce6";
 
-            return (
-              <article
-                key={item.id}
-                className="events-giveaway-card"
-                style={{ borderColor: `${rarityColor}40` }}
-              >
-                <div
-                  className="giveaway-accent-bar"
-                  style={{ backgroundColor: rarityColor, boxShadow: `0 0 12px ${rarityColor}88` }}
-                />
+              return (
+                <article
+                  key={item.id}
+                  className="events-giveaway-card"
+                  style={{ borderColor: `${rarityColor}40` }}
+                >
+                  <div
+                    className="giveaway-accent-bar"
+                    style={{ backgroundColor: rarityColor, boxShadow: `0 0 12px ${rarityColor}88` }}
+                  />
 
-                <div className="giveaway-top-meta">
-                  <span
-                    className="giveaway-rarity-badge"
+                  <div className="giveaway-top-meta">
+                    <span
+                      className="giveaway-rarity-badge"
+                      style={{
+                        color: rarityColor,
+                        borderColor: `${rarityColor}66`,
+                        backgroundColor: `${rarityColor}15`,
+                      }}
+                    >
+                      {item.rarity.toUpperCase()} · {item.wearCondition}
+                    </span>
+                    <span className="giveaway-value-badge">{money(item.valueUsd)}</span>
+                  </div>
+
+                  <div
+                    className="giveaway-image-wrapper"
                     style={{
-                      color: rarityColor,
-                      borderColor: `${rarityColor}66`,
-                      backgroundColor: `${rarityColor}15`,
+                      background: `radial-gradient(circle at center, ${rarityColor}20 0%, transparent 70%)`,
                     }}
                   >
-                    {item.rarity.toUpperCase()} · {item.wearCondition}
-                  </span>
-                  <span className="giveaway-value-badge">{money(item.valueUsd)}</span>
-                </div>
-
-                <div
-                  className="giveaway-image-wrapper"
-                  style={{
-                    background: `radial-gradient(circle at center, ${rarityColor}20 0%, transparent 70%)`,
-                  }}
-                >
-                  <img src={item.imageUrl} alt={item.title} loading="lazy" />
-                </div>
-
-                <div className="giveaway-info">
-                  <strong>{item.title}</strong>
-                  <span>{item.weaponName} · Sponsored by {item.sponsorName || "Clutch Labs"}</span>
-                </div>
-
-                <div className="giveaway-stats-box">
-                  <div className="stat-item">
-                    <span className="stat-label">ENDS IN</span>
-                    <strong className="stat-value countdown">{formatCountdown(item.endsAt)}</strong>
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = getWeaponSilhouetteSvg(
+                          item.weaponName || item.skinName
+                        );
+                      }}
+                    />
                   </div>
-                  <div className="stat-item">
-                    <span className="stat-label">TOTAL ENTRIES</span>
-                    <strong className="stat-value">{item.entriesCount.toLocaleString()}</strong>
+
+                  <div className="giveaway-info">
+                    <strong>{item.title}</strong>
+                    <span>
+                      {item.weaponName} · Sponsored by {item.sponsorName || "Clutch Labs"}
+                    </span>
                   </div>
+
+                  <div className="giveaway-stats-box">
+                    <div className="stat-item">
+                      <span className="stat-label">ENDS IN</span>
+                      <strong className="stat-value countdown">{formatCountdown(item.endsAt)}</strong>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">TOTAL ENTRIES</span>
+                      <strong className="stat-value">{item.entriesCount.toLocaleString()}</strong>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={`giveaway-enter-btn ${isEntered ? "entered" : ""}`}
+                    disabled={isEntered}
+                    onClick={() => handleEnterGiveaway(item)}
+                  >
+                    {isEntered ? (
+                      <>
+                        <span>Entered ✓</span>
+                        <small>Ticket Active in Raffle</small>
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="bolt" size={14} />
+                        <span>ENTER GIVEAWAY (FREE)</span>
+                      </>
+                    )}
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* SECTION 2: DEDICATED STEAM GAME DISCOUNTS (Live Store Sale) */}
+      {(filter === "ALL" || filter === "STEAM_GAMES") && (
+        <section className="events-section steam-games-section">
+          <div className="events-section-header">
+            <div>
+              <h3>🎮 STEAM GAME DISCOUNTS (LIVE STORE SALE)</h3>
+              <p>
+                Official Steam Store FPS &amp; tactical multiplayer discounts with verified Akamai
+                headers and direct store links.
+              </p>
+            </div>
+            <span className="events-deals-badge steam-badge">UP TO -67% OFF</span>
+          </div>
+
+          <div className="events-steam-games-grid">
+            {steamGames.map((game) => (
+              <article key={game.id} className="steam-game-card">
+                <div className="steam-game-image-wrap">
+                  <div className="steam-discount-tag">-{game.discountPercent}%</div>
+                  <img
+                    src={game.headerImageUrl}
+                    alt={game.title}
+                    loading="lazy"
+                    className="steam-game-capsule"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/header.jpg";
+                    }}
+                  />
                 </div>
 
-                <button
-                  type="button"
-                  className={`giveaway-enter-btn ${isEntered ? "entered" : ""}`}
-                  disabled={isEntered}
-                  onClick={() => handleEnterGiveaway(item)}
-                >
-                  {isEntered ? (
-                    <>
-                      <span>Entered ✓</span>
-                      <small>Ticket Active in Raffle</small>
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="bolt" size={14} />
-                      <span>ENTER GIVEAWAY (FREE)</span>
-                    </>
-                  )}
-                </button>
+                <div className="steam-game-body">
+                  <div className="steam-game-meta">
+                    <span className="steam-cat-badge">{game.category}</span>
+                    <span className="steam-rating-badge">★ {game.reviewRating}</span>
+                  </div>
+
+                  <h4 className="steam-game-title">{game.title}</h4>
+
+                  <div className="steam-game-footer">
+                    <div className="steam-game-prices">
+                      <span className="steam-orig-price">{money(game.originalPriceUsd)}</span>
+                      <strong className="steam-sale-price">{money(game.salePriceUsd)}</strong>
+                    </div>
+                    <a
+                      href={game.storeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="steam-store-btn"
+                    >
+                      Open on Steam Store ↗
+                    </a>
+                  </div>
+                </div>
               </article>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* SECTION 2: Flash Discounts */}
-      <section className="events-section">
-        <div className="events-section-header">
-          <div>
-            <h3>🔥 FLASH DISCOUNTS &amp; STEAM DEALS</h3>
-            <p>Verified market price cuts and Steam FPS community sales.</p>
+            ))}
           </div>
-          <span className="events-deals-badge">UP TO -66% OFF</span>
-        </div>
+        </section>
+      )}
 
-        <div className="events-deals-grid">
-          {deals.map((deal) => (
-            <article key={deal.id} className="events-deal-card">
-              <div className="deal-discount-ribbon">-{deal.discountPercent}%</div>
+      {/* SECTION 3: Flash Skin Discounts */}
+      {(filter === "ALL" || filter === "SKIN_DEALS") && (
+        <section className="events-section">
+          <div className="events-section-header">
+            <div>
+              <h3>🔥 CS2 SKIN FLASH DEALS &amp; MARKET CUTS</h3>
+              <p>Verified market price cuts and CS2 skin sales across trusted partner marketplaces.</p>
+            </div>
+            <span className="events-deals-badge">UP TO -40% OFF</span>
+          </div>
 
-              <div className="deal-image-wrap">
-                <img src={deal.imageUrl} alt={deal.title} loading="lazy" />
-              </div>
+          <div className="events-deals-grid">
+            {deals.map((deal) => (
+              <article key={deal.id} className="events-deal-card">
+                <div className="deal-discount-ribbon">-{deal.discountPercent}%</div>
 
-              <div className="deal-body">
-                <div className="deal-badge-row">
-                  <span className="deal-store-pill">{deal.storeName}</span>
-                  {deal.badgeText && <span className="deal-custom-pill">{deal.badgeText}</span>}
+                <div className="deal-image-wrap">
+                  <img
+                    src={deal.imageUrl}
+                    alt={deal.title}
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = getWeaponSilhouetteSvg(
+                        deal.title
+                      );
+                    }}
+                  />
                 </div>
-                <strong>{deal.title}</strong>
 
-                <div className="deal-pricing">
-                  <div className="deal-prices">
-                    <span className="deal-orig-price">{money(deal.originalPriceUsd)}</span>
-                    <strong className="deal-sale-price">{money(deal.salePriceUsd)}</strong>
+                <div className="deal-body">
+                  <div className="deal-badge-row">
+                    <span className="deal-store-pill">{deal.storeName}</span>
+                    {deal.badgeText && <span className="deal-custom-pill">{deal.badgeText}</span>}
                   </div>
-                  <a
-                    href={deal.storeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="deal-shop-btn"
-                  >
-                    VIEW DEAL ↗
-                  </a>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+                  <strong>{deal.title}</strong>
 
-      {/* SECTION 3: CS2 Special Events & Major Calendar */}
-      <section className="events-section">
-        <div className="events-section-header">
-          <div>
-            <h3>🏆 CS2 SPECIAL EVENTS &amp; MAJOR CALENDAR</h3>
-            <p>Valve Major championships, Armory Pass seasons, and community arena tournaments.</p>
+                  <div className="deal-pricing">
+                    <div className="deal-prices">
+                      <span className="deal-orig-price">{money(deal.originalPriceUsd)}</span>
+                      <strong className="deal-sale-price">{money(deal.salePriceUsd)}</strong>
+                    </div>
+                    <a
+                      href={deal.storeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="deal-shop-btn"
+                    >
+                      VIEW DEAL ↗
+                    </a>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
-          <span className="events-tier1-badge">VALVE SANCTIONED</span>
-        </div>
+        </section>
+      )}
 
-        <div className="events-calendar-timeline">
-          {events.map((evt) => (
-            <article key={evt.id} className={`events-calendar-card ${evt.status.toLowerCase()}`}>
-              <div className="evt-status-col">
-                <span className={`evt-status-badge ${evt.status.toLowerCase()}`}>
-                  {evt.status === "LIVE" ? "● LIVE NOW" : evt.status}
-                </span>
-                <span className="evt-type-badge">{evt.type.replace(/_/g, " ")}</span>
-              </div>
+      {/* SECTION 4: CS2 Special Events & Major Calendar */}
+      {(filter === "ALL" || filter === "CALENDAR") && (
+        <section className="events-section">
+          <div className="events-section-header">
+            <div>
+              <h3>🏆 CS2 SPECIAL EVENTS &amp; MAJOR CALENDAR</h3>
+              <p>Valve Major championships, Armory Pass seasons, and community arena tournaments.</p>
+            </div>
+            <span className="events-tier1-badge">VALVE SANCTIONED</span>
+          </div>
 
-              <div className="evt-content-col">
-                <div className="evt-date-range">
-                  {evt.startDate} → {evt.endDate}
-                  {evt.location ? ` · 📍 ${evt.location}` : ""}
+          <div className="events-calendar-timeline">
+            {events.map((evt) => (
+              <article key={evt.id} className={`events-calendar-card ${evt.status.toLowerCase()}`}>
+                <div className="evt-status-col">
+                  <span className={`evt-status-badge ${evt.status.toLowerCase()}`}>
+                    {evt.status === "LIVE" ? "● LIVE NOW" : evt.status}
+                  </span>
+                  <span className="evt-type-badge">{evt.type.replace(/_/g, " ")}</span>
                 </div>
-                <h4 className="evt-title">{evt.title}</h4>
-                <p className="evt-desc">{evt.description}</p>
 
-                <div className="evt-highlights">
-                  {evt.highlights.map((h, idx) => (
-                    <span key={idx} className="evt-highlight-chip">
-                      ✓ {h}
-                    </span>
-                  ))}
-                  {evt.prizePoolUsd && (
-                    <span className="evt-prize-chip">
-                      💰 {money(evt.prizePoolUsd)} Prize Pool
-                    </span>
+                <div className="evt-content-col">
+                  <div className="evt-date-range">
+                    {evt.startDate} → {evt.endDate}
+                    {evt.location ? ` · 📍 ${evt.location}` : ""}
+                  </div>
+                  <h4 className="evt-title">{evt.title}</h4>
+                  <p className="evt-desc">{evt.description}</p>
+
+                  <div className="evt-highlights">
+                    {evt.highlights.map((h, idx) => (
+                      <span key={idx} className="evt-highlight-chip">
+                        ✓ {h}
+                      </span>
+                    ))}
+                    {evt.prizePoolUsd && (
+                      <span className="evt-prize-chip">
+                        💰 {money(evt.prizePoolUsd)} Prize Pool
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="evt-action-col">
+                  {evt.officialUrl && (
+                    <a
+                      href={evt.officialUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="evt-link-btn"
+                    >
+                      OFFICIAL SITE ↗
+                    </a>
                   )}
                 </div>
-              </div>
-
-              <div className="evt-action-col">
-                {evt.officialUrl && (
-                  <a
-                    href={evt.officialUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="evt-link-btn"
-                  >
-                    OFFICIAL SITE ↗
-                  </a>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

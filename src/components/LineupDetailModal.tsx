@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, type MouseEvent } from "react";
 import type { UtilityLineup, UtilityType } from "../features/stratboard/types";
 import ClipPlayer from "./ClipPlayer";
 import Icon, { type IconName } from "./Icon";
+import RadarMapLayer from "./RadarMapLayer";
 import "./LineupDetailModal.css";
 
 interface Props {
@@ -19,6 +20,12 @@ const utilityColors: Record<UtilityType, string> = {
   HE: "#ef4444",
 };
 
+function extractYouTubeId(url?: string | null): string | null {
+  if (!url) return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  return match ? match[1] : null;
+}
+
 export default function LineupDetailModal({ lineup, onClose, onPlaceLineup }: Props) {
   const [activeTab, setActiveTab] = useState<ModalTab>("video");
   const [copied, setCopied] = useState(false);
@@ -29,11 +36,28 @@ export default function LineupDetailModal({ lineup, onClose, onPlaceLineup }: Pr
   });
   const aimContainerRef = useRef<HTMLDivElement>(null);
 
+  const cleanMap = (lineup?.mapName || "mirage").toLowerCase().replace(/^de_/, "");
+  const ytId = extractYouTubeId(lineup?.videoUrl);
+  const primaryAim = ytId
+    ? `https://i.ytimg.com/vi/${ytId}/maxresdefault.jpg`
+    : (lineup?.targetImgUrl || `/maps/de_${cleanMap}.webp`);
+  const fallbackAim = ytId
+    ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`
+    : `/maps/de_${cleanMap}.webp`;
+
+  const [aimImgSrc, setAimImgSrc] = useState(primaryAim);
+
   useEffect(() => {
     if (!lineup) return;
     setActiveTab(lineup.videoUrl ? "video" : "aim");
     setCopied(false);
-  }, [lineup?.id]);
+    const id = extractYouTubeId(lineup.videoUrl);
+    setAimImgSrc(
+      id
+        ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`
+        : (lineup.targetImgUrl || `/maps/${lineup.mapName.toLowerCase().replace(/^de_/, "")}.webp`)
+    );
+  }, [lineup?.id, lineup?.videoUrl, lineup?.mapName, lineup?.targetImgUrl]);
 
   // Global keydown listeners for Escape (close) and 'C' (copy setpos)
   useEffect(() => {
@@ -216,82 +240,65 @@ export default function LineupDetailModal({ lineup, onClose, onPlaceLineup }: Pr
                 onMouseMove={handleAimMouseMove}
                 onMouseLeave={handleAimMouseLeave}
               >
-                {/* Tactical First-Person Aim Backdrop */}
-                <div className="csnades-aim-skyline">
-                  {/* Sky & Lighting */}
-                  <div className="csnades-aim-sky" />
-                  {/* Architectural Building silhouettes */}
-                  <svg
-                    className="csnades-aim-svg-backdrop"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                  >
-                    {/* Distant building wall */}
-                    <rect x="0" y="40" width="38" height="60" fill="#18231e" stroke="#25352c" />
-                    <rect x="38" y="28" width="28" height="72" fill="#121b16" stroke="#2a3d32" />
-                    <rect x="66" y="46" width="34" height="54" fill="#1e2c24" stroke="#2e4236" />
-                    {/* Roof trims & windows */}
-                    <line x1="0" y1="40" x2="38" y2="40" stroke="#f59e0b" strokeWidth="0.8" opacity="0.6" />
-                    <line x1="38" y1="28" x2="66" y2="28" stroke="#38bdf8" strokeWidth="0.8" opacity="0.6" />
-                    <line x1="66" y1="46" x2="100" y2="46" stroke="#f59e0b" strokeWidth="0.8" opacity="0.6" />
-                    {/* Landmark Antenna / Corner alignment target */}
-                    <line x1="50" y1="28" x2="50" y2="15" stroke="#94a3b8" strokeWidth="0.6" />
-                    <circle cx="50" cy="15" r="1.2" fill="#ef4444" />
-                    <line x1="47" y1="18" x2="53" y2="18" stroke="#94a3b8" strokeWidth="0.4" />
-                    <line x1="48" y1="22" x2="52" y2="22" stroke="#94a3b8" strokeWidth="0.4" />
-                  </svg>
+                {/* Real HD CS2 First-Person Screenshot */}
+                <img
+                  src={aimImgSrc}
+                  alt={`Aim view for ${lineup.title}`}
+                  className="csnades-aim-hd-image"
+                  onError={() => {
+                    if (aimImgSrc !== fallbackAim) {
+                      setAimImgSrc(fallbackAim);
+                    }
+                  }}
+                />
 
-                  {/* Aim Crosshair Reticle (Centered at 50%, 50%) */}
-                  <div className="csnades-aim-crosshair-center">
-                    <div className="ch-line ch-top" />
-                    <div className="ch-line ch-bottom" />
-                    <div className="ch-line ch-left" />
-                    <div className="ch-line ch-right" />
-                    <div className="ch-center-dot" />
-                  </div>
-
-                  {/* Target Landmark Annotation */}
-                  <div className="csnades-aim-annotation">
-                    <span className="csnades-ann-dot" />
-                    <span className="csnades-ann-text">
-                      🎯 AIM TARGET:{" "}
-                      {lineup.precision === "Precise"
-                        ? "Antenna tip / edge intersection"
-                        : "Roof corner silhouette"}
-                    </span>
-                  </div>
-
-                  {/* Interactive 2.5x Magnifying Zoom Lens */}
-                  {lensPos.show && (
-                    <div
-                      className="csnades-magnifier-lens"
-                      style={{
-                        left: `${lensPos.x}%`,
-                        top: `${lensPos.y}%`,
-                        borderColor: color,
-                        boxShadow: `0 0 20px ${color}60`,
-                      }}
-                    >
-                      <div
-                        className="csnades-magnifier-content"
-                        style={{
-                          transform: `scale(2.5) translate(${50 - lensPos.x}%, ${50 - lensPos.y}%)`,
-                        }}
-                      >
-                        {/* Mini zoom background */}
-                        <div className="csnades-aim-crosshair-center zoom">
-                          <div className="ch-line ch-top" />
-                          <div className="ch-line ch-bottom" />
-                          <div className="ch-line ch-left" />
-                          <div className="ch-line ch-right" />
-                          <div className="ch-center-dot" />
-                        </div>
-                      </div>
-                      <div className="csnades-lens-reticle" />
-                      <span className="csnades-lens-tag">2.5× ZOOM</span>
-                    </div>
-                  )}
+                {/* CS2 Crosshair Reticle Center Overlay */}
+                <div className="csnades-aim-crosshair-center">
+                  <div className="ch-line ch-top" />
+                  <div className="ch-line ch-bottom" />
+                  <div className="ch-line ch-left" />
+                  <div className="ch-line ch-right" />
+                  <div className="ch-center-dot" />
                 </div>
+
+                {/* Target Landmark Annotation */}
+                <div className="csnades-aim-annotation">
+                  <span className="csnades-ann-dot" />
+                  <span className="csnades-ann-text">
+                    🎯 AIM TARGET: {lineup.precision === "Precise" ? "Align crosshair with vertex / landmark" : "Standard crosshair alignment"}
+                  </span>
+                </div>
+
+                {/* Real Interactive 2.5x Magnifying Zoom Lens */}
+                {lensPos.show && (
+                  <div
+                    className="csnades-magnifier-lens"
+                    style={{
+                      left: `${lensPos.x}%`,
+                      top: `${lensPos.y}%`,
+                      borderColor: color,
+                      boxShadow: `0 0 20px ${color}60`,
+                    }}
+                  >
+                    <div
+                      className="csnades-magnifier-zoom-layer"
+                      style={{
+                        backgroundImage: `url(${aimImgSrc})`,
+                        backgroundPosition: `${lensPos.x}% ${lensPos.y}%`,
+                        backgroundSize: "250%",
+                      }}
+                    />
+                    <div className="csnades-lens-reticle" />
+                    <div className="csnades-aim-crosshair-center zoom">
+                      <div className="ch-line ch-top" />
+                      <div className="ch-line ch-bottom" />
+                      <div className="ch-line ch-left" />
+                      <div className="ch-line ch-right" />
+                      <div className="ch-center-dot" />
+                    </div>
+                    <span className="csnades-lens-tag">2.5× ZOOM</span>
+                  </div>
+                )}
               </div>
               <div className="csnades-aim-guide-note">
                 <Icon name="spark" size={14} />
@@ -307,16 +314,8 @@ export default function LineupDetailModal({ lineup, onClose, onPlaceLineup }: Pr
           {activeTab === "stand" && (
             <div className="csnades-tab-content stand-tab">
               <div className="csnades-stand-radar-wrap">
-                <img
-                  src={`/maps/${lineup.mapName}.png`}
-                  alt={lineup.mapName}
-                  className="csnades-stand-radar-img"
-                  onError={(e) => {
-                    const clean = lineup.mapName.toLowerCase().replace(/^de_/, "");
-                    (e.currentTarget as HTMLImageElement).src = `https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/images/maps/de_${clean}.png`;
-                  }}
-                />
-                <svg className="csnades-stand-radar-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <RadarMapLayer mapName={lineup.mapName} />
+                <svg className="csnades-stand-radar-svg" viewBox="0 0 100 100">
                   {/* Dashed trajectory connecting stand to landing */}
                   <line
                     x1={lineup.standX}
@@ -324,36 +323,36 @@ export default function LineupDetailModal({ lineup, onClose, onPlaceLineup }: Pr
                     x2={lineup.landX}
                     y2={lineup.landY}
                     stroke={color}
-                    strokeWidth="1.6"
-                    strokeDasharray="3,3"
+                    strokeWidth="0.5"
+                    strokeDasharray="1.5,1.2"
                   />
                   {/* Stand Point Pin */}
                   <circle
                     cx={lineup.standX}
                     cy={lineup.standY}
-                    r="3.5"
+                    r="1.5"
                     fill={color}
                     stroke="#ffffff"
-                    strokeWidth="1.2"
+                    strokeWidth="0.4"
                   />
                   <circle
                     cx={lineup.standX}
                     cy={lineup.standY}
-                    r="6.5"
+                    r="2.5"
                     fill="none"
                     stroke={color}
-                    strokeWidth="0.8"
-                    opacity="0.7"
+                    strokeWidth="0.4"
+                    opacity="0.8"
                     className="stand-pulse-ring"
                   />
                   {/* Land Point Pin */}
                   <circle
                     cx={lineup.landX}
                     cy={lineup.landY}
-                    r="2.8"
+                    r="1.5"
                     fill="#0f172a"
                     stroke={color}
-                    strokeWidth="1.2"
+                    strokeWidth="0.4"
                   />
                 </svg>
 
@@ -369,82 +368,57 @@ export default function LineupDetailModal({ lineup, onClose, onPlaceLineup }: Pr
 
           {/* TECHNIQUE & KEYBINDS STRIP */}
           <div className="csnades-tech-strip">
-            <div className="csnades-tech-keys">
-              <span className="csnades-keys-label">KEYBINDS:</span>
-              {keybinds.map((kb) => (
-                <span key={kb.key} className="csnades-key-chip">
-                  <kbd>{kb.key}</kbd>
-                  <span>{kb.label}</span>
-                </span>
-              ))}
+            <div className="csnades-tech-info">
+              <span className="csnades-tech-label">TECHNIQUE</span>
+              <strong className="csnades-tech-value">
+                {lineup.technique || lineup.throwType || "Standing Throw"}
+              </strong>
             </div>
 
-            <div className="csnades-tech-meta">
-              {lineup.movement && (
-                <span className="csnades-meta-pill">
-                  <strong>Movement:</strong> {lineup.movement}
-                </span>
-              )}
-              {lineup.precision && (
-                <span className="csnades-meta-pill">
-                  <strong>Precision:</strong> {lineup.precision}
-                </span>
-              )}
-              {lineup.viewsCount && (
-                <span className="csnades-meta-pill">
-                  👁 {lineup.viewsCount.toLocaleString()} views
-                </span>
-              )}
+            {/* Visual CS2 Keybind Badges */}
+            <div className="csnades-keybinds-row">
+              <span className="csnades-tech-label">CONTROLS</span>
+              {keybinds.map((kb, idx) => (
+                <div key={idx} className="csnades-keybind-pill">
+                  <kbd className="csnades-kbd">{kb.key}</kbd>
+                  <span className="csnades-kbd-label">{kb.label}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* DESCRIPTION */}
-          {lineup.description && (
-            <p className="csnades-modal-desc-box">{lineup.description}</p>
-          )}
-
-          {/* CONSOLE COMMAND BAR */}
-          <div className="csnades-console-bar">
-            <div className="csnades-console-text-wrap">
-              <span className="csnades-console-label">CS2 CONSOLE:</span>
-              <code className="csnades-console-code">{consoleCommand}</code>
+          {/* CONSOLE SETPOS COMMAND STRIP */}
+          <div className="csnades-setpos-strip">
+            <div className="csnades-setpos-code-wrap">
+              <span className="csnades-setpos-tag">CONSOLE</span>
+              <code className="csnades-setpos-code">{consoleCommand}</code>
             </div>
             <button
               type="button"
-              className={`csnades-console-copy-btn ${copied ? "copied" : ""}`}
+              className={`csnades-btn-copy-console ${copied ? "copied" : ""}`}
               onClick={copyConsoleCommand}
-              title="Copy console command (Hotkey: C)"
+              title="Shortcut: Press 'C' anytime to copy"
             >
-              {copied ? "✓ COPIED!" : "COPY CONSOLE (C)"}
+              {copied ? "COPIED! ✓" : "COPY (C)"}
             </button>
           </div>
-        </div>
 
-        {/* MODAL FOOTER ACTIONS */}
-        <div className="csnades-modal-footer">
-          <button
-            type="button"
-            className="csnades-place-board-btn"
-            onClick={() => {
-              onPlaceLineup(lineup);
-              onClose();
-            }}
-          >
-            + SEND TO TACTICAL BOARD
-          </button>
-          {lineup.videoUrl && (
-            <a
-              href={lineup.videoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="csnades-ext-link-btn"
+          {/* MODAL FOOTER ACTIONS */}
+          <div className="csnades-modal-footer">
+            <button
+              type="button"
+              className="csnades-footer-btn place-btn"
+              onClick={() => {
+                onPlaceLineup(lineup);
+                onClose();
+              }}
             >
-              OPEN SOURCE VIDEO ↗
-            </a>
-          )}
-          <button type="button" className="csnades-footer-close-btn" onClick={onClose}>
-            CLOSE (ESC)
-          </button>
+              <Icon name="target" size={14} /> PLACE ON TACTICAL WHITEBOARD
+            </button>
+            <button type="button" className="csnades-footer-btn close-btn" onClick={onClose}>
+              CLOSE
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -23,10 +23,23 @@ function getLineupViews(id: string): string {
   return views.toLocaleString();
 }
 
+function extractYouTubeId(url?: string | null): string | null {
+  if (!url) return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  return match ? match[1] : null;
+}
+
 export const LineupDualThumbnail: FC<Props> = ({ lineup, mapName, onClick }) => {
   const theme = utilityTheme[lineup.utilityType] ?? utilityTheme.SMOKE;
   const views = getLineupViews(lineup.id);
   const cleanMap = (mapName || "").toLowerCase().replace(/^de_/, "");
+  const ytId = extractYouTubeId(lineup.videoUrl);
+
+  const leftBg = ytId
+    ? `radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.2) 0%, rgba(10, 14, 12, 0.75) 100%), url(https://i.ytimg.com/vi/${ytId}/hqdefault.jpg)`
+    : `radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.4) 0%, rgba(10, 14, 12, 0.95) 100%), url(/maps/de_${cleanMap}.webp)`;
+
+  const rightBg = `radial-gradient(circle at 50% 50%, rgba(20, 24, 20, 0.3) 0%, rgba(10, 14, 12, 0.95) 100%), url(/maps/de_${cleanMap}.webp)`;
 
   return (
     <div
@@ -56,13 +69,13 @@ export const LineupDualThumbnail: FC<Props> = ({ lineup, mapName, onClick }) => 
           <div
             className="cs2nades-thumb-bg"
             style={{
-              backgroundImage: `radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.4) 0%, rgba(10, 14, 12, 0.95) 100%), url(/maps/de_${cleanMap}.png)`,
-              backgroundPosition: `${lineup.standX}% ${lineup.standY}%`,
-              backgroundSize: "280%",
+              backgroundImage: leftBg,
+              backgroundPosition: ytId ? "center" : `${lineup.standX}% ${lineup.standY}%`,
+              backgroundSize: ytId ? "cover" : "280%",
             }}
           />
           {/* Tactical Crosshair Reticle */}
-          <svg className="cs2nades-reticle-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <svg className="cs2nades-reticle-svg" viewBox="0 0 100 100">
             {/* Fine Crosshair Lines */}
             <line x1="50" y1="20" x2="50" y2="44" stroke="#fff" strokeWidth="1.2" strokeOpacity="0.85" />
             <line x1="50" y1="56" x2="50" y2="80" stroke="#fff" strokeWidth="1.2" strokeOpacity="0.85" />
@@ -85,7 +98,7 @@ export const LineupDualThumbnail: FC<Props> = ({ lineup, mapName, onClick }) => 
           <div
             className="cs2nades-thumb-bg"
             style={{
-              backgroundImage: `radial-gradient(circle at 50% 50%, rgba(20, 24, 20, 0.3) 0%, rgba(10, 14, 12, 0.95) 100%), url(/maps/de_${cleanMap}.png)`,
+              backgroundImage: rightBg,
               backgroundPosition: `${lineup.landX}% ${lineup.landY}%`,
               backgroundSize: "280%",
             }}
@@ -117,7 +130,7 @@ export const LineupDualThumbnail: FC<Props> = ({ lineup, mapName, onClick }) => 
             {lineup.utilityType === "HE" && (
               <svg className="cs2nades-bloom-svg" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="28" fill="rgba(239, 68, 68, 0.35)" filter="blur(8px)" />
-                <circle cx="50" cy="50" r="12" fill="#fed7aa" filter="blur(3px)" />
+                <circle cx="50" cy="12" fill="#fed7aa" filter="blur(3px)" />
               </svg>
             )}
           </div>

@@ -28,6 +28,8 @@ export interface UtilityLineup {
   viewsCount?: number;
   setposCommand?: string;
   airTimeSeconds?: number;
+  targetImgUrl?: string;
+  standImgUrl?: string;
 }
 
 export interface TacticSummary {

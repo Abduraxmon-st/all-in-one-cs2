@@ -5,6 +5,42 @@
   gap: 24px;
 }
 
+/* Filter Navigation Bar */
+.events-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #111a14;
+  border: 1px solid #233529;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.events-filter-pill {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid transparent;
+  padding: 6px 12px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.events-filter-pill:hover {
+  color: #f1f5f9;
+  background: #19271e;
+}
+
+.events-filter-pill.active {
+  background: rgba(200, 241, 53, 0.15);
+  border-color: #c8f135;
+  color: #c8f135;
+}
+
 .events-loader-bar {
   background: #19241c;
   color: var(--lime);
@@ -484,6 +520,153 @@
   background: var(--lime);
   color: #111;
   border-color: var(--lime);
+}
+
+/* SECTION: Steam Game Discounts */
+.steam-games-section {
+  border-color: #1e3a47;
+}
+
+.events-deals-badge.steam-badge {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.events-steam-games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.steam-game-card {
+  background: #0d161a;
+  border: 1px solid #1c2e38;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.steam-game-card:hover {
+  transform: translateY(-2px);
+  border-color: #38bdf8;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.15);
+}
+
+.steam-game-image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 460 / 215;
+  background: #080d10;
+  overflow: hidden;
+}
+
+.steam-game-capsule {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.steam-discount-tag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #4ade80;
+  color: #052e16;
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 3px 7px;
+  border-radius: 3px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.steam-game-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.steam-game-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.steam-cat-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.steam-rating-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #a3e635;
+}
+
+.steam-game-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.steam-game-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid #16242c;
+}
+
+.steam-game-prices {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.steam-orig-price {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-decoration: line-through;
+}
+
+.steam-sale-price {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #4ade80;
+}
+
+.steam-store-btn {
+  background: #1e3a47;
+  color: #38bdf8;
+  border: 1px solid #2d5568;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.steam-store-btn:hover {
+  background: #38bdf8;
+  color: #082f49;
+  border-color: #38bdf8;
 }
 
 @media (max-width: 900px) {

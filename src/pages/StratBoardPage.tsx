@@ -29,6 +29,7 @@ import type {
 } from "../features/stratboard/types";
 import { getRadarSources } from "../features/stratboard/radarMapUrls";
 import { fallbackLineups } from "../features/stratboard/fallbackLineups";
+import { fallbackTactics, type ProTacticPlaybook } from "../features/stratboard/fallbackTactics";
 import ClipPlayer from "../components/ClipPlayer";
 import Icon, { type IconName } from "../components/Icon";
 import LineupDualThumbnail from "../components/LineupDualThumbnail";
@@ -40,69 +41,73 @@ import "./StratBoardPage.css";
 
 const MAP_CALLOUTS: Record<string, { name: string; x: number; y: number }[]> = {
   mirage: [
-    { name: "A Site", x: 60, y: 58 },
-    { name: "B Site", x: 22, y: 45 },
-    { name: "Window", x: 48, y: 46 },
-    { name: "Top Mid", x: 42, y: 62 },
-    { name: "Connector", x: 53, y: 52 },
-    { name: "Stairs", x: 59, y: 50 },
-    { name: "Jungle", x: 52, y: 42 },
-    { name: "Palace", x: 65, y: 68 },
-    { name: "A Ramp", x: 45, y: 70 },
-    { name: "B Apts", x: 24, y: 36 },
-    { name: "T Spawn", x: 34, y: 82 },
-    { name: "CT Spawn", x: 52, y: 32 },
-    { name: "Catwalk", x: 36, y: 52 },
-    { name: "Underpass", x: 42, y: 54 },
+    { name: "A Site", x: 71, y: 42 },
+    { name: "B Site", x: 26, y: 34 },
+    { name: "Window", x: 50, y: 45 },
+    { name: "Top Mid", x: 42, y: 60 },
+    { name: "Connector", x: 56, y: 52 },
+    { name: "Stairs", x: 62, y: 46 },
+    { name: "Jungle", x: 56, y: 38 },
+    { name: "Palace", x: 79, y: 47 },
+    { name: "A Ramp", x: 68, y: 66 },
+    { name: "B Apts", x: 22, y: 58 },
+    { name: "T Spawn", x: 45, y: 88 },
+    { name: "CT Spawn", x: 66, y: 28 },
+    { name: "Catwalk", x: 38, y: 46 },
+    { name: "Underpass", x: 46, y: 56 },
   ],
   inferno: [
-    { name: "A Site", x: 62, y: 44 },
-    { name: "B Site", x: 24, y: 34 },
-    { name: "Banana", x: 30, y: 64 },
-    { name: "Coffin", x: 22, y: 30 },
-    { name: "CT Spawn", x: 28, y: 22 },
-    { name: "Pit", x: 72, y: 38 },
-    { name: "Apps", x: 52, y: 48 },
-    { name: "Mid", x: 48, y: 62 },
-    { name: "T Spawn", x: 46, y: 88 },
+    { name: "A Site", x: 68, y: 38 },
+    { name: "B Site", x: 24, y: 38 },
+    { name: "Banana", x: 32, y: 68 },
+    { name: "Coffin", x: 20, y: 30 },
+    { name: "CT Spawn", x: 30, y: 18 },
+    { name: "Pit", x: 76, y: 35 },
+    { name: "Apps", x: 58, y: 45 },
+    { name: "Mid", x: 52, y: 62 },
+    { name: "T Spawn", x: 46, y: 90 },
   ],
   dust2: [
-    { name: "A Site", x: 72, y: 32 },
-    { name: "B Site", x: 24, y: 28 },
-    { name: "Long A", x: 78, y: 58 },
-    { name: "Catwalk", x: 60, y: 38 },
-    { name: "Mid Doors", x: 48, y: 48 },
-    { name: "Xbox", x: 46, y: 54 },
-    { name: "T Spawn", x: 44, y: 85 },
-    { name: "CT Spawn", x: 52, y: 32 },
-    { name: "Tunnels", x: 28, y: 46 },
+    { name: "A Site", x: 76, y: 32 },
+    { name: "B Site", x: 22, y: 26 },
+    { name: "Long A", x: 82, y: 55 },
+    { name: "Catwalk", x: 62, y: 36 },
+    { name: "Mid Doors", x: 48, y: 46 },
+    { name: "Xbox", x: 46, y: 52 },
+    { name: "T Spawn", x: 44, y: 88 },
+    { name: "CT Spawn", x: 52, y: 28 },
+    { name: "Tunnels", x: 26, y: 46 },
   ],
   nuke: [
-    { name: "A Site", x: 50, y: 48 },
-    { name: "B Site", x: 50, y: 58 },
-    { name: "Ramp", x: 66, y: 58 },
-    { name: "Hut", x: 44, y: 52 },
-    { name: "Outside", x: 32, y: 42 },
-    { name: "Garage", x: 26, y: 36 },
-    { name: "Lobby", x: 50, y: 72 },
+    { name: "A Site", x: 50, y: 46 },
+    { name: "B Site", x: 50, y: 62 },
+    { name: "Ramp", x: 68, y: 56 },
+    { name: "Hut", x: 44, y: 50 },
+    { name: "Outside", x: 30, y: 44 },
+    { name: "Garage", x: 24, y: 36 },
+    { name: "Lobby", x: 50, y: 74 },
+    { name: "T Spawn", x: 50, y: 88 },
+    { name: "CT Spawn", x: 48, y: 24 },
   ],
   ancient: [
-    { name: "A Site", x: 64, y: 42 },
-    { name: "B Site", x: 32, y: 44 },
+    { name: "A Site", x: 68, y: 42 },
+    { name: "B Site", x: 30, y: 44 },
     { name: "Mid", x: 48, y: 52 },
-    { name: "Donut", x: 56, y: 48 },
-    { name: "Cheetah", x: 38, y: 52 },
-    { name: "Red Room", x: 46, y: 40 },
-    { name: "T Spawn", x: 48, y: 82 },
+    { name: "Donut", x: 58, y: 46 },
+    { name: "Cheetah", x: 36, y: 52 },
+    { name: "Red Room", x: 46, y: 38 },
+    { name: "T Spawn", x: 48, y: 86 },
+    { name: "CT Spawn", x: 50, y: 24 },
   ],
   anubis: [
-    { name: "A Site", x: 68, y: 38 },
-    { name: "B Site", x: 28, y: 42 },
-    { name: "Mid", x: 48, y: 52 },
+    { name: "A Site", x: 70, y: 36 },
+    { name: "B Site", x: 26, y: 40 },
+    { name: "Mid", x: 48, y: 46 },
     { name: "Canal", x: 44, y: 64 },
     { name: "Bridge", x: 48, y: 44 },
-    { name: "Ruins", x: 34, y: 56 },
-    { name: "T Spawn", x: 48, y: 84 },
+    { name: "Ruins", x: 32, y: 56 },
+    { name: "T Spawn", x: 48, y: 88 },
+    { name: "CT Spawn", x: 52, y: 22 },
   ],
   overpass: [
     { name: "A Site", x: 62, y: 44 },
@@ -288,7 +293,11 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
   const [favouriteIds, setFavouriteIds] = useState<Set<string>>(() => new Set());
 
   // Tactics
-  const [tactics, setTactics] = useState<TacticSummary[]>([]);
+  const [tactics, setTactics] = useState<TacticSummary[]>(() =>
+    fallbackTactics.filter(
+      (t) => t.mapName.toLowerCase().replace(/^de_/, "") === "mirage" && t.teamSide === "T"
+    )
+  );
   const [tacticPage, setTacticPage] = useState(0);
   const [tacticTotalPages, setTacticTotalPages] = useState(0);
   const [myTactics, setMyTactics] = useState<TacticSummary[]>([]);
@@ -390,17 +399,30 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
   useEffect(() => {
     if (tab !== "tactics") return;
     const controller = new AbortController();
+    const cleanCurrentMap = normalizeMap(mapName).toLowerCase().replace(/^de_/, "");
+    // Pre-populate with fallback tactics immediately for instant 0ms rendering
+    const fallbackMatches = fallbackTactics.filter(
+      (t) => t.mapName.toLowerCase().replace(/^de_/, "") === cleanCurrentMap && t.teamSide === teamSide
+    );
+    if (fallbackMatches.length > 0) {
+      setTactics(fallbackMatches);
+      setTacticTotalPages(1);
+    }
+
     getTactics(
       { mapName: normalizeMap(mapName), teamSide, page: tacticPage, size: 20 },
       controller.signal
     )
       .then((data) => {
-        setTactics(data.content);
-        setTacticTotalPages(data.totalPages);
+        if (data && data.content && data.content.length > 0) {
+          setTactics(data.content);
+          setTacticTotalPages(data.totalPages);
+        }
       })
       .catch((cause: unknown) => {
-        if (!controller.signal.aborted)
-          setError(cause instanceof Error ? cause.message : "Could not load tactics.");
+        if (!controller.signal.aborted) {
+          console.warn("Using fallback tactics during network cold start:", cause);
+        }
       });
     if (token) getMyTactics(token).then(setMyTactics).catch(() => setMyTactics([]));
     else setMyTactics([]);
@@ -573,6 +595,15 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
 
   async function openTactic(code: string) {
     setError("");
+    const trimmed = code.trim().toLowerCase();
+    const localMatch = fallbackTactics.find(
+      (t) => t.id.toLowerCase() === trimmed || t.shareCode.toLowerCase() === trimmed
+    );
+    if (localMatch) {
+      setTactic(localMatch);
+      setTab("tactics");
+      return;
+    }
     try {
       setTactic(await getTactic(code, token || undefined));
       setTab("tactics");
@@ -581,17 +612,76 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
     }
   }
 
+  function loadTacticOntoBoard(targetTactic: TacticSummary | ProTacticPlaybook | TacticDetail) {
+    const foundPlaybook = fallbackTactics.find(
+      (t) => t.id === targetTactic.id || t.shareCode === targetTactic.shareCode
+    );
+    let elements: CanvasElement[] = [];
+    if (foundPlaybook?.parsedElements && foundPlaybook.parsedElements.length > 0) {
+      elements = foundPlaybook.parsedElements;
+    } else if ("canvasStateJson" in targetTactic && targetTactic.canvasStateJson) {
+      try {
+        const parsed = JSON.parse(targetTactic.canvasStateJson);
+        elements = Array.isArray(parsed) ? parsed : (parsed.elements || []);
+      } catch {
+        elements = [];
+      }
+    }
+
+    const norm = normalizeMap(targetTactic.mapName);
+    setMapName(norm);
+    setTeamSide(targetTactic.teamSide);
+
+    if (room) {
+      setRoom((cur) =>
+        cur
+          ? {
+              ...cur,
+              mapName: norm,
+              teamSide: targetTactic.teamSide,
+              canvasElements: elements,
+            }
+          : cur
+      );
+    } else {
+      const localRoom: RoomSnapshot = {
+        roomCode: "LOCAL-BOARD",
+        mapName: norm,
+        teamSide: targetTactic.teamSide,
+        hostUserId: user?.id ?? null,
+        hostParticipantId: "local-user",
+        participants: [
+          {
+            participantId: "local-user",
+            displayName: displayName || "Commander",
+            colorHex: "#C8F135",
+            userId: user?.id ?? null,
+            isHost: true,
+          },
+        ],
+        canvasElements: elements,
+        createdAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString(),
+      };
+      setRoom(localRoom);
+      setParticipant(localRoom.participants[0]);
+    }
+    setTab("board");
+    notify(`Loaded tactic: "${targetTactic.title}" onto whiteboard!`);
+  }
+
   async function loadTactic() {
-    if (!room || !tactic) {
-      setError("Join a room first.");
-      return;
+    if (!tactic) return;
+    if (room && room.roomCode !== "LOCAL-BOARD") {
+      try {
+        setRoom(await loadTacticIntoRoom(room.roomCode, tactic.id, token || undefined));
+        setTab("board");
+        return;
+      } catch {
+        // Fall back to direct loading into room snapshot
+      }
     }
-    try {
-      setRoom(await loadTacticIntoRoom(room.roomCode, tactic.id, token || undefined));
-      setTab("board");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not load tactic into room.");
-    }
+    loadTacticOntoBoard(tactic);
   }
 
   async function saveChanges() {
@@ -1043,19 +1133,19 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
 
               {/* Interactive csnades.gg Trajectory on Whiteboard */}
               {showBoardNades && (
-                <svg className="strat-board-nades-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <svg className="strat-board-nades-svg" viewBox="0 0 100 100">
                   <defs>
-                    <marker id="board-marker-smoke" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                      <path d="M 0 0 L 6 3 L 0 6 Z" fill="#c8f135" />
+                    <marker id="board-marker-smoke" markerWidth="3.5" markerHeight="3.5" refX="2.5" refY="1.75" orient="auto">
+                      <path d="M 0 0 L 3.5 1.75 L 0 3.5 Z" fill="#c8f135" />
                     </marker>
-                    <marker id="board-marker-flash" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                      <path d="M 0 0 L 6 3 L 0 6 Z" fill="#facc15" />
+                    <marker id="board-marker-flash" markerWidth="3.5" markerHeight="3.5" refX="2.5" refY="1.75" orient="auto">
+                      <path d="M 0 0 L 3.5 1.75 L 0 3.5 Z" fill="#facc15" />
                     </marker>
-                    <marker id="board-marker-molotov" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                      <path d="M 0 0 L 6 3 L 0 6 Z" fill="#f97316" />
+                    <marker id="board-marker-molotov" markerWidth="3.5" markerHeight="3.5" refX="2.5" refY="1.75" orient="auto">
+                      <path d="M 0 0 L 3.5 1.75 L 0 3.5 Z" fill="#f97316" />
                     </marker>
-                    <marker id="board-marker-he" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                      <path d="M 0 0 L 6 3 L 0 6 Z" fill="#ef4444" />
+                    <marker id="board-marker-he" markerWidth="3.5" markerHeight="3.5" refX="2.5" refY="1.75" orient="auto">
+                      <path d="M 0 0 L 3.5 1.75 L 0 3.5 Z" fill="#ef4444" />
                     </marker>
                   </defs>
                   {lineups.map((l) => {
@@ -1065,22 +1155,22 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                     const markerId = `board-marker-${l.utilityType.toLowerCase()}`;
                     return (
                       <g key={`traj-${l.id}`} className="strat-radar-lineup-path active">
-                        <circle cx={l.standX} cy={l.standY} r="2.4" fill={color} stroke="#fff" strokeWidth="0.8" />
+                        <circle cx={l.standX} cy={l.standY} r="1.2" fill={color} stroke="#fff" strokeWidth="0.4" />
                         <circle
                           cx={l.standX}
                           cy={l.standY}
-                          r="4.6"
+                          r="2.2"
                           fill="none"
                           stroke={color}
-                          strokeWidth="0.8"
+                          strokeWidth="0.4"
                           className="strat-radar-stand-pulse"
                         />
                         <text
                           x={l.standX}
-                          y={l.standY - 3}
+                          y={l.standY - 1.8}
                           textAnchor="middle"
                           fill={color}
-                          fontSize="2.5"
+                          fontSize="2"
                           fontWeight="bold"
                         >
                           STAND
@@ -1091,8 +1181,8 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                           x2={l.landX}
                           y2={l.landY}
                           stroke={color}
-                          strokeWidth="1.8"
-                          strokeDasharray="4,3"
+                          strokeWidth="0.45"
+                          strokeDasharray="1.5,1.2"
                           className="strat-radar-trajectory-active"
                           markerEnd={`url(#${markerId})`}
                         />
@@ -1212,7 +1302,6 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                       className="strat-arrow"
                       key={element.elementId}
                       viewBox="0 0 100 100"
-                      preserveAspectRatio="none"
                     >
                       <line
                         x1={element.x}
@@ -1220,19 +1309,20 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                         x2={element.endX}
                         y2={element.endY}
                         stroke={element.colorHex ?? "#ff7a28"}
-                        strokeWidth=".8"
+                        strokeWidth="0.45"
+                        strokeDasharray="1.5,1.2"
                         markerEnd="url(#arrowhead)"
                       />
                       <defs>
                         <marker
                           id="arrowhead"
-                          markerWidth="6"
-                          markerHeight="6"
-                          refX="3.5"
-                          refY="3"
+                          markerWidth="3.5"
+                          markerHeight="3.5"
+                          refX="2.5"
+                          refY="1.75"
                           orient="auto"
                         >
-                          <path d="M0,0 L6,3 L0,6 Z" fill={element.colorHex ?? "#ff7a28"} />
+                          <path d="M 0 0 L 3.5 1.75 L 0 3.5 Z" fill={element.colorHex ?? "#ff7a28"} />
                         </marker>
                       </defs>
                     </svg>
@@ -1685,16 +1775,19 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                   ))}
 
                 {/* Trajectory SVG Layer */}
-                <svg className="csnades-radar-traj-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <svg className="csnades-radar-traj-svg" viewBox="0 0 100 100">
                   <defs>
-                    <marker id="csnades-arrow-smoke" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                      <path d="M 0 0 L 6 3 L 0 6 Z" fill="#ffeba6" />
+                    <marker id="csnades-arrow-smoke" markerWidth="3.5" markerHeight="3.5" refX="2.5" refY="1.75" orient="auto">
+                      <path d="M 0 0 L 3.5 1.75 L 0 3.5 Z" fill="#ffeba6" />
                     </marker>
-                    <marker id="csnades-arrow-molo" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                      <path d="M 0 0 L 6 3 L 0 6 Z" fill="#f97316" />
+                    <marker id="csnades-arrow-molo" markerWidth="3.5" markerHeight="3.5" refX="2.5" refY="1.75" orient="auto">
+                      <path d="M 0 0 L 3.5 1.75 L 0 3.5 Z" fill="#f97316" />
                     </marker>
-                    <marker id="csnades-arrow-flash" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                      <path d="M 0 0 L 6 3 L 0 6 Z" fill="#facc15" />
+                    <marker id="csnades-arrow-flash" markerWidth="3.5" markerHeight="3.5" refX="2.5" refY="1.75" orient="auto">
+                      <path d="M 0 0 L 3.5 1.75 L 0 3.5 Z" fill="#facc15" />
+                    </marker>
+                    <marker id="csnades-arrow-he" markerWidth="3.5" markerHeight="3.5" refX="2.5" refY="1.75" orient="auto">
+                      <path d="M 0 0 L 3.5 1.75 L 0 3.5 Z" fill="#ef4444" />
                     </marker>
                   </defs>
 
@@ -1702,24 +1795,39 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                   {activeTargetCluster &&
                     activeTargetCluster.lineups.map((l) => {
                       const isHovered = hoveredRadarLineupId === l.id;
-                      const color = l.utilityType === "MOLOTOV" ? "#f97316" : (l.utilityType === "FLASH" ? "#facc15" : "#ffeba6");
+                      const color =
+                        l.utilityType === "MOLOTOV"
+                          ? "#f97316"
+                          : l.utilityType === "FLASH"
+                            ? "#facc15"
+                            : l.utilityType === "HE"
+                              ? "#ef4444"
+                              : "#ffeba6";
+                      const markerId =
+                        l.utilityType === "MOLOTOV"
+                          ? "csnades-arrow-molo"
+                          : l.utilityType === "FLASH"
+                            ? "csnades-arrow-flash"
+                            : l.utilityType === "HE"
+                              ? "csnades-arrow-he"
+                              : "csnades-arrow-smoke";
                       return (
                         <g key={`fan-${l.id}`} className={`csnades-traj-group active ${isHovered ? "hovered" : ""}`}>
                           <circle
                             cx={l.standX}
                             cy={l.standY}
-                            r="2.2"
+                            r="1.2"
                             fill={color}
                             stroke="#ffffff"
-                            strokeWidth="0.8"
+                            strokeWidth="0.4"
                           />
                           <circle
                             cx={l.standX}
                             cy={l.standY}
-                            r="4.8"
+                            r="2.2"
                             fill="none"
                             stroke={color}
-                            strokeWidth="0.8"
+                            strokeWidth="0.4"
                             className="csnades-stand-pulse"
                           />
                           <line
@@ -1728,10 +1836,10 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                             x2={activeTargetCluster.landX}
                             y2={activeTargetCluster.landY}
                             stroke={color}
-                            strokeWidth={isHovered ? "2.6" : "1.8"}
-                            strokeDasharray="4,3"
+                            strokeWidth={isHovered ? "0.7" : "0.45"}
+                            strokeDasharray="1.5,1.2"
                             className="csnades-traj-active"
-                            markerEnd="url(#csnades-arrow-smoke)"
+                            markerEnd={`url(#${markerId})`}
                           />
                         </g>
                       );
@@ -1931,11 +2039,12 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
             </aside>
           )}
         </section>
-      )}{/* TACTICS TAB */}
+      )}
+      {/* TACTICS TAB */}
       {tab === "tactics" && (
         <section className="strat-list">
           <div className="panel-title">
-            <span>PUBLIC TACTICS · {tactics.length}</span>
+            <span>PRO PLAYBOOKS &amp; COMMUNITY TACTICS · {tactics.length}</span>
           </div>
           <form
             className="strat-code"
@@ -1947,21 +2056,63 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
             <input
               value={tacticCode}
               onChange={(event) => setTacticCode(event.target.value)}
-              placeholder="Tactic ID or share code"
+              placeholder="Enter Share Code (e.g. NAVI-MIRA, FAZE-MIDB)"
             />
-            <button>OPEN</button>
+            <button type="submit">OPEN</button>
           </form>
-          {[...myTactics, ...tactics.filter((item) => !myTactics.some((mine) => mine.id === item.id))].map(
-            (item) => (
-              <button className="strat-tactic-row" key={item.id} onClick={() => openTactic(item.id)}>
-                <strong>{item.title}</strong>
-                <span>
-                  {item.mapName} · {item.teamSide}
-                </span>
-                <small>{item.shareCode}</small>
-              </button>
-            )
-          )}
+
+          <div className="strat-tactics-grid">
+            {[...myTactics, ...tactics.filter((item) => !myTactics.some((mine) => mine.id === item.id))].map(
+              (item) => {
+                const playbook = fallbackTactics.find((t) => t.id === item.id || t.shareCode === item.shareCode);
+                return (
+                  <article className="strat-tactic-card" key={item.id}>
+                    <div className="strat-tactic-card-header">
+                      <div className="strat-tactic-badges">
+                        {playbook?.proTeam && (
+                          <span className="strat-pro-badge">★ {playbook.proTeam}</span>
+                        )}
+                        <span className={`strat-side-pill side-${item.teamSide.toLowerCase()}`}>
+                          {item.teamSide} SIDE
+                        </span>
+                        <span className="strat-map-pill">
+                          {item.mapName.replace(/^de_/, "").toUpperCase()}
+                        </span>
+                        {playbook?.difficulty && (
+                          <span className={`strat-diff-pill diff-${playbook.difficulty.toLowerCase()}`}>
+                            {playbook.difficulty}
+                          </span>
+                        )}
+                      </div>
+                      <small className="strat-share-code">{item.shareCode}</small>
+                    </div>
+
+                    <h3 className="strat-tactic-title">{item.title}</h3>
+                    {item.description && <p className="strat-tactic-desc">{item.description}</p>}
+
+                    <div className="strat-tactic-actions">
+                      <button
+                        type="button"
+                        className="strat-btn-load-board"
+                        onClick={() => loadTacticOntoBoard(item)}
+                        title="Load execute onto Tactical Whiteboard"
+                      >
+                        ⚡ Load onto Board
+                      </button>
+                      <button
+                        type="button"
+                        className="strat-btn-inspect"
+                        onClick={() => openTactic(item.id)}
+                      >
+                        Inspect Details
+                      </button>
+                    </div>
+                  </article>
+                );
+              }
+            )}
+          </div>
+
           <div className="strat-pagination">
             <button disabled={tacticPage === 0} onClick={() => setTacticPage((page) => page - 1)}>
               PREVIOUS
@@ -1981,9 +2132,16 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
               <h3>{tactic.title}</h3>
               <p>{tactic.description}</p>
               <p>Share code: {tactic.shareCode}</p>
-              <button onClick={loadTactic} disabled={!room}>
-                LOAD INTO ROOM
-              </button>
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                <button type="button" className="strat-btn-load-board" onClick={() => loadTacticOntoBoard(tactic)}>
+                  ⚡ LOAD ONTO BOARD
+                </button>
+                {room && room.roomCode !== "LOCAL-BOARD" && (
+                  <button type="button" onClick={loadTactic}>
+                    SYNC TO ROOM ({room.roomCode})
+                  </button>
+                )}
+              </div>
               {token && tactic.authorUserId === user?.id && (
                 <>
                   <input
