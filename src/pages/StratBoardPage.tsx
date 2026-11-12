@@ -1122,13 +1122,14 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
           </div>
 
           <div className="strat-workspace">
-            <div
-              className="strat-canvas"
-              onClick={point}
-              onMouseMove={moveCursor}
-              role="presentation"
-            >
-              <RadarMapLayer mapName={mapName} />
+            <div className="strat-canvas">
+              <div
+                className="strat-board-stage"
+                onClick={point}
+                onMouseMove={moveCursor}
+                role="presentation"
+              >
+                <RadarMapLayer mapName={mapName} />
               
 
               {/* Interactive csnades.gg Trajectory on Whiteboard */}
@@ -1391,6 +1392,7 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
                     {room?.participants.find((p) => p.participantId === id)?.displayName ?? "PLAYER"}
                   </span>
                 ))}
+              </div>
             </div>
 
             <aside className="strat-people">

@@ -186,124 +186,124 @@ const FALLBACK_DEALS: FlashDeal[] = [
 
 const STEAM_GAME_DISCOUNTS: SteamGameDeal[] = [
   {
-    id: "steam-cs2-prime",
-    appId: 730,
-    title: "Counter-Strike 2: Prime Status Upgrade",
-    category: "Tactical FPS / Competitive",
-    originalPriceUsd: 14.99,
-    salePriceUsd: 11.99,
-    discountPercent: 20,
-    reviewRating: "Very Positive (8.2M+)",
-    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/730/CounterStrike_2/",
+    id: "steam-deal-2132890",
+    appId: 2132890,
+    title: "Possessor(s)",
+    category: "Steam Special / Tactical Action",
+    originalPriceUsd: 9.99,
+    salePriceUsd: 1.49,
+    discountPercent: 85,
+    reviewRating: "Mostly Positive (75%)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2132890/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/2132890/",
   },
   {
-    id: "steam-r6s",
-    appId: 359550,
-    title: "Tom Clancy's Rainbow Six® Siege",
-    category: "Tactical Hero Shooter",
+    id: "steam-deal-418460",
+    appId: 418460,
+    title: "Rising Storm 2: Vietnam",
+    category: "Steam Special / Tactical Shooter",
+    originalPriceUsd: 24.99,
+    salePriceUsd: 2.49,
+    discountPercent: 90,
+    reviewRating: "Very Positive (89%)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/418460/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/418460/",
+  },
+  {
+    id: "steam-deal-413410",
+    appId: 413410,
+    title: "Danganronpa: Trigger Happy Havoc",
+    category: "Steam Special / Mystery Adventure",
     originalPriceUsd: 19.99,
-    salePriceUsd: 7.99,
-    discountPercent: 60,
-    reviewRating: "Very Positive (1.1M+)",
-    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/359550/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/359550/",
+    salePriceUsd: 1.99,
+    discountPercent: 90,
+    reviewRating: "Overwhelmingly Positive (95%)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/413410/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/413410/",
   },
   {
-    id: "steam-rust",
-    appId: 252490,
-    title: "Rust",
-    category: "Survival / Multiplayer",
-    originalPriceUsd: 39.99,
-    salePriceUsd: 19.99,
-    discountPercent: 50,
-    reviewRating: "Very Positive (940K+)",
-    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/252490/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/252490/",
-  },
-  {
-    id: "steam-cyberpunk",
-    appId: 1091500,
-    title: "Cyberpunk 2077",
-    category: "Open World RPG",
-    originalPriceUsd: 59.99,
-    salePriceUsd: 29.99,
-    discountPercent: 50,
-    reviewRating: "Very Positive (740K+)",
-    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1091500/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1091500/",
-  },
-  {
-    id: "steam-eldenring",
-    appId: 1245620,
-    title: "ELDEN RING",
-    category: "Action RPG / Souls-like",
-    originalPriceUsd: 59.99,
-    salePriceUsd: 35.99,
-    discountPercent: 40,
-    reviewRating: "Very Positive (880K+)",
-    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1245620/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1245620/",
-  },
-  {
-    id: "steam-bg3",
-    appId: 1086940,
-    title: "Baldur's Gate 3",
-    category: "Turn-Based RPG / D&D",
-    originalPriceUsd: 59.99,
-    salePriceUsd: 47.99,
-    discountPercent: 20,
-    reviewRating: "Overwhelmingly Positive (660K+)",
-    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1086940/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1086940/",
-  },
-  {
-    id: "steam-apex",
-    appId: 1172470,
-    title: "Apex Legends™ - Champion Bundle",
-    category: "Battle Royale / Movement FPS",
-    originalPriceUsd: 39.99,
-    salePriceUsd: 15.99,
-    discountPercent: 60,
-    reviewRating: "Mostly Positive (900K+)",
-    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1172470/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1172470/",
-  },
-  {
-    id: "steam-bo6",
-    appId: 1938090,
-    title: "Call of Duty®: Black Ops 6",
-    category: "Fast-Paced Military FPS",
-    originalPriceUsd: 69.99,
-    salePriceUsd: 48.99,
-    discountPercent: 30,
-    reviewRating: "Mostly Positive (120K+)",
-    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1938090/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/1938090/",
-  },
-  {
-    id: "steam-insurgency",
-    appId: 412020,
-    title: "Insurgency: Sandstorm",
-    category: "Hardcore Tactical CQC",
-    originalPriceUsd: 29.99,
-    salePriceUsd: 9.89,
-    discountPercent: 67,
-    reviewRating: "Very Positive (115K+)",
-    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/412020/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/412020/",
-  },
-  {
-    id: "steam-readyornot",
-    appId: 782330,
-    title: "Ready or Not",
-    category: "Tactical SWAT Simulation",
+    id: "steam-deal-1029690",
+    appId: 1029690,
+    title: "Sniper Elite 5",
+    category: "Steam Special / Tactical Stealth FPS",
     originalPriceUsd: 49.99,
-    salePriceUsd: 33.49,
-    discountPercent: 33,
-    reviewRating: "Very Positive (160K+)",
-    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/782330/header.jpg",
-    storeUrl: "https://store.steampowered.com/app/782330/",
+    salePriceUsd: 4.99,
+    discountPercent: 90,
+    reviewRating: "Very Positive (84%)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1029690/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/1029690/",
+  },
+  {
+    id: "steam-deal-203140",
+    appId: 203140,
+    title: "Hitman: Absolution",
+    category: "Steam Special / Stealth Action",
+    originalPriceUsd: 19.99,
+    salePriceUsd: 1.99,
+    discountPercent: 90,
+    reviewRating: "Very Positive (88%)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/203140/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/203140/",
+  },
+  {
+    id: "steam-deal-312660",
+    appId: 312660,
+    title: "Sniper Elite 4",
+    category: "Steam Special / Tactical Marksman",
+    originalPriceUsd: 59.99,
+    salePriceUsd: 5.99,
+    discountPercent: 90,
+    reviewRating: "Very Positive (91%)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/312660/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/312660/",
+  },
+  {
+    id: "steam-deal-4560",
+    appId: 4560,
+    title: "Company of Heroes",
+    category: "Steam Special / Military Strategy",
+    originalPriceUsd: 14.99,
+    salePriceUsd: 2.99,
+    discountPercent: 80,
+    reviewRating: "Very Positive (94%)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4560/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/4560/",
+  },
+  {
+    id: "steam-deal-13560",
+    appId: 13560,
+    title: "Tom Clancy's Splinter Cell",
+    category: "Steam Special / Classic Stealth",
+    originalPriceUsd: 9.99,
+    salePriceUsd: 2.49,
+    discountPercent: 75,
+    reviewRating: "Very Positive (87%)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/13560/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/13560/",
+  },
+  {
+    id: "steam-deal-475550",
+    appId: 475550,
+    title: "Beholder",
+    category: "Steam Special / Strategy Dystopia",
+    originalPriceUsd: 13.99,
+    salePriceUsd: 1.39,
+    discountPercent: 90,
+    reviewRating: "Very Positive (81%)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/475550/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/475550/",
+  },
+  {
+    id: "steam-deal-489830",
+    appId: 489830,
+    title: "The Elder Scrolls V: Skyrim Special Edition",
+    category: "Steam Special / Open World RPG",
+    originalPriceUsd: 39.99,
+    salePriceUsd: 7.99,
+    discountPercent: 80,
+    reviewRating: "Very Positive (94%)",
+    headerImageUrl: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/489830/header.jpg",
+    storeUrl: "https://store.steampowered.com/app/489830/",
   },
 ];
 
@@ -364,7 +364,7 @@ export const EventsPage: FC<Props> = ({ notify }) => {
   const [filter, setFilter] = useState<EventsTab>("ALL");
   const [giveaways, setGiveaways] = useState<GiveawayItem[]>(FALLBACK_GIVEAWAYS);
   const [deals, setDeals] = useState<FlashDeal[]>(FALLBACK_DEALS);
-  const [steamGames] = useState<SteamGameDeal[]>(STEAM_GAME_DISCOUNTS);
+  const [steamGames, setSteamGames] = useState<SteamGameDeal[]>(STEAM_GAME_DISCOUNTS);
   const [events, setEvents] = useState<MajorEvent[]>(FALLBACK_EVENTS);
   const [loading, setLoading] = useState(false);
   const [enteredMap, setEnteredMap] = useState<Record<string, boolean>>(() => {
@@ -381,6 +381,46 @@ export const EventsPage: FC<Props> = ({ notify }) => {
   useEffect(() => {
     const timer = window.setInterval(() => setTick((v) => v + 1), 1000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  // Dynamic fetch of 100% live Steam Store deals via CheapShark
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("https://www.cheapshark.com/api/1.0/deals?storeID=1&pageSize=15", {
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("CheapShark returned non-200");
+        return res.json();
+      })
+      .then((items: any[]) => {
+        if (Array.isArray(items) && items.length > 0) {
+          const liveDeals: SteamGameDeal[] = items
+            .filter((d) => d.steamAppID && parseFloat(d.savings) > 0)
+            .map((d) => ({
+              id: `steam-deal-${d.steamAppID}`,
+              appId: parseInt(d.steamAppID, 10),
+              title: d.title,
+              category: "Steam Special / Tactical Action",
+              originalPriceUsd: parseFloat(d.normalPrice),
+              salePriceUsd: parseFloat(d.salePrice),
+              discountPercent: Math.round(parseFloat(d.savings)),
+              reviewRating: d.steamRatingText
+                ? `${d.steamRatingText} (${d.steamRatingPercent}%)`
+                : "Very Positive",
+              headerImageUrl: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${d.steamAppID}/header.jpg`,
+              storeUrl: `https://store.steampowered.com/app/${d.steamAppID}/`,
+            }));
+          if (liveDeals.length > 0) {
+            setSteamGames(liveDeals);
+          }
+        }
+      })
+      .catch(() => {
+        // Fallback gracefully to pre-hydrated STEAM_GAME_DISCOUNTS
+      });
+
+    return () => controller.abort();
   }, []);
 
   // Fetch from backend hub
@@ -633,11 +673,11 @@ export const EventsPage: FC<Props> = ({ notify }) => {
                   <img
                     src={game.headerImageUrl}
                     alt={game.title}
-                    loading="lazy"
+                    loading="eager"
                     className="steam-game-capsule"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).src =
-                        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/header.jpg";
+                        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/489830/header.jpg";
                     }}
                   />
                 </div>

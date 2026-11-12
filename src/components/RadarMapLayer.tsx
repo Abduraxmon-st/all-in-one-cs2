@@ -39,7 +39,7 @@ export const RadarMapLayer: FC<Props> = ({ mapName, className }) => {
         inset: 0,
         width: "100%",
         height: "100%",
-        objectFit: "contain",
+        objectFit: "fill",
         zIndex: 1,
         opacity: 1,
         display: "block",
