@@ -92,7 +92,7 @@ const FALLBACK_GIVEAWAYS: GiveawayItem[] = [
     rarity: "Covert",
     valueUsd: 820.0,
     imageUrl:
-      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLzho_f_jFl-_WfUq1vL6KWHmSRzO0mtu5pSHrglEl25jSGnNr8IHuTPlF4WcEkR_sLshK_lYHuPu_gtVON3YxInyTqhStAuv9rsb4BU6a24vjG",
+      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwlcK3wiFO0PSneqF-JeKDC2mE_u995LZWTTuygxIYvzSCkpu3cnvFPQB2DpUkROFY4Rntw93lP7i241DbiI1BxSuviHlKunk_6-sHU71lpPMTRLyP4Q",
     endsAt: new Date(Date.now() + 1 * 24 * 3600 * 1000 + 6 * 3600 * 1000).toISOString(),
     entriesCount: 2840,
     winnerCount: 1,
@@ -107,7 +107,7 @@ const FALLBACK_GIVEAWAYS: GiveawayItem[] = [
     rarity: "Covert",
     valueUsd: 1950.0,
     imageUrl:
-      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3",
+      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf-jFk7uW-V6x0JOKSMWuZxuZi_uA7Syu2w0Ry4mqGzYypeH3DaAEnCpt0FuAK4RjrkoDgMb7mtFfcit5bjXKpX4RFZcA",
     endsAt: new Date(Date.now() + 4 * 24 * 3600 * 1000 + 8 * 3600 * 1000).toISOString(),
     entriesCount: 5310,
     winnerCount: 1,
@@ -139,7 +139,7 @@ const FALLBACK_DEALS: FlashDeal[] = [
     salePriceUsd: 12.0,
     discountPercent: 25,
     imageUrl:
-      "https://community.cloudflare.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXX7gNPRV454wtRRFzVTej24eDYVkZ4LRFpv7y3LgJh3vn3cTB94M63l4XdwvWhY7-JkzME7pwpjLiUpY2hjAW3qUtrNW3xcoWcIwc6YguD8VPqku_n0MW8vcmamnZq6XUi53zcnEa-1RtLauZxxavJ4L0w7V4/360fx360f",
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/730/header.jpg",
     storeName: "Steam Store",
     storeUrl: "https://store.steampowered.com/app/730/CounterStrike_2/",
     badgeText: "OFFICIAL PASS",
@@ -152,7 +152,7 @@ const FALLBACK_DEALS: FlashDeal[] = [
     salePriceUsd: 126.75,
     discountPercent: 35,
     imageUrl:
-      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6jIb9-Tdt-fGqfL9uJfadAmPsz-h7tN44S3zmkU5yuTvUwtqkIH6XZg4kCZYjReYLtRbum9XgYuvm41WB24gSrvHz37VLyqH0nJ8",
+      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwjFS4_ega6F_H_OGMWrEwL9lj_F7Rienhgk1tjyIpYPwJiPTcAAoCpsiEO5ZsUbpm9C2Zuni4VHW3o5EzSX62HxP7Sg96-hWVqYi_6TJz1aW0nxrkGs",
     storeName: "CSFloat Market",
     storeUrl: "https://csfloat.com",
     badgeText: "HOT FLASH DEAL",
@@ -165,7 +165,7 @@ const FALLBACK_DEALS: FlashDeal[] = [
     salePriceUsd: 57.0,
     discountPercent: 40,
     imageUrl:
-      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL7m4jf_Td95_erfffvI-KDGmetzu1_u9s-HX3m0kgw4T_QwtqkIH6XZg4kCZYjReYLtRbum9XgYur26QSF241-S_fz37VLjZ32-uM",
+      "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL1m5fn8Sdk7OeRbKFsJ_yWMWyZ1e1-j-1gSCGn2x5-sG7Wzdyvc3OSbgcnXpR5FO9bukTtm9WzMePhswaN2N5CmCj_jyhXrnE8ibjhEyc",
     storeName: "Skinport",
     storeUrl: "https://skinport.com",
     badgeText: "LOWEST 30-DAY",

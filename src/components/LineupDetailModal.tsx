@@ -22,7 +22,7 @@ const utilityColors: Record<UtilityType, string> = {
 
 function extractYouTubeId(url?: string | null): string | null {
   if (!url) return null;
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([a-zA-Z0-9_-]{11})(?![a-zA-Z0-9_-])/);
   return match ? match[1] : null;
 }
 

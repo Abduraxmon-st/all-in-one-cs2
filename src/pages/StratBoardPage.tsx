@@ -1964,7 +1964,7 @@ export default function StratBoardPage({ notify, roomCodeFromRoute }: Props) {
 
               <div className="csnades-drawer-cards-stack">
                 {activeTargetCluster.lineups.map((lineup) => {
-                  const ytMatch = (lineup.videoUrl || "").match(/watch\?v=([a-zA-Z0-9_-]+)/);
+                  const ytMatch = (lineup.videoUrl || "").match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([a-zA-Z0-9_-]{11})(?![a-zA-Z0-9_-])/);
                   const ytId = ytMatch ? ytMatch[1] : null;
                   const thumbUrl = ytId
                     ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`

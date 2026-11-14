@@ -181,16 +181,25 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
       .then((data) => {
         if (!data || !Array.isArray(data)) return;
         const lookup = new Map<string, string>();
+        const norm = (str: string) => str.replace(/[★™\s|()_-]/g, "").toLowerCase();
         for (const s of data) {
           if (s.name && s.image) {
+            lookup.set(norm(s.name), s.image);
             lookup.set(s.name.toLowerCase().trim(), s.image);
-            lookup.set(s.name.replace(/[★™\s|()]/g, "").toLowerCase(), s.image);
+            if (s.pattern?.name) {
+              lookup.set(norm(`${s.name} ${s.pattern.name}`), s.image);
+            }
           }
         }
         setItems((current) =>
           current.map((item) => {
-            const clean = item.marketHashName.replace(/[★™\s|()]/g, "").toLowerCase();
-            const found = lookup.get(clean) || lookup.get(item.marketHashName.toLowerCase().trim());
+            const withoutWear = item.marketHashName.replace(/\s*\([^)]*\)\s*$/, "").trim();
+            const found =
+              lookup.get(norm(item.marketHashName)) ||
+              lookup.get(norm(withoutWear)) ||
+              lookup.get(norm(`${item.weaponName} ${item.skinName}`)) ||
+              lookup.get(norm(item.skinName)) ||
+              lookup.get(withoutWear.toLowerCase());
             return found ? { ...item, imageUrl: found } : item;
           })
         );
@@ -920,7 +929,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
               </div>
             ) : (
               <div className="csf-cards-grid">
-                {filteredItems.map((item) => {
+                {filteredItems.map((item, idx) => {
                   const rarityGlow = getRarityGlowColor(item.rarity, item.category);
                   const isFav = favorites.has(item.id);
                   const isEquippedCtItem = equippedCt.some((i) => i.id === item.id);
@@ -997,7 +1006,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = getWeaponSilhouetteSvg(item.weaponName);
                           }}
-                          loading="eager"
+                          loading={idx < 12 ? "eager" : "lazy"}
                         />
 
                         {/* Bottom-Left Applied Sticker Icons */}
