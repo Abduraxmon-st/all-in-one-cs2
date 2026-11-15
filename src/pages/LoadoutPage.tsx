@@ -55,7 +55,7 @@ const SUB_WEAPONS: Record<string, string[]> = {
   Gloves: ["All", "Sport Gloves", "Specialist Gloves", "Moto Gloves", "Driver Gloves", "Hand Wraps", "Bloodhound Gloves"],
   SMGs: ["All", "MP9", "MAC-10", "MP7", "UMP-45", "P90", "MP5-SD", "PP-Bizon"],
   Heavy: ["All", "Negev", "M249", "MAG-7", "XM1014", "Nova", "Sawed-Off"],
-  Containers: ["All", "Fracture Case", "Clutch Case", "Snakebite Case", "Recoil Case", "Dreams & Nightmares Case", "Kilowatt Case", "Revolution Case"],
+  Containers: ["All", "Fracture Case", "Clutch Case", "Kilowatt Case", "Dreams & Nightmares Case", "Recoil Case", "Snakebite Case", "Storage Unit", "Revolution Case"],
   Stickers: ["All", "Katowice 2014", "Cologne 2014", "Stockholm 2021", "Antwerp 2022", "Paris 2023"],
   "Music Kits": ["All", "Daniel Sadowski, Dead Shot", "The Verkkars", "Denzel Curry", "Knock2"],
   Collectibles: ["All", "Daniel Sadowski, Dead Shot", "Fracture Case", "Clutch Case"],

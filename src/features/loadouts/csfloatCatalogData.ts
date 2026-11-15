@@ -17,6 +17,23 @@ export interface WearPriceInfo {
   offersCount: number;
 }
 
+export interface CaseDropItem {
+  name: string;
+  weapon: string;
+  rarity: "Special" | "Covert" | "Classified" | "Restricted" | "Mil-Spec";
+  rarityColor: string;
+  minPrice: number;
+}
+
+export interface CaseDetails {
+  caseName: string;
+  releaseDate: string;
+  casePriceUsd: number;
+  keyPriceUsd: number;
+  description: string;
+  drops: CaseDropItem[];
+}
+
 export type CurrencyCode = "USD" | "EUR" | "GBP" | "CNY" | "CAD" | "AUD";
 
 export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
@@ -1814,8 +1831,334 @@ const RAW_CATALOG_DATA: CSFloatItem[] = [
     primaryColor: "PURPLE",
     description: "Daniel Sadowski brings you a heart-pounding modern orchestral and industrial rock soundtrack designed for tactical clutch situations."
   },
+  // 68. Kilowatt Case
+  {
+    id: "csf-case-kilowatt",
+    marketHashName: "Kilowatt Case",
+    weaponName: "Container",
+    skinName: "Kilowatt Case",
+    category: "CASES",
+    rarity: "Base Grade",
+    wearTier: "FN",
+    wearName: "Standard",
+    floatValue: 0,
+    floatFormatted: "0.00",
+    paintSeed: 0,
+    priceUsd: 1.25,
+    discountPercent: -12.0,
+    imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frnEVvqf_a6VoIfGSXz7Hlbwg57QwSS_mxhl15jiGyN37c3_GZw91W8BwRflK7EfKsa2sfw",
+    isStatTrak: false,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "07:00:00:00",
+    stickers: [],
+    teamSide: "BOTH",
+    primaryColor: "GOLD",
+    collectionName: "Kilowatt Collection",
+    description: "Features the all-new Kukri Knife, Zeus skin, and 17 community-designed finishes.",
+  },
+  // 69. Dreams & Nightmares Case
+  {
+    id: "csf-case-dreams-nightmares",
+    marketHashName: "Dreams & Nightmares Case",
+    weaponName: "Container",
+    skinName: "Dreams & Nightmares Case",
+    category: "CASES",
+    rarity: "Base Grade",
+    wearTier: "FN",
+    wearName: "Standard",
+    floatValue: 0,
+    floatFormatted: "0.00",
+    paintSeed: 0,
+    priceUsd: 1.10,
+    discountPercent: -15.0,
+    imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frnIV7Kb5OaU-JqfHDzXFle0u4LY8Gy_kkRgisGzcm4v4J3vDOAQmDMdyRvlK7EcmeCU3yw",
+    isStatTrak: false,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "07:00:00:00",
+    stickers: [],
+    teamSide: "BOTH",
+    primaryColor: "BLUE",
+    collectionName: "Dreams & Nightmares Collection",
+    description: "Contains 17 winning community contest submissions and Gamma Doppler knives.",
+  },
+  // 70. Recoil Case
+  {
+    id: "csf-case-recoil",
+    marketHashName: "Recoil Case",
+    weaponName: "Container",
+    skinName: "Recoil Case",
+    category: "CASES",
+    rarity: "Base Grade",
+    wearTier: "FN",
+    wearName: "Standard",
+    floatValue: 0,
+    floatFormatted: "0.00",
+    paintSeed: 0,
+    priceUsd: 0.38,
+    discountPercent: -10.0,
+    imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frnMVu6b-avA-JqSSCjSWwuhz47U9TCzlxh9yt2WGnNqgIi-fbgUkWMNxFPlK7EdIJF6a2Q",
+    isStatTrak: false,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "07:00:00:00",
+    stickers: [],
+    teamSide: "BOTH",
+    primaryColor: "ORANGE",
+    collectionName: "Recoil Collection",
+    description: "Contains 17 community-designed finishes and Broken Fang gloves.",
+  },
+  // 71. Storage Unit
+  {
+    id: "csf-storage-unit",
+    marketHashName: "Storage Unit",
+    weaponName: "Tool",
+    skinName: "Storage Unit",
+    category: "CASES",
+    rarity: "Base Grade",
+    wearTier: "FN",
+    wearName: "Standard",
+    floatValue: 0,
+    floatFormatted: "0.00",
+    paintSeed: 0,
+    priceUsd: 1.99,
+    discountPercent: 0,
+    imageUrl: "https://cdn.steamstatic.com/apps/730/icons/econ/tools/casket_rio2022_0.1f7758a6fea36f8b8801bcb2c3abe04e6c98d6fb.png",
+    isStatTrak: false,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "07:00:00:00",
+    stickers: [],
+    teamSide: "BOTH",
+    primaryColor: "GOLD",
+    description: "Store up to 1,000 surplus inventory items and retrieve them at any time.",
+  },
 
 ];
+
+export const CASE_DETAILS_MAP: Record<string, CaseDetails> = {
+  "Fracture Case": {
+    caseName: "Fracture Case",
+    releaseDate: "August 6, 2020",
+    casePriceUsd: 0.85,
+    keyPriceUsd: 2.49,
+    description: "Contains 17 community weapon finishes and 4 Shattered Web knife types.",
+    drops: [
+      { name: "Shattered Web Knives (Nomad/Skeleton)", weapon: "★ Rare Special Item", rarity: "Special", rarityColor: "#ffd700", minPrice: 220.00 },
+      { name: "Printstream", weapon: "Desert Eagle", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 95.00 },
+      { name: "Legion of Anubis", weapon: "AK-47", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 14.50 },
+      { name: "Tooth Fairy", weapon: "M4A4", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 8.20 },
+      { name: "Vogue", weapon: "Glock-18", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 9.80 },
+      { name: "Entombed", weapon: "XM1014", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 6.50 },
+      { name: "Monster Call", weapon: "MAG-7", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.40 },
+      { name: "Allure", weapon: "MAC-10", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.90 },
+      { name: "Connexion", weapon: "Galil AR", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.20 },
+      { name: "Brother", weapon: "Tec-9", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.50 },
+      { name: "Kitbash", weapon: "MP5-SD", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.10 },
+      { name: "Freight", weapon: "P90", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.25 },
+      { name: "Mainframe 001", weapon: "SSG 08", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.20 },
+      { name: "Ol' Rusty", weapon: "SG 553", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.18 },
+      { name: "Cassette", weapon: "P250", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.22 },
+      { name: "Gnarled", weapon: "P2000", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.19 },
+      { name: "Runic", weapon: "PP-Bizon", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.15 },
+      { name: "Ultralight", weapon: "Negev", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.16 },
+    ],
+  },
+  "Clutch Case": {
+    caseName: "Clutch Case",
+    releaseDate: "February 15, 2018",
+    casePriceUsd: 0.45,
+    keyPriceUsd: 2.49,
+    description: "Contains 17 community weapon finishes and 24 Clutch glove types.",
+    drops: [
+      { name: "Clutch Gloves (Vice/Crimson Web)", weapon: "★ Rare Special Item", rarity: "Special", rarityColor: "#ffd700", minPrice: 380.00 },
+      { name: "Neo-Noir", weapon: "M4A4", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 38.50 },
+      { name: "Bloodsport", weapon: "MP7", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 6.20 },
+      { name: "Cortex", weapon: "USP-S", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 7.40 },
+      { name: "Mortis", weapon: "AWP", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 6.80 },
+      { name: "Wild Six", weapon: "Nova", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 4.10 },
+      { name: "Moonrise", weapon: "Glock-18", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.80 },
+      { name: "Arctic Wolf", weapon: "UMP-45", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.20 },
+      { name: "SWAG-7", weapon: "MAG-7", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.30 },
+      { name: "Lionfish", weapon: "Negev", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.10 },
+      { name: "Oxide Blaze", weapon: "XM1014", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.25 },
+      { name: "Aloha", weapon: "SG 553", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.20 },
+      { name: "Urban Hazard", weapon: "P2000", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.18 },
+      { name: "Black Sand", weapon: "MP9", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.22 },
+      { name: "Flame Test", weapon: "Five-SeveN", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.19 },
+    ],
+  },
+  "Snakebite Case": {
+    caseName: "Snakebite Case",
+    releaseDate: "May 3, 2021",
+    casePriceUsd: 0.42,
+    keyPriceUsd: 2.49,
+    description: "Contains 17 community weapon finishes and Broken Fang gloves.",
+    drops: [
+      { name: "Snakebite Gloves", weapon: "★ Rare Special Item", rarity: "Special", rarityColor: "#ffd700", minPrice: 195.00 },
+      { name: "In Living Color", weapon: "M4A4", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 24.00 },
+      { name: "The Traitor", weapon: "USP-S", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 28.00 },
+      { name: "Chromatic Aberration", weapon: "Galil AR", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 7.50 },
+      { name: "XOXO", weapon: "XM1014", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 5.20 },
+      { name: "Button Masher", weapon: "MAC-10", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 3.80 },
+      { name: "Slate", weapon: "AK-47", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 3.20 },
+      { name: "Trigger Discipline", weapon: "Desert Eagle", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 2.10 },
+      { name: "Clear Polymer", weapon: "CZ75-Auto", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.40 },
+      { name: "Windblown", weapon: "Nova", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.25 },
+      { name: "Junk Yard", weapon: "R8 Revolver", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.20 },
+      { name: "Circaetus", weapon: "CZ75-Auto", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.18 },
+    ],
+  },
+  "Kilowatt Case": {
+    caseName: "Kilowatt Case",
+    releaseDate: "February 7, 2024",
+    casePriceUsd: 1.25,
+    keyPriceUsd: 2.49,
+    description: "Features the Kukri Knife, Zeus x27 skin, and 17 community finishes.",
+    drops: [
+      { name: "Kukri Knives (Fade/Slaughter)", weapon: "★ Rare Special Item", rarity: "Special", rarityColor: "#ffd700", minPrice: 340.00 },
+      { name: "Inheritance", weapon: "AK-47", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 88.00 },
+      { name: "Chrome Cannon", weapon: "AWP", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 65.00 },
+      { name: "Black Lotus", weapon: "M4A1-S", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 18.50 },
+      { name: "Olympus", weapon: "Zeus x27", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 11.00 },
+      { name: "Jawbreaker", weapon: "USP-S", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 12.50 },
+      { name: "Block-18", weapon: "Glock-18", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 3.20 },
+      { name: "Etch Lord", weapon: "M4A4", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 3.80 },
+      { name: "Hybrid", weapon: "Five-SeveN", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 2.40 },
+      { name: "Light Box", weapon: "MAC-10", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.45 },
+      { name: "Dezastre", weapon: "SSG 08", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.40 },
+      { name: "Dark Sigil", weapon: "Nova", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.30 },
+    ],
+  },
+  "Dreams & Nightmares Case": {
+    caseName: "Dreams & Nightmares Case",
+    releaseDate: "January 20, 2022",
+    casePriceUsd: 1.10,
+    keyPriceUsd: 2.49,
+    description: "Contains 17 winning community finishes and Gamma Doppler knives.",
+    drops: [
+      { name: "Gamma Doppler Knives (Butterfly/M9)", weapon: "★ Rare Special Item", rarity: "Special", rarityColor: "#ffd700", minPrice: 450.00 },
+      { name: "Nightwish", weapon: "AK-47", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 52.00 },
+      { name: "Starlight Protector", weapon: "MP9", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 14.00 },
+      { name: "Melondrama", weapon: "Dual Berettas", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 6.80 },
+      { name: "Rapid Eye Movement", weapon: "FAMAS", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 5.50 },
+      { name: "Abyssal Apparition", weapon: "MP7", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 4.90 },
+      { name: "Night Terror", weapon: "M4A1-S", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 2.80 },
+      { name: "Ticket to Hell", weapon: "USP-S", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 2.10 },
+      { name: "Zombie Offensive", weapon: "XM1014", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.40 },
+      { name: "Scrawl", weapon: "Five-SeveN", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.35 },
+      { name: "Ensnared", weapon: "MAC-10", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.30 },
+      { name: "Foresight", weapon: "MAG-7", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.28 },
+    ],
+  },
+  "Recoil Case": {
+    caseName: "Recoil Case",
+    releaseDate: "July 1, 2022",
+    casePriceUsd: 0.38,
+    keyPriceUsd: 2.49,
+    description: "Contains 17 community finishes and Broken Fang gloves.",
+    drops: [
+      { name: "Broken Fang Gloves", weapon: "★ Rare Special Item", rarity: "Special", rarityColor: "#ffd700", minPrice: 210.00 },
+      { name: "Printstream", weapon: "USP-S", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 82.00 },
+      { name: "Ice Coaled", weapon: "AK-47", rarity: "Covert", rarityColor: "#eb4b4b", minPrice: 18.00 },
+      { name: "Kiss♥Love", weapon: "Sawed-Off", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 7.50 },
+      { name: "Visions", weapon: "P250", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 8.20 },
+      { name: "Flora Carnivora", weapon: "Dual Berettas", rarity: "Classified", rarityColor: "#d32ce6", minPrice: 4.20 },
+      { name: "Poly Mag", weapon: "M4A4", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.60 },
+      { name: "Crazy 8", weapon: "R8 Revolver", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.20 },
+      { name: "Dragon Tech", weapon: "SG 553", rarity: "Restricted", rarityColor: "#8847ff", minPrice: 1.40 },
+      { name: "Meow 36", weapon: "FAMAS", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.25 },
+      { name: "Destroyer", weapon: "Galil AR", rarity: "Mil-Spec", rarityColor: "#4b69ff", minPrice: 0.20 },
+    ],
+  },
+};
+
+export function getCaseDetails(item: CSFloatItem): CaseDetails | null {
+  if (CASE_DETAILS_MAP[item.skinName]) return CASE_DETAILS_MAP[item.skinName];
+  if (CASE_DETAILS_MAP[item.marketHashName]) return CASE_DETAILS_MAP[item.marketHashName];
+  if (item.collectionName && CASE_DETAILS_MAP[item.collectionName]) return CASE_DETAILS_MAP[item.collectionName];
+  for (const [k, v] of Object.entries(CASE_DETAILS_MAP)) {
+    if (
+      item.skinName.toLowerCase().includes(k.toLowerCase()) ||
+      (item.collectionName && item.collectionName.toLowerCase().includes(k.toLowerCase()))
+    ) {
+      return v;
+    }
+    if (
+      v.drops.some(
+        (d) =>
+          d.name.toLowerCase() === item.skinName.toLowerCase() ||
+          item.marketHashName.toLowerCase().includes(d.name.toLowerCase())
+      )
+    ) {
+      return v;
+    }
+  }
+  return null;
+}
+
+export function simulateCaseOpening(details: CaseDetails): {
+  item: CaseDropItem;
+  wearTier: "FN" | "MW" | "FT" | "WW" | "BS";
+  wearName: string;
+  floatValue: number;
+  isStatTrak: boolean;
+  estimatedPrice: number;
+} {
+  const roll = Math.random() * 100;
+  let targetRarity: "Special" | "Covert" | "Classified" | "Restricted" | "Mil-Spec";
+
+  if (roll < 0.26) targetRarity = "Special";
+  else if (roll < 0.26 + 0.64) targetRarity = "Covert";
+  else if (roll < 0.26 + 0.64 + 3.20) targetRarity = "Classified";
+  else if (roll < 0.26 + 0.64 + 3.20 + 15.98) targetRarity = "Restricted";
+  else targetRarity = "Mil-Spec";
+
+  const candidates = details.drops.filter((d) => d.rarity === targetRarity);
+  const picked = candidates.length > 0 ? candidates[Math.floor(Math.random() * candidates.length)] : details.drops[0];
+
+  const wearRoll = Math.random();
+  let wearTier: "FN" | "MW" | "FT" | "WW" | "BS" = "FT";
+  let wearName = "Field-Tested";
+  let floatValue = 0.20;
+
+  if (wearRoll < 0.10) {
+    wearTier = "FN";
+    wearName = "Factory New";
+    floatValue = Number((Math.random() * 0.07).toFixed(5));
+  } else if (wearRoll < 0.35) {
+    wearTier = "MW";
+    wearName = "Minimal Wear";
+    floatValue = Number((0.07 + Math.random() * 0.08).toFixed(5));
+  } else if (wearRoll < 0.75) {
+    wearTier = "FT";
+    wearName = "Field-Tested";
+    floatValue = Number((0.15 + Math.random() * 0.23).toFixed(5));
+  } else if (wearRoll < 0.90) {
+    wearTier = "WW";
+    wearName = "Well-Worn";
+    floatValue = Number((0.38 + Math.random() * 0.07).toFixed(5));
+  } else {
+    wearTier = "BS";
+    wearName = "Battle-Scarred";
+    floatValue = Number((0.45 + Math.random() * 0.50).toFixed(5));
+  }
+
+  const isStatTrak = Math.random() < 0.10;
+  const wearMultiplier = wearTier === "FN" ? 1.5 : wearTier === "MW" ? 1.2 : wearTier === "FT" ? 1.0 : wearTier === "WW" ? 0.8 : 0.6;
+  const stMultiplier = isStatTrak ? 1.45 : 1.0;
+  const estimatedPrice = Math.round(picked.minPrice * wearMultiplier * stMultiplier * 100) / 100;
+
+  return {
+    item: picked,
+    wearTier,
+    wearName,
+    floatValue,
+    isStatTrak,
+    estimatedPrice,
+  };
+}
 
 export function enrichItemWithCSGOSkins(item: CSFloatItem): CSFloatItem {
   if (item.marketPrices && item.marketPrices.length > 0) return item;
