@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useAuth } from "../features/identity/AuthProvider";
 import { csfloatCatalogData, type CSFloatItem, formatPrice, type CurrencyCode } from "../features/loadouts/csfloatCatalogData";
 import { CSGOSkinsModal } from "../components/CSGOSkinsModal";
+import { CSGOSkinsHeaderNav } from "../components/CSGOSkinsHeaderNav";
+import { AdvancedSearchModal, type AdvancedSearchParams } from "../components/AdvancedSearchModal";
 import { getWeaponSilhouetteSvg } from "../components/WeaponSilhouette";
 import {
   generateLoadout,
@@ -138,9 +140,79 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Category Mega-Bar & Showcase
-  const [activeMegaCategory, setActiveMegaCategory] = useState<MegaCategory | null>("Rifles");
+  const [activeMegaCategory, setActiveMegaCategory] = useState<MegaCategory | null>("Knives");
   const [selectedSubWeapon, setSelectedSubWeapon] = useState<string>("All");
   const carouselScrollRef = useRef<HTMLDivElement>(null);
+
+  // Advanced Search Modal State
+  const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
+  const [advancedParams, setAdvancedParams] = useState<AdvancedSearchParams>({
+    query: "",
+    minPrice: "",
+    maxPrice: "",
+    color: "Any",
+    weapon: "Any",
+    exterior: "Any",
+    variant: "Any",
+    orderBy: "popularity",
+  });
+
+  const handleApplyAdvancedSearch = (params: AdvancedSearchParams) => {
+    setAdvancedParams(params);
+    if (params.query !== undefined) setSearchQuery(params.query);
+    setPriceMin(params.minPrice);
+    setPriceMax(params.maxPrice);
+
+    if (params.color && params.color !== "Any") {
+      setColorFilter(params.color.toUpperCase());
+    } else {
+      setColorFilter("ALL");
+    }
+
+    if (params.weapon && params.weapon !== "Any") {
+      setSelectedSubWeapon(params.weapon);
+      for (const [cat, weps] of Object.entries(SUB_WEAPONS)) {
+        if (weps.includes(params.weapon)) {
+          setActiveMegaCategory(cat as MegaCategory);
+          break;
+        }
+      }
+    } else {
+      setSelectedSubWeapon("All");
+    }
+
+    if (params.exterior && params.exterior !== "Any") {
+      const codeMap: Record<string, Wear> = {
+        "Factory New": "FN",
+        "Minimal Wear": "MW",
+        "Field-Tested": "FT",
+        "Well-Worn": "WW",
+        "Battle-Scarred": "BS",
+      };
+      if (codeMap[params.exterior]) {
+        setSelectedTiers(new Set([codeMap[params.exterior]]));
+      }
+    }
+
+    if (params.variant === "StatTrak") {
+      setFilterStatTrak(true);
+      setFilterSouvenir(false);
+    } else if (params.variant === "Souvenir") {
+      setFilterSouvenir(true);
+      setFilterStatTrak(false);
+    } else if (params.variant === "Normal") {
+      setFilterNormal(true);
+      setFilterStatTrak(false);
+      setFilterSouvenir(false);
+    }
+
+    if (params.orderBy === "price-asc") setSortBy("lowest_price");
+    else if (params.orderBy === "price-desc") setSortBy("highest_price");
+    else if (params.orderBy === "float-asc") setSortBy("lowest_float");
+    else setSortBy("deals");
+
+    notify(`Applied Advanced Search filters`);
+  };
 
   // 2. Filter State
   const [searchQuery, setSearchQuery] = useState("");
@@ -448,38 +520,79 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const currentShowcaseItems = activeMegaCategory ? SHOWCASE_DATA[activeMegaCategory] || [] : [];
   const currentSubWeapons = activeMegaCategory ? SUB_WEAPONS[activeMegaCategory] || [] : [];
 
+  // CSGOSKINS.GG Hero Information
+  const activeHeroTitle =
+    selectedSubWeapon !== "All"
+      ? `${selectedSubWeapon} Skins`
+      : activeMegaCategory
+      ? `${activeMegaCategory} Skins`
+      : "All CS2 Skins";
+
+  const activeHeroDescription =
+    selectedSubWeapon !== "All"
+      ? `Buy, sell & trade all ${selectedSubWeapon} skins for CS2. Compare real-time market offers, wear float spectrums, and pattern variations across 7 top marketplaces.`
+      : activeMegaCategory
+      ? `Explore all CS2 ${activeMegaCategory} finishes, Doppler phases, wear spectrums, and live price comparisons.`
+      : "Browse every CS2 skin, glove, knife, and case with verified market quotes from CSFloat, Skinport, BUFF163, and Steam Market.";
+
+  const activeHeroThumbnail =
+    filteredItems.length > 0
+      ? filteredItems[0].imageUrl
+      : "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwiFCzvfqffVsKfyFCEvFkeB-j7I3Xjeyxh5z52CGnNv4J3yRb1AnC8N5FO5U5kK6wI_sMrjX713XjN4SxC2vi35K4yq1t09e8H8D";
+
   return (
     <div className="csf-page">
-      {/* 1. TOP CATEGORY MEGA-BAR */}
-      <nav className="csf-category-megabar" aria-label="Weapon Categories">
-        {MEGA_CATEGORIES.map((cat) => {
-          const isActive = activeMegaCategory === cat;
-          return (
-            <button
-              key={cat}
-              type="button"
-              className={`csf-megabar-btn ${isActive ? "active" : ""}`}
-              onClick={() => {
-                if (isActive) {
-                  setActiveMegaCategory(null);
-                  setSelectedSubWeapon("All");
-                } else {
-                  setActiveMegaCategory(cat);
-                  setSelectedSubWeapon("All");
-                }
-              }}
-            >
-              <span>{cat}</span>
-              <span className="csf-megabar-chevron">⌄</span>
-            </button>
-          );
-        })}
-      </nav>
+      {/* 1. CSGOSKINS.GG TOP HEADER NAV BAR */}
+      <CSGOSkinsHeaderNav
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSelectWeapon={(cat, wep) => {
+          setActiveMegaCategory(cat as MegaCategory);
+          setSelectedSubWeapon(wep);
+        }}
+        activeCategory={activeMegaCategory}
+        activeWeapon={selectedSubWeapon}
+        currency={currency}
+        onCurrencyChange={setCurrency}
+        onOpenAdvancedSearch={() => setIsAdvancedSearchOpen(true)}
+      />
 
-      {/* 2. EXPANDABLE SUB-WEAPON DRAWER & SHOWCASE CAROUSEL */}
+      {/* 2. CSGOSKINS.GG WEAPON HERO SECTION MATCHING SCREENSHOT 1 */}
+      <section className="csgoskins-hero-section">
+        <div className="csgoskins-hero-inner">
+          <div className="csgoskins-hero-left">
+            <img
+              src={activeHeroThumbnail}
+              alt={activeHeroTitle}
+              className="csgoskins-hero-thumb"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = getWeaponSilhouetteSvg(
+                  selectedSubWeapon !== "All" ? selectedSubWeapon : (activeMegaCategory || "Knives")
+                );
+              }}
+            />
+            <div>
+              <h1 className="csgoskins-hero-title">{activeHeroTitle}</h1>
+              <p className="csgoskins-hero-desc">{activeHeroDescription}</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="csgoskins-adv-search-btn"
+            onClick={() => setIsAdvancedSearchOpen(true)}
+            title="Open Advanced Search Filter Modal"
+          >
+            <span>Advanced Search</span>
+            <span style={{ fontSize: 14 }}>&gt;</span>
+          </button>
+        </div>
+      </section>
+
+      {/* Sub-Weapon Pills Drawer & Showcase Carousel */}
       {activeMegaCategory && (
         <section className="csf-showcase-drawer">
-          {/* Sub-Weapon Pills */}
           {currentSubWeapons.length > 0 && (
             <div className="csf-subweapon-pills">
               {currentSubWeapons.map((wep) => (
@@ -1004,34 +1117,44 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                   const isEquippedTItem = equippedT.some((i) => i.id === item.id);
                   const needlePosition = Math.min(100, Math.max(0, item.floatValue * 100));
 
-                  return (
-                    <article key={item.id} className="csf-item-card">
-                      {/* Header */}
-                      <div className="csf-card-header">
-                        <h4 className="csf-card-title" title={item.marketHashName}>
-                          {item.marketHashName}
-                        </h4>
-                        <span
-                          className={`csf-card-sub ${item.isStatTrak ? "st" : item.isSouvenir ? "souvenir" : ""}`}
-                        >
-                          {item.isStatTrak
-                            ? `StatTrak™ ${item.wearName}`
-                            : item.isSouvenir
-                            ? `Souvenir ${item.wearName}`
-                            : item.wearName}
-                        </span>
-                      </div>
+                  const basePrice = item.priceUsd;
+                  const minPrice = item.wearPrices ? Math.min(...item.wearPrices.map((w) => w.price)) : basePrice * 0.85;
+                  const maxPrice = item.wearPrices ? Math.max(...item.wearPrices.map((w) => w.price * 1.45)) : basePrice * 1.55;
+                  const cleanSkinTitle = item.skinName.replace(/\s*\([^)]*\)\s*$/, "");
+                  const containerLabel = item.collectionName?.replace(" Collection", " Case") || "Glove Case +1";
+                  const offersCount = `${Math.floor((item.paintSeed % 20) + 5)}K`;
+                  const marketsCount = "34";
 
-                      {/* Image Area */}
-                      <div className="csf-card-stage">
+                  return (
+                    <article
+                      key={item.id}
+                      className="csf-item-card csgoskins-card-item"
+                      onClick={() => setInspect3DItem(item)}
+                    >
+                      {/* CSGOSKINS.GG Top Header matching Screenshot 1 */}
+                      <h4 className="csgoskins-card-top-title" title={item.skinName || item.marketHashName}>
+                        {cleanSkinTitle}
+                      </h4>
+                      <span
+                        className="csgoskins-card-rarity-badge"
+                        style={{
+                          backgroundColor: rarityGlow,
+                          boxShadow: `0 0 10px ${rarityGlow}88`,
+                        }}
+                      >
+                        {item.rarity} {item.category.replace(/S$/, "")}
+                      </span>
+
+                      {/* Image Stage */}
+                      <div className="csgoskins-card-img-stage csf-card-stage">
                         {item.fadePercentage !== undefined && (
                           <div className="csf-fade-badge">
                             {item.fadePercentage}% Fade
                           </div>
                         )}
 
-                        {/* Right-Side Vertical Stack of 3 Icon Buttons */}
-                        <div className="csf-stage-actions">
+                        {/* Top-Right Quick Stage Actions */}
+                        <div className="csf-stage-actions" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             className="csf-stage-icon-btn"
@@ -1065,7 +1188,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                           </button>
                         </div>
 
-                        {/* Main Skin PNG with fallback SVG */}
+                        {/* Main Skin PNG */}
                         <img
                           src={item.imageUrl}
                           alt={item.skinName}
@@ -1096,104 +1219,40 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                         )}
                       </div>
 
-                      {/* Glowing Rarity Bottom Border */}
-                      <div
-                        className="csf-rarity-accent-bar"
-                        style={{
-                          backgroundColor: rarityGlow,
-                          boxShadow: `0 0 8px ${rarityGlow}bb`,
-                        }}
-                      />
+                      {/* CSGOSKINS.GG Price Range matching Screenshot 1 */}
+                      <div className="csgoskins-card-price-range csf-price-val">
+                        {money(minPrice)} - {money(maxPrice)}
+                      </div>
 
-                      {/* Telemetry Body */}
-                      <div className="csf-card-telemetry">
-                        <div className="csf-tele-row-1">
-                          <div className="csf-price-val">{money(item.priceUsd)}</div>
-                          <span className="csf-discount-pill">
-                            • {item.discountPercent.toFixed(1)}%
-                          </span>
-                        </div>
+                      {/* Container Source */}
+                      <div className="csgoskins-card-container-row">
+                        <span>📦</span>
+                        <span>{containerLabel}</span>
+                      </div>
 
-                        {/* 5-Color Spectrum Bar with Needle */}
-                        <div className="csf-wear-spectrum-wrapper">
-                          {SPECTRUM_SEGMENTS.map((s) => (
-                            <div
-                              key={s.wear}
-                              className="csf-spec-seg"
-                              style={{ width: s.width, backgroundColor: s.color }}
-                            />
-                          ))}
-                          <div
-                            className="csf-needle"
-                            style={{ left: `${needlePosition}%` }}
-                            title={`Float: ${item.floatFormatted}`}
-                          />
-                        </div>
+                      {/* Market Best Pill & Compare Button */}
+                      <div className="csf-card-market-meta" onClick={(e) => e.stopPropagation()}>
+                        <span
+                          className="csf-market-best-pill"
+                          title="Lowest verified offer across CSFloat, BUFF163, Skinport, DMarket"
+                        >
+                          🏷️ from {money(item.priceUsd * 0.96)} (CSFloat)
+                        </span>
+                        <button
+                          type="button"
+                          className="csf-compare-markets-btn"
+                          onClick={() => setInspect3DItem(item)}
+                          title="Open CSGOSKINS.GG 7-Market Comparison & 3D Inspector"
+                        >
+                          Compare ↗
+                        </button>
+                      </div>
 
-                        <div className="csf-tele-row-3">
-                          <span className="csf-float-text" title={item.floatFormatted}>
-                            {item.floatFormatted.slice(0, 10)} (#{item.paintSeed})
-                          </span>
-                          {item.patternRank && (
-                            <span className="csf-rank-badge">#{item.patternRank}</span>
-                          )}
-                        </div>
-
-                        <div className="csf-tele-row-4">
-                          <span
-                            className={`csf-delivery-status ${item.deliveryType.toLowerCase()}`}
-                          >
-                            ● {item.deliveryType === "INSTANT" ? "Instant" : "Offline"}
-                          </span>
-                          <button
-                            type="button"
-                            className={`csf-fav-star-btn ${isFav ? "active" : ""}`}
-                            onClick={() => toggleFavorite(item.id)}
-                            title="Add to Favorites"
-                          >
-                            ★
-                          </button>
-                        </div>
-
-                        <div className="csf-tele-row-5">
-                          <span>Expires in {item.expiresIn}</span>
-                          <div className="csf-equip-btn-group">
-                            <button
-                              type="button"
-                              className={`csf-quick-equip-btn ${isEquippedCtItem ? "equipped" : ""}`}
-                              onClick={() => toggleEquip(item, "CT")}
-                              title="Toggle equip in CT loadout"
-                            >
-                              {isEquippedCtItem ? "✓ CT" : "+ CT"}
-                            </button>
-                            <button
-                              type="button"
-                              className={`csf-quick-equip-btn ${isEquippedTItem ? "equipped" : ""}`}
-                              onClick={() => toggleEquip(item, "T")}
-                              title="Toggle equip in T loadout"
-                            >
-                              {isEquippedTItem ? "✓ T" : "+ T"}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* CSGOSKINS.GG Market Comparison & Best Price Meta */}
-                        <div className="csf-card-market-meta">
-                          <span
-                            className="csf-market-best-pill"
-                            title="Lowest verified offer across CSFloat, BUFF163, Skinport, DMarket"
-                          >
-                            🏷️ from {money(item.priceUsd * 0.96)} (CSFloat)
-                          </span>
-                          <button
-                            type="button"
-                            className="csf-compare-markets-btn"
-                            onClick={() => setInspect3DItem(item)}
-                            title="Open CSGOSKINS.GG 7-Market Comparison & 3D Inspector"
-                          >
-                            Compare ↗
-                          </button>
-                        </div>
+                      {/* CSGOSKINS.GG Analytics Footer matching Screenshot 1 */}
+                      <div className="csgoskins-card-analytics-footer">
+                        <span>
+                          {offersCount} OFFERS · {marketsCount} MARKETS
+                        </span>
                       </div>
                     </article>
                   );
@@ -1373,6 +1432,15 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
           onEquip={(side) => toggleEquip(inspect3DItem, side)}
         />
       )}
+
+      {/* 9. ADVANCED SEARCH FILTER MODAL (CSGOSKINS.GG 1:1) */}
+      <AdvancedSearchModal
+        isOpen={isAdvancedSearchOpen}
+        onClose={() => setIsAdvancedSearchOpen(false)}
+        onApply={handleApplyAdvancedSearch}
+        currentParams={advancedParams}
+        currency={currency}
+      />
     </div>
   );
 }

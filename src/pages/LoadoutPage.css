@@ -1224,3 +1224,380 @@
   align-items: center;
   gap: 3px;
 }
+
+/* ==========================================================================
+   CSGOSKINS.GG AUTHENTIC NAVIGATION, HERO & CARD LAYOUT
+   ========================================================================== */
+
+.csgoskins-main-nav {
+  background: #0f1723;
+  border-bottom: 1px solid #1c2636;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.csgoskins-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 58px;
+  max-width: 1440px;
+  margin: 0 auto;
+  gap: 16px;
+}
+
+.csgoskins-brand {
+  display: flex;
+  align-items: center;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 900;
+  font-size: 19px;
+  letter-spacing: -0.03em;
+  user-select: none;
+}
+
+.brand-csgo {
+  color: #38bdf8;
+}
+
+.brand-skins {
+  color: #60a5fa;
+}
+
+.brand-gg {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-left: 2px;
+}
+
+.csgoskins-menu-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.csgoskins-menu-dropdown-wrapper {
+  position: relative;
+}
+
+.csgoskins-menu-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.csgoskins-menu-btn:hover,
+.csgoskins-menu-btn.active {
+  color: #ffffff;
+  background: #182333;
+}
+
+.csgoskins-caret {
+  font-size: 10px;
+  color: #64748b;
+  transition: transform 0.15s ease;
+}
+
+.csgoskins-dropdown-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #111823;
+  border: 1px solid #233144;
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 200px;
+  max-height: 420px;
+  overflow-y: auto;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.csgoskins-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.csgoskins-dropdown-item:hover,
+.csgoskins-dropdown-item.active {
+  background: #1e2a3a;
+  color: #ffffff;
+}
+
+.csgoskins-item-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+}
+
+.csgoskins-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.csgoskins-settings-btn {
+  background: #182232;
+  border: 1px solid #243245;
+  color: #94a3b8;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.15s ease;
+}
+
+.csgoskins-settings-btn:hover {
+  color: #ffffff;
+  background: #233044;
+}
+
+.csgoskins-settings-popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: #111823;
+  border: 1px solid #233144;
+  border-radius: 10px;
+  padding: 14px;
+  width: 200px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85);
+  z-index: 200;
+}
+
+.csgoskins-curr-select-btn {
+  background: #182232;
+  border: 1px solid #243245;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.csgoskins-curr-select-btn:hover,
+.csgoskins-curr-select-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.csgoskins-header-search {
+  display: flex;
+  align-items: center;
+  background: #131c28;
+  border: 1px solid #233144;
+  border-radius: 8px;
+  padding: 6px 12px;
+  gap: 8px;
+  width: 240px;
+}
+
+.csgoskins-search-icon {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.csgoskins-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f8fafc;
+  font-size: 12px;
+  width: 100%;
+}
+
+/* Hero Section */
+.csgoskins-hero-section {
+  background: linear-gradient(180deg, #121a26 0%, #0d131c 100%);
+  border-bottom: 1px solid #1c2636;
+  padding: 28px 32px;
+}
+
+.csgoskins-hero-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.csgoskins-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.csgoskins-hero-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.6));
+}
+
+.csgoskins-hero-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+}
+
+.csgoskins-hero-desc {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #94a3b8;
+  max-width: 680px;
+  line-height: 1.5;
+}
+
+.csgoskins-adv-search-btn {
+  background: #182333;
+  border: 1px solid #28374a;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.csgoskins-adv-search-btn:hover {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+}
+
+/* Card Enhancements Matching Screenshot 1 */
+.csgoskins-card-item {
+  background: #111723;
+  border: 1px solid #1f2b3c;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.csgoskins-card-item:hover {
+  transform: translateY(-3px);
+  border-color: #3b82f6;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+.csgoskins-card-top-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.csgoskins-card-rarity-badge {
+  display: inline-block;
+  align-self: center;
+  margin-top: 6px;
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffffff;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
+.csgoskins-card-img-stage {
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 12px 0;
+  position: relative;
+}
+
+.csgoskins-card-img-stage img {
+  max-width: 100%;
+  max-height: 135px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.7));
+  transition: transform 0.25s ease;
+}
+
+.csgoskins-card-item:hover .csgoskins-card-img-stage img {
+  transform: scale(1.06);
+}
+
+.csgoskins-card-price-range {
+  font-size: 16px;
+  font-weight: 900;
+  color: #f8fafc;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.csgoskins-card-container-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 8px;
+}
+
+.csgoskins-card-analytics-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #1a2332;
+  text-transform: uppercase;
+}
