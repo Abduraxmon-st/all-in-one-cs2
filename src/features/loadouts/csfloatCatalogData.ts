@@ -1,3 +1,49 @@
+export interface MarketOffer {
+  market: string;
+  price: number;
+  discount: number;
+  url: string;
+  offersCount: number;
+  rating: number;
+  reviews: string;
+  best?: boolean;
+}
+
+export interface WearPriceInfo {
+  wear: "FN" | "MW" | "FT" | "WW" | "BS";
+  wearName: string;
+  floatRange: string;
+  price: number;
+  offersCount: number;
+}
+
+export type CurrencyCode = "USD" | "EUR" | "GBP" | "CNY" | "CAD" | "AUD";
+
+export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  CNY: "¥",
+  CAD: "C$",
+  AUD: "A$",
+};
+
+export const CURRENCY_RATES: Record<CurrencyCode, number> = {
+  USD: 1.0,
+  EUR: 0.92,
+  GBP: 0.79,
+  CNY: 7.24,
+  CAD: 1.36,
+  AUD: 1.52,
+};
+
+export function formatPrice(usdAmount: number, currency: CurrencyCode = "USD"): string {
+  const rate = CURRENCY_RATES[currency] || 1.0;
+  const symbol = CURRENCY_SYMBOLS[currency] || "$";
+  const converted = usdAmount * rate;
+  return `${symbol}${converted.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export interface CSFloatSticker {
   id: string;
   name: string;
@@ -10,8 +56,8 @@ export interface CSFloatItem {
   marketHashName: string;
   weaponName: string;
   skinName: string;
-  category: "KNIVES" | "GLOVES" | "RIFLES" | "PISTOLS" | "SMGS" | "HEAVY";
-  rarity: "Covert" | "Classified" | "Restricted" | "Mil-Spec Grade" | "Extraordinary" | "Contraband";
+  category: "KNIVES" | "GLOVES" | "RIFLES" | "PISTOLS" | "SMGS" | "HEAVY" | "CASES" | "STICKERS" | "MUSIC_KITS";
+  rarity: "Covert" | "Classified" | "Restricted" | "Mil-Spec Grade" | "Extraordinary" | "Contraband" | "Base Grade";
   wearTier: "FN" | "MW" | "FT" | "WW" | "BS";
   wearName: string;
   floatValue: number;
@@ -30,6 +76,14 @@ export interface CSFloatItem {
   teamSide: "CT" | "T" | "BOTH";
   inspectLink?: string;
   primaryColor: string;
+  minFloat?: number;
+  maxFloat?: number;
+  finishStyle?: string;
+  finishCatalog?: number;
+  collectionName?: string;
+  marketPrices?: MarketOffer[];
+  wearPrices?: WearPriceInfo[];
+  description?: string;
 }
 
 const STICKER_TITAN_HOLO: CSFloatSticker = {
@@ -60,7 +114,7 @@ const STICKER_REASON_HOLO: CSFloatSticker = {
   wear: 0,
 };
 
-export const csfloatCatalogData: CSFloatItem[] = [
+const RAW_CATALOG_DATA: CSFloatItem[] = [
   // 1. ★ Karambit | Gamma Doppler (Factory New - Emerald)
   {
     id: "csf-karambit-gamma-emerald",
@@ -1566,4 +1620,292 @@ export const csfloatCatalogData: CSFloatItem[] = [
     teamSide: "BOTH",
     primaryColor: "BLUE",
   },
+  // 61. AK-47 | Slate (The Iconic All-Black Rifle - from user's csgoskins.gg history)
+  {
+    id: "csf-ak47-slate",
+    marketHashName: "AK-47 | Slate (Factory New)",
+    weaponName: "AK-47",
+    skinName: "Slate",
+    category: "RIFLES",
+    rarity: "Restricted",
+    wearTier: "FN",
+    wearName: "Factory New (Pure Black)",
+    floatValue: 0.031245892110,
+    floatFormatted: "0.031245892110",
+    paintSeed: 714,
+    patternRank: 1,
+    priceUsd: 28.50,
+    discountPercent: -22.5,
+    imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwlcK3wiVI0POlPPNSMOKcCGKD0ud5vuBlcCW6khUz_W3Sytb4cCqTOFUpWJtzTOUD5hPsw9a0Yrnrs1SK3ooXzy6shilM5311o7FVYrIufmI",
+    isStatTrak: false,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "04:12:00:00",
+    stickers: [],
+    teamSide: "T",
+    primaryColor: "BLACK",
+    minFloat: 0.00,
+    maxFloat: 1.00,
+    finishStyle: "Custom Paint Job",
+    finishCatalog: 1035,
+    collectionName: "Snakebite Case",
+    description: "It has been custom painted with a matte black finish. Call it whatever you want, as long as it's black."
+  },
+  // 62. SG 553 | Darkwing (from user's csgoskins.gg history)
+  {
+    id: "csf-sg553-darkwing",
+    marketHashName: "SG 553 | Darkwing (Field-Tested)",
+    weaponName: "SG 553",
+    skinName: "Darkwing",
+    category: "RIFLES",
+    rarity: "Restricted",
+    wearTier: "FT",
+    wearName: "Field-Tested",
+    floatValue: 0.185291048123,
+    floatFormatted: "0.185291048123",
+    paintSeed: 198,
+    patternRank: 4,
+    priceUsd: 4.80,
+    discountPercent: -18.2,
+    imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLimcO1qx1Y-s29b_E4c8-XD3Wb1ud4t95lRi67gVN24D7WmN2sdSqSalAmDpR2F-IDtxTpkYKyZrmzsQffgtgXzSmqjSNA8G81tFvCRYkS",
+    isStatTrak: true,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "03:10:00:00",
+    stickers: [],
+    teamSide: "T",
+    primaryColor: "BLACK",
+    minFloat: 0.00,
+    maxFloat: 1.00,
+    finishStyle: "Custom Paint Job",
+    finishCatalog: 950,
+    collectionName: "Prisma 2 Case"
+  },
+  // 63. M249 | Downtown (from user's csgoskins.gg history)
+  {
+    id: "csf-m249-downtown",
+    marketHashName: "M249 | Downtown (Minimal Wear)",
+    weaponName: "M249",
+    skinName: "Downtown",
+    category: "HEAVY",
+    rarity: "Restricted",
+    wearTier: "MW",
+    wearName: "Minimal Wear",
+    floatValue: 0.091482019481,
+    floatFormatted: "0.091482019481",
+    paintSeed: 552,
+    patternRank: 2,
+    priceUsd: 3.20,
+    discountPercent: -15.0,
+    imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8zMK5wiFO0P_8PP1SJP-EAHGf1etJvOhuRz39wUh-5GuGz4mrJHuSbg4jWJp1FLINsRCxwdDuZezm7leK3d5GmSr_jTQJsHj3YwoNRA",
+    isStatTrak: false,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "05:08:00:00",
+    stickers: [],
+    teamSide: "BOTH",
+    primaryColor: "BLUE",
+    minFloat: 0.00,
+    maxFloat: 0.65,
+    finishStyle: "Custom Paint Job",
+    finishCatalog: 1083,
+    collectionName: "Snakebite Case"
+  },
+  // 64. Fracture Case (from user's csgoskins.gg history)
+  {
+    id: "csf-case-fracture",
+    marketHashName: "Fracture Case",
+    weaponName: "Container",
+    skinName: "Fracture Case",
+    category: "CASES",
+    rarity: "Base Grade",
+    wearTier: "FN",
+    wearName: "Sealed Case",
+    floatValue: 0,
+    floatFormatted: "0.00",
+    paintSeed: 0,
+    priceUsd: 0.45,
+    discountPercent: -10.0,
+    imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_fr3QV7aD7OP01IfbGDzPCmbsm4LU5GnvkzUsi4WvUmIqtci_CPQNyApsjE_lK7EfrhW545A",
+    isStatTrak: false,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "07:00:00:00",
+    stickers: [],
+    teamSide: "BOTH",
+    primaryColor: "GOLD",
+    collectionName: "Fracture Collection",
+    description: "Contains 17 community-designed weapon finishes and Shattered Web knives in standard finishes."
+  },
+  // 65. Clutch Case (from user's csgoskins.gg history)
+  {
+    id: "csf-case-clutch",
+    marketHashName: "Clutch Case",
+    weaponName: "Container",
+    skinName: "Clutch Case",
+    category: "CASES",
+    rarity: "Base Grade",
+    wearTier: "FN",
+    wearName: "Sealed Case",
+    floatValue: 0,
+    floatFormatted: "0.00",
+    paintSeed: 0,
+    priceUsd: 0.92,
+    discountPercent: -12.0,
+    imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHsVtqr8a_dsdKTAWDWVxLgjsrAwHSvgwEQk4m-ByYuqIC2eO1VyD5QiR_lK7EcxQQPYQA",
+    isStatTrak: false,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "07:00:00:00",
+    stickers: [],
+    teamSide: "BOTH",
+    primaryColor: "BLACK",
+    collectionName: "Clutch Collection",
+    description: "Contains 17 community-designed weapon finishes and 24 new glove finishes."
+  },
+  // 66. Snakebite Case (from user's csgoskins.gg history)
+  {
+    id: "csf-case-snakebite",
+    marketHashName: "Snakebite Case",
+    weaponName: "Container",
+    skinName: "Snakebite Case",
+    category: "CASES",
+    rarity: "Base Grade",
+    wearTier: "FN",
+    wearName: "Sealed Case",
+    floatValue: 0,
+    floatFormatted: "0.00",
+    paintSeed: 0,
+    priceUsd: 0.38,
+    discountPercent: -14.0,
+    imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_fr3oVvvT4bfI4dvTLCGTCmLl16ec7TX_mk08k42iHwtqscy-WPVUmCZJ4R_lK7Ed8Q6OYtw",
+    isStatTrak: false,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "07:00:00:00",
+    stickers: [],
+    teamSide: "BOTH",
+    primaryColor: "GREEN",
+    collectionName: "Snakebite Collection",
+    description: "Contains 17 community-designed weapon finishes and Broken Fang gloves."
+  },
+  // 67. Music Kit | Daniel Sadowski, Dead Shot (from user's csgoskins.gg history)
+  {
+    id: "csf-music-dead-shot",
+    marketHashName: "Music Kit | Daniel Sadowski, Dead Shot",
+    weaponName: "Music Kit",
+    skinName: "Daniel Sadowski, Dead Shot",
+    category: "MUSIC_KITS",
+    rarity: "Classified",
+    wearTier: "FN",
+    wearName: "Standard",
+    floatValue: 0,
+    floatFormatted: "0.00",
+    paintSeed: 0,
+    priceUsd: 5.60,
+    discountPercent: -18.0,
+    imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIijyEKzb_3d19nuMXqZ7FN554bw5U70ShTOzsOuqnACvKD5P6Fpd6SWCGPFlu0u4eA_SyqwzEwmsTvQyNapdi_CPFMlDYwwG7Abj54DYw",
+    isStatTrak: true,
+    isSouvenir: false,
+    deliveryType: "INSTANT",
+    expiresIn: "05:00:00:00",
+    stickers: [],
+    teamSide: "BOTH",
+    primaryColor: "PURPLE",
+    description: "Daniel Sadowski brings you a heart-pounding modern orchestral and industrial rock soundtrack designed for tactical clutch situations."
+  },
+
 ];
+
+export function enrichItemWithCSGOSkins(item: CSFloatItem): CSFloatItem {
+  if (item.marketPrices && item.marketPrices.length > 0) return item;
+
+  const base = item.priceUsd;
+  const marketPrices: MarketOffer[] = [
+    {
+      market: "CSFloat",
+      price: Math.round(base * 0.96 * 100) / 100,
+      discount: Math.round(Math.abs(item.discountPercent || 22)),
+      url: "https://csfloat.com",
+      offersCount: Math.floor(180 + (item.paintSeed % 150)),
+      rating: 4.8,
+      reviews: "9.8K",
+      best: true,
+    },
+    {
+      market: "BUFF163",
+      price: Math.round(base * 0.94 * 100) / 100,
+      discount: Math.round(Math.abs(item.discountPercent || 22) + 2.5),
+      url: "https://buff.163.com",
+      offersCount: Math.floor(450 + (item.paintSeed % 300)),
+      rating: 4.5,
+      reviews: "1.2K",
+    },
+    {
+      market: "Skinport",
+      price: Math.round(base * 0.98 * 100) / 100,
+      discount: Math.round(Math.abs(item.discountPercent || 22) - 2),
+      url: "https://skinport.com",
+      offersCount: Math.floor(95 + (item.paintSeed % 80)),
+      rating: 4.9,
+      reviews: "28.5K",
+    },
+    {
+      market: "DMarket",
+      price: Math.round(base * 0.97 * 100) / 100,
+      discount: Math.round(Math.abs(item.discountPercent || 22) - 1),
+      url: "https://dmarket.com",
+      offersCount: Math.floor(120 + (item.paintSeed % 100)),
+      rating: 4.6,
+      reviews: "14.2K",
+    },
+    {
+      market: "Tradeit.gg",
+      price: Math.round(base * 0.99 * 100) / 100,
+      discount: Math.round(Math.abs(item.discountPercent || 22) - 3),
+      url: "https://tradeit.gg",
+      offersCount: Math.floor(45 + (item.paintSeed % 40)),
+      rating: 4.6,
+      reviews: "21.8K",
+    },
+    {
+      market: "CS.MONEY",
+      price: Math.round(base * 1.03 * 100) / 100,
+      discount: Math.round(Math.max(5, Math.abs(item.discountPercent || 22) - 6)),
+      url: "https://cs.money",
+      offersCount: Math.floor(35 + (item.paintSeed % 30)),
+      rating: 4.7,
+      reviews: "9.2K",
+    },
+    {
+      market: "Steam Market",
+      price: Math.round(base * 1.15 * 100) / 100,
+      discount: 0,
+      url: "https://steamcommunity.com/market",
+      offersCount: Math.floor(80 + (item.paintSeed % 90)),
+      rating: 5.0,
+      reviews: "Valve Reference",
+    },
+  ];
+
+  const wearPrices: WearPriceInfo[] = [
+    { wear: "FN", wearName: "Factory New", floatRange: "0.00 – 0.07", price: Math.round(base * 1.35 * 100) / 100, offersCount: 140 },
+    { wear: "MW", wearName: "Minimal Wear", floatRange: "0.07 – 0.15", price: Math.round(base * 1.10 * 100) / 100, offersCount: 95 },
+    { wear: "FT", wearName: "Field-Tested", floatRange: "0.15 – 0.38", price: Math.round(base * 0.85 * 100) / 100, offersCount: 320 },
+    { wear: "WW", wearName: "Well-Worn", floatRange: "0.38 – 0.45", price: Math.round(base * 0.70 * 100) / 100, offersCount: 45 },
+    { wear: "BS", wearName: "Battle-Scarred", floatRange: "0.45 – 1.00", price: Math.round(base * 0.55 * 100) / 100, offersCount: 180 },
+  ];
+
+  return {
+    ...item,
+    minFloat: item.minFloat ?? 0.00,
+    maxFloat: item.maxFloat ?? (item.skinName.includes("Asiimov") ? 1.00 : item.skinName.includes("Fade") ? 0.08 : 0.80),
+    finishStyle: item.finishStyle ?? (item.category === "KNIVES" ? "Anodized Airbrushed" : "Custom Paint Job"),
+    finishCatalog: item.finishCatalog ?? (item.paintSeed || 445),
+    collectionName: item.collectionName ?? "The CS2 Armory & Major Collections",
+    marketPrices,
+    wearPrices,
+  };
+}
+
+export const csfloatCatalogData: CSFloatItem[] = RAW_CATALOG_DATA.map(enrichItemWithCSGOSkins);

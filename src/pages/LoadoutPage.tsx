@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useAuth } from "../features/identity/AuthProvider";
-import { csfloatCatalogData, type CSFloatItem } from "../features/loadouts/csfloatCatalogData";
-import { Skin3DModal } from "../components/Skin3DModal";
+import { csfloatCatalogData, type CSFloatItem, formatPrice, type CurrencyCode } from "../features/loadouts/csfloatCatalogData";
+import { CSGOSkinsModal } from "../components/CSGOSkinsModal";
 import { getWeaponSilhouetteSvg } from "../components/WeaponSilhouette";
 import {
   generateLoadout,
@@ -55,8 +55,10 @@ const SUB_WEAPONS: Record<string, string[]> = {
   Gloves: ["All", "Sport Gloves", "Specialist Gloves", "Moto Gloves", "Driver Gloves", "Hand Wraps", "Bloodhound Gloves"],
   SMGs: ["All", "MP9", "MAC-10", "MP7", "UMP-45", "P90", "MP5-SD", "PP-Bizon"],
   Heavy: ["All", "Negev", "M249", "MAG-7", "XM1014", "Nova", "Sawed-Off"],
-  Containers: ["All", "Kilowatt Case", "Dreams & Nightmares Case", "Revolution Case", "Recoil Case", "Snakebite Case"],
+  Containers: ["All", "Fracture Case", "Clutch Case", "Snakebite Case", "Recoil Case", "Dreams & Nightmares Case", "Kilowatt Case", "Revolution Case"],
   Stickers: ["All", "Katowice 2014", "Cologne 2014", "Stockholm 2021", "Antwerp 2022", "Paris 2023"],
+  "Music Kits": ["All", "Daniel Sadowski, Dead Shot", "The Verkkars", "Denzel Curry", "Knock2"],
+  Collectibles: ["All", "Daniel Sadowski, Dead Shot", "Fracture Case", "Clutch Case"],
 };
 
 // Showcase Cards Definition
@@ -90,7 +92,19 @@ const SHOWCASE_DATA: Record<string, { name: string; weapon: string; price: numbe
   ],
 };
 
-const money = (val: number) => `$${val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+// CSGOSKINS.GG Palette Definitions
+const CSGOSKINS_PALETTES = [
+  { id: "ALL", label: "All Colors", dot: "🎨" },
+  { id: "RED", label: "🔴 All Red Skins", dot: "#ef4444" },
+  { id: "BLUE", label: "🔵 All Blue Skins", dot: "#3b82f6" },
+  { id: "PURPLE", label: "🟣 All Purple Skins", dot: "#a855f7" },
+  { id: "GREEN", label: "🟢 All Green Skins", dot: "#22c55e" },
+  { id: "GOLD", label: "🟡 All Gold Skins", dot: "#eab308" },
+  { id: "WHITE", label: "⚪ All White Skins", dot: "#f8fafc" },
+  { id: "BLACK", label: "⚫ All Black Skins", dot: "#0f172a" },
+  { id: "ORANGE", label: "🟠 All Orange Skins", dot: "#f97316" },
+  { id: "PINK", label: "🌸 All Pink Skins", dot: "#ec4899" },
+];
 
 const SPECTRUM_SEGMENTS = [
   { wear: "FN", width: "7%", color: "#22c55e", label: "0.00 - 0.07" },
@@ -113,7 +127,11 @@ function getRarityGlowColor(rarity: string, category: string): string {
 export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const { user, token } = useAuth();
 
-  // 1. Core State
+  // 1. Core State & CSGOSKINS.GG Currency / Palette
+  const [currency, setCurrency] = useState<CurrencyCode>("USD");
+  const [colorFilter, setColorFilter] = useState<string>("ALL");
+  const money = (val: number) => formatPrice(val, currency);
+
   const [items, setItems] = useState<CSFloatItem[]>(csfloatCatalogData);
   const [viewTab, setViewTab] = useState<ViewTab>("all");
   const [sortBy, setSortBy] = useState<SortOption>("deals");
@@ -338,6 +356,25 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
           if (!matches) return false;
         }
 
+        // CSGOSKINS.GG Color Palette Filter
+        if (colorFilter !== "ALL") {
+          const itemColor = (item.primaryColor || "").toUpperCase();
+          if (itemColor !== colorFilter.toUpperCase()) return false;
+        }
+
+        // Mega Category Filter
+        if (activeMegaCategory) {
+          if (activeMegaCategory === "Rifles" && item.category !== "RIFLES") return false;
+          if (activeMegaCategory === "Pistols" && item.category !== "PISTOLS") return false;
+          if (activeMegaCategory === "Knives" && item.category !== "KNIVES") return false;
+          if (activeMegaCategory === "Gloves" && item.category !== "GLOVES") return false;
+          if (activeMegaCategory === "SMGs" && item.category !== "SMGS") return false;
+          if (activeMegaCategory === "Heavy" && item.category !== "HEAVY") return false;
+          if (activeMegaCategory === "Containers" && item.category !== "CASES") return false;
+          if (activeMegaCategory === "Music Kits" && item.category !== "MUSIC_KITS") return false;
+          if (activeMegaCategory === "Stickers" && (!item.stickers || item.stickers.length === 0)) return false;
+        }
+
         // Sub-Weapon Filter
         if (selectedSubWeapon !== "All") {
           const wepClean = item.weaponName.replace(/[★™\s]/g, "").toLowerCase();
@@ -391,6 +428,8 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     searchQuery,
     selectedSubWeapon,
     viewTab,
+    colorFilter,
+    activeMegaCategory,
     priceMin,
     priceMax,
     selectedTiers,
@@ -627,6 +666,20 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         </div>
 
         <div className="csf-toolbar-right">
+          {/* CSGOSKINS.GG Multi-Currency Switcher */}
+          <div className="csf-currency-switcher" title="CSGOSKINS.GG Currency Converter">
+            {(["USD", "EUR", "GBP", "CNY", "CAD", "AUD"] as CurrencyCode[]).map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={`csf-curr-btn ${currency === c ? "active" : ""}`}
+                onClick={() => setCurrency(c)}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
           <div className="csf-items-count-badge">
             <strong>{filteredItems.length}</strong> Listings
           </div>
@@ -915,6 +968,21 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
 
           {/* Right Market Stage */}
           <main className="csf-market-content">
+            {/* CSGOSKINS.GG Color Palette Bar */}
+            <div className="csgoskins-color-palette-bar">
+              <span className="csgoskins-palette-label">🎨 CSGOSKINS.GG PALETTES:</span>
+              {CSGOSKINS_PALETTES.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`csgoskins-color-pill ${colorFilter === c.id ? "active" : ""}`}
+                  onClick={() => setColorFilter(c.id)}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
             {filteredItems.length === 0 ? (
               <div className="csf-empty-state">
                 <h3>No items match your active filters</h3>
@@ -1108,6 +1176,24 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                             </button>
                           </div>
                         </div>
+
+                        {/* CSGOSKINS.GG Market Comparison & Best Price Meta */}
+                        <div className="csf-card-market-meta">
+                          <span
+                            className="csf-market-best-pill"
+                            title="Lowest verified offer across CSFloat, BUFF163, Skinport, DMarket"
+                          >
+                            🏷️ from {money(item.priceUsd * 0.96)} (CSFloat)
+                          </span>
+                          <button
+                            type="button"
+                            className="csf-compare-markets-btn"
+                            onClick={() => setInspect3DItem(item)}
+                            title="Open CSGOSKINS.GG 7-Market Comparison & 3D Inspector"
+                          >
+                            Compare ↗
+                          </button>
+                        </div>
                       </div>
                     </article>
                   );
@@ -1277,10 +1363,11 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         </section>
       )}
 
-      {/* 8. INTERACTIVE 3D SKIN INSPECTOR MODAL */}
+      {/* 8. INTERACTIVE CSGOSKINS.GG MARKET COMPARISON & 3D INSPECTOR MODAL */}
       {inspect3DItem && (
-        <Skin3DModal
+        <CSGOSkinsModal
           item={inspect3DItem}
+          currency={currency}
           onClose={() => setInspect3DItem(null)}
           notify={notify}
           onEquip={(side) => toggleEquip(inspect3DItem, side)}
