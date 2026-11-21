@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, type FC } from "react";
 import type { CurrencyCode } from "../features/loadouts/csfloatCatalogData";
+import { getWeaponIconUrl } from "../features/loadouts/weaponIconResolver";
+import { getWeaponSilhouetteSvg } from "./WeaponSilhouette";
 
 interface Props {
   searchQuery: string;
@@ -92,7 +94,6 @@ const NAV_MENUS: NavMenu[] = [
       {
         groupTitle: "ASSAULT RIFLES",
         items: [
-          "All Rifles",
           "AK-47",
           "AUG",
           "FAMAS",
@@ -245,21 +246,6 @@ const NAV_MENUS: NavMenu[] = [
   },
 ];
 
-// Clean miniature silhouette icon for dropdown entries
-function getMiniIcon(menuId: string, itemName: string): string {
-  const name = itemName.toLowerCase();
-  if (name.includes("awp") || name.includes("ssg") || name.includes("scar") || name.includes("g3sg1")) return "🎯";
-  if (menuId === "knives") return "🗡️";
-  if (menuId === "gloves") return "🧤";
-  if (menuId === "rifles") return "🔫";
-  if (menuId === "pistols") return "🔫";
-  if (menuId === "mid-tier") return "⚡";
-  if (menuId === "cases") return "📦";
-  if (menuId === "collections") return "🛡️";
-  if (menuId === "stickers") return "🏷️";
-  return "📦";
-}
-
 export const CSGOSkinsHeaderNav: FC<Props> = ({
   searchQuery,
   onSearchChange,
@@ -341,7 +327,8 @@ export const CSGOSkinsHeaderNav: FC<Props> = ({
                         <div className="clutch-dropdown-group-items">
                           {grp.items.map((item) => {
                             const isItemActive = activeWeapon === item;
-                            const icon = getMiniIcon(menu.id, item);
+                            const iconUrl = getWeaponIconUrl(item, menu.category);
+                            const fallbackSvg = getWeaponSilhouetteSvg(item);
 
                             return (
                               <div
@@ -352,7 +339,16 @@ export const CSGOSkinsHeaderNav: FC<Props> = ({
                                   setOpenDropdown(null);
                                 }}
                               >
-                                <span className="csgoskins-item-icon">{icon}</span>
+                                <img
+                                  src={iconUrl}
+                                  alt={item}
+                                  className="csgoskins-dropdown-item-img"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = fallbackSvg;
+                                  }}
+                                />
                                 <span className="csgoskins-item-name">{item}</span>
                               </div>
                             );

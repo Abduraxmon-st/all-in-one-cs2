@@ -473,15 +473,15 @@ export const AdvancedSearchModal: FC<Props> = ({
             <button
               type="submit"
               style={{
-                background: "#2563eb",
-                color: "#ffffff",
+                background: "#bef264",
+                color: "#0b0f17",
                 border: "none",
                 borderRadius: 6,
                 padding: "10px 24px",
                 fontSize: 13,
-                fontWeight: 800,
+                fontWeight: 900,
                 cursor: "pointer",
-                boxShadow: "0 2px 10px rgba(37, 99, 235, 0.4)",
+                boxShadow: "0 2px 14px rgba(190, 242, 100, 0.35)",
               }}
             >
               Search &gt;

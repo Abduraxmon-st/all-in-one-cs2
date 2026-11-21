@@ -1313,45 +1313,70 @@
 
 .csgoskins-dropdown-panel {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 0;
   background: #111823;
-  border: 1px solid #233144;
+  border: 1px solid #1f2d3f;
   border-radius: 10px;
-  padding: 6px;
-  min-width: 200px;
-  max-height: 420px;
+  padding: 8px 0;
+  min-width: 220px;
+  max-height: 480px;
   overflow-y: auto;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85);
-  z-index: 200;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
+  z-index: 250;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+}
+
+.clutch-dropdown-group {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 4px;
+}
+
+.clutch-dropdown-group:not(:last-child) {
+  border-bottom: 1px solid #1b2636;
+  margin-bottom: 4px;
+}
+
+.clutch-dropdown-group-title {
+  padding: 8px 16px 4px 16px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .csgoskins-dropdown-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 12px;
-  border-radius: 6px;
-  color: #94a3b8;
-  font-size: 12px;
-  font-weight: 700;
+  gap: 12px;
+  padding: 6px 16px;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.12s ease;
 }
 
 .csgoskins-dropdown-item:hover,
 .csgoskins-dropdown-item.active {
-  background: #1e2a3a;
-  color: #ffffff;
+  background: #182333;
+  color: #bef264;
 }
 
-.csgoskins-item-icon {
-  font-size: 14px;
-  width: 20px;
-  text-align: center;
+.csgoskins-dropdown-item-img {
+  width: 32px;
+  height: 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  flex-shrink: 0;
+}
+
+.csgoskins-item-name {
+  flex: 1;
+  white-space: nowrap;
 }
 
 .csgoskins-nav-right {
@@ -2217,4 +2242,464 @@
   border-color: #bef264;
   color: #0b0f17;
   box-shadow: 0 0 14px rgba(190, 242, 100, 0.35);
+}
+
+/* =========================================================
+   EXTENDED CLUTCH SKIN DETAIL SUITE (MATCHING CSGOSKINS.GG)
+   ========================================================= */
+
+/* Metadata Card Stack */
+.clutch-meta-card {
+  background: #111827;
+  border: 1px solid #1f2b3e;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.clutch-meta-card-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #bef264;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 8px;
+}
+
+.clutch-meta-kv-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.clutch-meta-kv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.kv-label {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.kv-val {
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.clutch-container-row-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #162032;
+  border: 1px solid #233146;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.clutch-palette-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #334155;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.clutch-liquidity-track {
+  height: 6px;
+  background: #1e293b;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.clutch-liquidity-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #84cc16, #bef264);
+  border-radius: 3px;
+}
+
+.clutch-funnel-pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 6px;
+}
+
+.funnel-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.funnel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #475569;
+}
+
+.funnel-dot.active {
+  background: #bef264;
+  box-shadow: 0 0 8px #bef264;
+}
+
+.funnel-label.active {
+  color: #bef264;
+  font-weight: 800;
+}
+
+.clutch-star-widget {
+  display: flex;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.star-btn {
+  font-size: 20px;
+  color: #334155;
+  transition: color 0.15s ease;
+}
+
+.star-btn.filled {
+  color: #eab308;
+}
+
+/* Studio Scrubber Card */
+.clutch-studio-card {
+  background: #111827;
+  border: 1px solid #1f2b3e;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.clutch-studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #1f2b3e;
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.clutch-studio-badge {
+  background: rgba(190, 242, 100, 0.15);
+  border: 1px solid rgba(190, 242, 100, 0.35);
+  color: #bef264;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.clutch-studio-mode-tabs {
+  display: flex;
+  background: #162032;
+  border: 1px solid #233146;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 4px;
+}
+
+.clutch-studio-tab {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.clutch-studio-tab.active {
+  background: #233146;
+  color: #bef264;
+}
+
+.clutch-float-range-slider {
+  width: 100%;
+  accent-color: #bef264;
+  cursor: pointer;
+  height: 6px;
+  background: #1e293b;
+  border-radius: 3px;
+}
+
+.clutch-code-btn {
+  background: #162032;
+  border: 1px solid #28374a;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.clutch-code-btn:hover {
+  background: #1e2c42;
+  border-color: #bef264;
+  color: #bef264;
+}
+
+/* Price History Chart & Statistics Suite */
+.clutch-chart-card {
+  background: #111827;
+  border: 1px solid #1f2b3e;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.clutch-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.clutch-timeframe-pills {
+  display: flex;
+  background: #162032;
+  border: 1px solid #233146;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 4px;
+}
+
+.clutch-timeframe-pill {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.clutch-timeframe-pill.active {
+  background: #223247;
+  color: #bef264;
+}
+
+.clutch-svg-chart-stage {
+  width: 100%;
+  height: 140px;
+  margin: 10px 0 16px;
+}
+
+.clutch-svg-chart {
+  width: 100%;
+  height: 100%;
+}
+
+.clutch-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .clutch-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.clutch-kpi-box {
+  background: #141d2e;
+  border: 1px solid #1e2a3c;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpi-label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.kpi-val {
+  font-size: 14px;
+  color: #f8fafc;
+  font-weight: 800;
+}
+
+/* Recommended Stickers */
+.clutch-stickers-card {
+  background: #111827;
+  border: 1px solid #1f2b3e;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.clutch-stickers-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.clutch-sticker-item {
+  background: #141d2e;
+  border: 1px solid #1f2c3f;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  transition: transform 0.15s ease;
+}
+
+.clutch-sticker-item:hover {
+  transform: translateY(-2px);
+  border-color: #bef264;
+}
+
+.clutch-sticker-img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}
+
+.clutch-sticker-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.clutch-sticker-price {
+  font-size: 11px;
+  color: #bef264;
+  font-weight: 800;
+}
+
+/* Trivia Cards */
+.clutch-trivia-card {
+  background: #111827;
+  border: 1px solid #1f2b3e;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.clutch-trivia-desc {
+  font-size: 13px;
+  color: #cbd5e1;
+  font-style: italic;
+  line-height: 1.6;
+  margin: 0 0 16px;
+  border-left: 3px solid #bef264;
+  padding-left: 12px;
+}
+
+.clutch-facts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .clutch-facts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.clutch-fact-box {
+  background: #141d2e;
+  border: 1px solid #1e2a3c;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.clutch-fact-box strong {
+  font-size: 12px;
+  color: #bef264;
+}
+
+.clutch-fact-box span {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+/* Similar Skins Grid */
+.clutch-similar-card {
+  background: #111827;
+  border: 1px solid #1f2b3e;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.clutch-similar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.clutch-similar-item {
+  background: #141d2e;
+  border: 1px solid #1f2c3f;
+  border-radius: 8px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.clutch-similar-item:hover {
+  transform: translateY(-3px);
+  border-color: #bef264;
+  box-shadow: 0 4px 14px rgba(190, 242, 100, 0.2);
+}
+
+.clutch-similar-img {
+  width: 90px;
+  height: 65px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7));
+}
+
+.clutch-similar-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.clutch-similar-price {
+  font-size: 11px;
+  font-weight: 800;
+  color: #bef264;
 }

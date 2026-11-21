@@ -1651,7 +1651,14 @@ const RAW_CATALOG_DATA: CSFloatItem[] = [
     floatFormatted: "0.031245892110",
     paintSeed: 714,
     patternRank: 1,
-    priceUsd: 28.50,
+    priceUsd: 11.74,
+    wearPrices: [
+      { wear: "FN", wearName: "Factory New", floatRange: "0.00 – 0.07", price: 11.74, offersCount: 416 },
+      { wear: "MW", wearName: "Minimal Wear", floatRange: "0.07 – 0.15", price: 5.45, offersCount: 283 },
+      { wear: "FT", wearName: "Field-Tested", floatRange: "0.15 – 0.38", price: 3.36, offersCount: 1500 },
+      { wear: "WW", wearName: "Well-Worn", floatRange: "0.38 – 0.45", price: 3.04, offersCount: 1100 },
+      { wear: "BS", wearName: "Battle-Scarred", floatRange: "0.45 – 1.00", price: 2.98, offersCount: 203 },
+    ],
     discountPercent: -22.5,
     imageUrl: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwlcK3wiVI0POlPPNSMOKcCGKD0ud5vuBlcCW6khUz_W3Sytb4cCqTOFUpWJtzTOUD5hPsw9a0Yrnrs1SK3ooXzy6shilM5311o7FVYrIufmI",
     isStatTrak: false,
@@ -2246,8 +2253,8 @@ export function enrichItemWithCSGOSkins(item: CSFloatItem): CSFloatItem {
     finishStyle: item.finishStyle ?? (item.category === "KNIVES" ? "Anodized Airbrushed" : "Custom Paint Job"),
     finishCatalog: item.finishCatalog ?? (item.paintSeed || 445),
     collectionName: item.collectionName ?? "The CS2 Armory & Major Collections",
-    marketPrices,
-    wearPrices,
+    marketPrices: item.marketPrices ?? marketPrices,
+    wearPrices: item.wearPrices ?? wearPrices,
   };
 }
 

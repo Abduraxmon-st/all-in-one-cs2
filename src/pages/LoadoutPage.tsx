@@ -6,6 +6,7 @@ import { CSGOSkinsHeaderNav } from "../components/CSGOSkinsHeaderNav";
 import { SkinDetailOverview } from "../components/SkinDetailOverview";
 import { AdvancedSearchModal, type AdvancedSearchParams } from "../components/AdvancedSearchModal";
 import { getWeaponSilhouetteSvg } from "../components/WeaponSilhouette";
+import { getWeaponIconUrl } from "../features/loadouts/weaponIconResolver";
 import {
   generateLoadout,
   getCommunity,
@@ -76,11 +77,15 @@ const SHOWCASE_DATA: Record<string, { name: string; weapon: string; price: numbe
     { name: "AWP | The Prince", weapon: "AWP", price: 1449.42, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#eb4b4b" },
   ],
   Knives: [
-    { name: "★ Karambit | Gamma Doppler (Emerald)", weapon: "Karambit", price: 11450.00, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpotLu8JAllx8zJfAJH4dmklYyPqPr1Ibndk2JL7cFOhuDG_Zi73VG2qUQ_am36LNKWcwM2Ml3X_FS8wL3vhMC0vJXOn3ZkuSAl7HiOmwv3308XDHXucw", rarityColor: "#e4ae39" },
-    { name: "★ Skeleton Knife | Doppler (Ruby)", weapon: "Skeleton Knife", price: 5900.00, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf0ebcZThQ6tCvq4GGqPr1Ibndk1Rx5sB9teXI8oThxlKw-Ettam_zcNSSew86Z1vT-1W9k-y7hp65usnKzCExuCQ8pSGKFl39l6E", rarityColor: "#e4ae39" },
-    { name: "★ Butterfly Knife | Fade", weapon: "Butterfly Knife", price: 4150.00, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf0ebcZThQ6tCvq4GGqPr1Ibndk1Rx5sB9teXI8oThxlKw-Ettam_zcNSSew86Z1vT-1W9k-y7hp65usnKzCExuCQ8pSGKFl39l6E", rarityColor: "#e4ae39" },
-    { name: "★ M9 Bayonet | Gamma Doppler", weapon: "M9 Bayonet", price: 2294.80, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpotLu8JAllx8zJfAJH4dmklYyPqPr1Ibndk2JL7cFOhuDG_Zi73VG2qUQ_am36LNKWcwM2Ml3X_FS8wL3vhMC0vJXOn3ZkuSAl7HiOmwv3308XDHXucw", rarityColor: "#e4ae39" },
-    { name: "★ Talon Knife | Fade", weapon: "Talon Knife", price: 2150.00, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf0ebcZThQ6tCvq4GGqPr1Ibndk1Rx5sB9teXI8oThxlKw-Ettam_zcNSSew86Z1vT-1W9k-y7hp65usnKzCExuCQ8pSGKFl39l6E", rarityColor: "#e4ae39" },
+    { name: "★ Karambit | Gamma Doppler (Emerald)", weapon: "Karambit", price: 11450.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Q7uCvZaZkNM-SA1iVzOtkse1tcCSyhx8rtjSfn4vGLSLANkI-X8MjTLFYskTsw9bnZOuwsgSIj4sTniz-2i5A7yY6tbwGV6Nx-qGEjxaBb-MuPavopw", rarityColor: "#e4ae39" },
+    { name: "★ Skeleton Knife | Doppler (Ruby)", weapon: "Skeleton Knife", price: 5900.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1I5PeibbBiLs-SA1iSze91u_FsTju_qhAmoT-Jn4bjJC_4Ml93UtZuR7JYtEO-mtzjN-_gs1DXjN9MyHr92n4d7S89sL4AWaR2_vbSigzFZKp9v8c7W1qI3g", rarityColor: "#e4ae39" },
+    { name: "★ Butterfly Knife | Fade", weapon: "Butterfly Knife", price: 4150.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Z-ua6bbZrLOmsD2avx-9ytd5lRi67gVNwsDvSwtqqc3iXZg4kCZYjReYLtRbum9XgYuvm5wbWjtgUzCn3iSsf8G81tFEeH9rw", rarityColor: "#e4ae39" },
+    { name: "★ M9 Bayonet | Gamma Doppler", weapon: "M9 Bayonet", price: 2294.80, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf3qr3czxb49KzgL-KmsjxPr7Dl2dV18hwmOvN8IXvjVCLpxo7Oy3tIYKVIVNtYFjS_FC2yLvogMK4vM7NmHQ36CMgsHfbmhHkh0tEO-dtg-veFwv998pqQw", rarityColor: "#e4ae39" },
+    { name: "★ Talon Knife | Fade", weapon: "Talon Knife", price: 2150.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1M5vahf6lsK_WBMWaR_uh3tORWQyC0nQlpsmXcnNaoeHuTZwUiWMZzRrVZsxm9x9ThNrzj4QCPjdhNmHj73S9KujErvbhX2ACGeQ", rarityColor: "#e4ae39" },
+    { name: "★ Butterfly Knife | Doppler (Phase 4)", weapon: "Butterfly Knife", price: 3450.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Z-ua6bbZrLOmsD2qvw-J3s-p5SiihmSIqsi-HlorwOy7DAVRPVssnHaMUuhe9xIHlMuvqtgPf2IoTyC383Sod7CY-sr4DVfZ2qKPU3g-TNuE-545DeqjFvb87vg", rarityColor: "#e4ae39" },
+    { name: "★ Karambit | Lore", weapon: "Karambit", price: 2850.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Q7uCvZaZkNM-QG1ibwPx3vd5lQDu2qhEutDWR1IqrIHLCZlUmDJYlTLFb50HuwdyxPu2w4lCKjI5HniT2jS1PuCxj5e0cEf1y9ZCADXU", rarityColor: "#e4ae39" },
+    { name: "★ Nomad Knife | Case Hardened", weapon: "Nomad Knife", price: 1950.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1U-uaqZ6t_H_GCMWiZzetyj-1gSCGn2xhz5GyHwtr_dS7EOlR1DZtyEe8MsBO-xNKyNbnq7w3b2d8WzC7-jSNXrnE8rdGSE7w", rarityColor: "#e4ae39" },
+    { name: "★ M9 Bayonet | Marble Fade", weapon: "M9 Bayonet", price: 1680.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Wts2sab1iLvWHMWad_uN3ouNlSha1lBkijDGMnYftb3OTbVRyD8Z1RrNctkS6kobkZLzi7gTW2NpFxH33hi9Nuno65uxXAqs7uvqA7lyFHH4", rarityColor: "#e4ae39" },
   ],
   Gloves: [
     { name: "★ Moto Gloves | Spearmint", weapon: "Moto Gloves", price: 4890.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu4r7_lb1QgTykpPf-i5U-fe9V6liNP-BDX6TzetJvehnWxanhxQmvTqJn7D1KCzPKhgnW5UmRO4DsxXrlYbhPurmtAXai98UzS73in5I6S5p4OsAU_Zx-KHWkUifZsxBQgc2", rarityColor: "#e4ae39" },
@@ -147,7 +152,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
 
   // Chosen Skin State for Direct On-Page Detailed Information (Photo 5)
   const [selectedSkin, setSelectedSkin] = useState<CSFloatItem>(() => {
-    return items.find((i) => i.skinName === "Slate" || i.weaponName === "AK-47") || items[0];
+    return items.find((i) => i.skinName === "Slate") || items.find((i) => i.weaponName === "AK-47") || items[0];
   });
 
   const handleSelectWeapon = (cat: string, wep: string) => {
@@ -613,9 +618,11 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
       : "Browse every CS2 skin, glove, knife, and case with verified market quotes from CSFloat, Skinport, BUFF163, and Steam Market.";
 
   const activeHeroThumbnail =
-    filteredItems.length > 0
+    (selectedSubWeapon !== "All" ? getWeaponIconUrl(selectedSubWeapon) : null) ||
+    getWeaponIconUrl(activeMegaCategory === "Knives" ? "Karambit" : activeMegaCategory === "Gloves" ? "Sport Gloves" : activeMegaCategory === "Rifles" ? "AK-47" : activeMegaCategory === "Pistols" ? "USP-S" : (activeMegaCategory || "AK-47")) ||
+    (filteredItems.length > 0
       ? filteredItems[0].imageUrl
-      : "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwiFCzvfqffVsKfyFCEvFkeB-j7I3Xjeyxh5z52CGnNv4J3yRb1AnC8N5FO5U5kK6wI_sMrjX713XjN4SxC2vi35K4yq1t09e8H8D";
+      : "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwiFCzvfqffVsKfyFCEvFkeB-j7I3Xjeyxh5z52CGnNv4J3yRb1AnC8N5FO5U5kK6wI_sMrjX713XjN4SxC2vi35K4yq1t09e8H8D");
 
   return (
     <div className="csf-page">
@@ -631,7 +638,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         onOpenAdvancedSearch={() => setIsAdvancedSearchOpen(true)}
       />
 
-      {/* 2. WEAPON HERO SECTION */}
+      {/* 2. WEAPON HERO SECTION (MATCHING PHOTO 3 & 4) */}
       <section className="csgoskins-hero-section">
         <div className="csgoskins-hero-inner">
           <div className="csgoskins-hero-left">
@@ -707,12 +714,14 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                   <div className="csf-showcase-img-stage">
                     <img
                       src={
+                        (selectedSubWeapon !== "All" ? getWeaponIconUrl(selectedSubWeapon) : null) ||
+                        getWeaponIconUrl(activeMegaCategory === "Knives" ? "Karambit" : activeMegaCategory === "Gloves" ? "Sport Gloves" : activeMegaCategory === "Rifles" ? "AK-47" : activeMegaCategory === "Pistols" ? "USP-S" : (activeMegaCategory || "AK-47")) ||
                         currentShowcaseItems[0]?.image ||
                         getWeaponSilhouetteSvg(selectedSubWeapon !== "All" ? selectedSubWeapon : (activeMegaCategory || "Knives"))
                       }
                       alt="View All"
                       className="csf-showcase-img"
-                      style={{ opacity: 0.9 }}
+                      style={{ opacity: 0.95 }}
                     />
                   </div>
                   <span style={{ fontSize: 10, color: "#bef264", fontWeight: 800 }}>EXPLORE →</span>
@@ -791,17 +800,21 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         </section>
       )}
 
-      {/* 3. CHOSEN SKIN DETAIL OVERVIEW (MATCHING PHOTO 5 IN CLUTCH LABS UI DESIGN) */}
+      {/* 3. CHOSEN SKIN DETAIL OVERVIEW (PHOTO 5: "and below of that page have information about skin that is chosen like 5th photo") */}
       {selectedSkin && (
-        <SkinDetailOverview
-          skin={selectedSkin}
-          currency={currency}
-          notify={notify}
-          onOpen3DModal={(s) => setInspect3DItem(s)}
-        />
+        <div id="chosen-skin-overview">
+          <SkinDetailOverview
+            skin={selectedSkin}
+            currency={currency}
+            notify={notify}
+            onOpen3DModal={(s) => setInspect3DItem(s)}
+            onSelectSkin={(s) => setSelectedSkin(s)}
+            allSkins={items}
+          />
+        </div>
       )}
 
-      {/* 3. TOP TOOLBAR */}
+      {/* 4. TOP TOOLBAR & CATALOG */}
       <header className="csf-toolbar">
         <div className="csf-toolbar-left">
           <button

@@ -215,7 +215,7 @@ export const CSGOSkinsModal: FC<Props> = ({
                   letterSpacing: "0.06em",
                 }}
               >
-                CSGOSKINS.GG HUB
+                CLUTCH ARSENAL HUB
               </span>
               <span
                 style={{
@@ -1666,7 +1666,7 @@ export const CSGOSkinsModal: FC<Props> = ({
                 borderRadius: 4,
               }}
             >
-              -{Math.abs(item.discountPercent || 22).toFixed(1)}% CSGOSKINS.GG DISCOUNT
+              -{Math.abs(item.discountPercent || 22).toFixed(1)}% CLUTCH DISCOUNT
             </span>
           </div>
 
