@@ -1,43 +1,27 @@
-
 /* =========================================================
-   CSGOSKINS.GG 1:1 WEAPON SKINS GRID SUITE (PHOTO 3 ALIGNMENT)
+   CLUTCH LABS WEAPON SKINS GRID SUITE (CSGOSKINS.GG 1:1)
+   Theme: Neutral Charcoal (#0d0f0f, #151818, #1b1f1e) + Lime (#c8f135)
    ========================================================= */
 
 .csgoskins-weapon-page-container {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 24px 60px;
-}
-
-.csf-subweapon-pills-bar {
-  display: flex;
-  align-items: center;
-  overflow-x: auto;
-  padding: 14px 0 20px;
-  gap: 8px;
-  scrollbar-width: thin;
-}
-
-.csf-subweapon-pills-bar::-webkit-scrollbar {
-  height: 4px;
-}
-.csf-subweapon-pills-bar::-webkit-scrollbar-thumb {
-  background: #233144;
-  border-radius: 2px;
+  padding: 16px 24px 60px;
 }
 
 .csgoskins-grid-section {
-  margin-top: 10px;
-  margin-bottom: 40px;
+  margin-top: 8px;
+  margin-bottom: 30px;
 }
 
+/* Toolbar above grid */
 .csgoskins-grid-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 14px 18px;
-  background: #0f1724;
-  border: 1px solid #1e2b3c;
+  background: #151818;
+  border: 1px solid #2b302f;
   border-radius: 10px;
   margin-bottom: 20px;
   gap: 16px;
@@ -46,11 +30,11 @@
 
 .csgoskins-grid-count {
   font-size: 13px;
-  color: #94a3b8;
+  color: #8f9995;
   font-weight: 600;
 }
 .csgoskins-grid-count strong {
-  color: #bef264;
+  color: #c8f135;
   font-weight: 800;
 }
 
@@ -64,8 +48,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #080d14;
-  border: 1px solid #233144;
+  background: #0d0f0f;
+  border: 1px solid #2b302f;
   border-radius: 8px;
   padding: 6px 12px;
   min-width: 220px;
@@ -75,18 +59,18 @@
   background: transparent;
   border: none;
   outline: none;
-  color: #f8fafc;
+  color: #f1f3ec;
   font-size: 12px;
   width: 100%;
 }
 .csgoskins-grid-search-input::placeholder {
-  color: #64748b;
+  color: #8f9995;
 }
 
 .csgoskins-grid-sort-select {
-  background: #080d14;
-  border: 1px solid #233144;
-  color: #cbd5e1;
+  background: #0d0f0f;
+  border: 1px solid #2b302f;
+  color: #f1f3ec;
   font-size: 12px;
   font-weight: 700;
   padding: 6px 12px;
@@ -95,7 +79,7 @@
   cursor: pointer;
 }
 
-/* 4-Column Responsive Grid matching Photo 3 */
+/* 4-Column Responsive Grid */
 .csgoskins-catalog-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -122,8 +106,8 @@
 
 /* Card Design matching Photo 3 */
 .csgoskins-card-item {
-  background: #111827;
-  border: 1px solid #1f293d;
+  background: #151818;
+  border: 1px solid #242826;
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -135,20 +119,20 @@
 
 .csgoskins-card-item:hover {
   transform: translateY(-4px);
-  border-color: #bef264;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.7), 0 0 20px rgba(190, 242, 100, 0.18);
+  border-color: #c8f135;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.7), 0 0 20px rgba(200, 241, 53, 0.15);
 }
 
 .csgoskins-card-item.selected-active {
-  border-color: #bef264;
-  background: #131d2e;
-  box-shadow: 0 0 0 2px rgba(190, 242, 100, 0.4), 0 14px 34px rgba(0, 0, 0, 0.8);
+  border-color: #c8f135;
+  background: #1b1f1e;
+  box-shadow: 0 0 0 2px rgba(200, 241, 53, 0.4), 0 14px 34px rgba(0, 0, 0, 0.8);
 }
 
 .csgoskins-card-top-title {
   font-size: 16px;
   font-weight: 800;
-  color: #f8fafc;
+  color: #f1f3ec;
   margin: 0;
   text-align: center;
   white-space: nowrap;
@@ -231,7 +215,7 @@
 .csgoskins-card-price-range {
   font-size: 15px;
   font-weight: 900;
-  color: #f8fafc;
+  color: #f1f3ec;
 }
 
 .csgoskins-card-stattrak-price {
@@ -246,7 +230,7 @@
   justify-content: center;
   gap: 6px;
   font-size: 11px;
-  color: #94a3b8;
+  color: #8f9995;
   margin-top: 8px;
 }
 
@@ -263,16 +247,120 @@
   justify-content: center;
   font-size: 10px;
   font-weight: 800;
-  color: #64748b;
+  color: #8f9995;
   letter-spacing: 0.05em;
   margin-top: 10px;
   padding-top: 8px;
-  border-top: 1px solid #1e293b;
+  border-top: 1px solid #242826;
   text-transform: uppercase;
 }
 
+/* =========================================================
+   PAGINATION SUITE (CSGOSKINS.GG 1:1)
+   ========================================================= */
+
+.csgoskins-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 36px 0 24px;
+  flex-wrap: wrap;
+}
+
+.csgoskins-page-nav-btn {
+  background: #151818;
+  border: 1px solid #2b302f;
+  color: #f1f3ec;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.csgoskins-page-nav-btn:hover:not(:disabled) {
+  background: #1b1f1e;
+  border-color: #c8f135;
+  color: #c8f135;
+}
+
+.csgoskins-page-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.csgoskins-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.csgoskins-page-btn {
+  min-width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #151818;
+  border: 1px solid #2b302f;
+  color: #f1f3ec;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.csgoskins-page-btn:hover {
+  background: #1b1f1e;
+  border-color: #c8f135;
+  color: #c8f135;
+}
+
+.csgoskins-page-btn.active {
+  background: #c8f135;
+  color: #111111;
+  border-color: #c8f135;
+  font-weight: 900;
+  box-shadow: 0 0 14px rgba(200, 241, 53, 0.35);
+}
+
+.csgoskins-page-dots {
+  color: #8f9995;
+  font-weight: 700;
+  padding: 0 6px;
+  user-select: none;
+}
+
+/* Detail Section Container */
 #chosen-skin-overview {
-  margin-top: 40px;
-  padding-top: 20px;
-  border-top: 1px solid #1e293b;
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid #2b302f;
+}
+
+.clutch-close-details-btn {
+  background: #1b1f1e;
+  border: 1px solid #2b302f;
+  color: #f1f3ec;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clutch-close-details-btn:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
 }

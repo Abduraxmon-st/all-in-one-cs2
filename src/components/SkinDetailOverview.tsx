@@ -6,6 +6,7 @@ interface Props {
   skin: CSFloatItem;
   currency: CurrencyCode;
   notify: (msg: string) => void;
+  onClose?: () => void;
   onOpen3DModal: (skin: CSFloatItem) => void;
   onSelectSkin?: (skin: CSFloatItem) => void;
   allSkins?: CSFloatItem[];
@@ -32,6 +33,7 @@ export const SkinDetailOverview: FC<Props> = ({
   skin,
   currency,
   notify,
+  onClose,
   onOpen3DModal,
   onSelectSkin,
   allSkins = [],
@@ -289,8 +291,18 @@ export const SkinDetailOverview: FC<Props> = ({
             title="Open Full 3D Interactive Inspector & Unboxing Simulator"
           >
             <span>🧊 3D INSPECT & COMPARISON</span>
-            <span style={{ color: "#bef264" }}>↗</span>
+            <span style={{ color: "#c8f135" }}>↗</span>
           </button>
+          {onClose && (
+            <button
+              type="button"
+              className="clutch-close-details-btn"
+              onClick={onClose}
+              title="Close skin details and return to catalog"
+            >
+              ✕ Close Details
+            </button>
+          )}
         </div>
       </div>
 

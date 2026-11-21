@@ -16,7 +16,7 @@ type Props = {
   notify: (message: string) => void;
 };
 
-// Sub-Weapon Pills by Category
+// Sub-Weapon Options by Category
 const SUB_WEAPONS: Record<string, string[]> = {
   Rifles: ["All", "AK-47", "AUG", "AWP", "FAMAS", "G3SG1", "Galil AR", "M4A1-S", "M4A4", "SCAR-20", "SG 553", "SSG 08"],
   Pistols: ["All", "CZ75-Auto", "Desert Eagle", "Dual Berettas", "Five-SeveN", "Glock-18", "P2000", "P250", "R8 Revolver", "Tec-9", "USP-S"],
@@ -31,6 +31,8 @@ const SUB_WEAPONS: Record<string, string[]> = {
   Stickers: ["All", "Katowice 2014", "Cologne 2014", "Stockholm 2021", "Antwerp 2022", "Paris 2023", "Copenhagen 2024"],
   Other: ["All", "Music Kits", "Storage Units", "Agents", "Patches", "Pins"],
 };
+
+const PAGE_SIZE = 24;
 
 function formatPriceRange(min?: number, max?: number, currency: CurrencyCode = "USD"): string {
   if (min === undefined || min === null) return "Check Offers";
@@ -67,6 +69,19 @@ function getRarityLabel(item: CSFloatItem): string {
   return cat ? `${r} ${cat}` : r;
 }
 
+function getPageNumbers(current: number, total: number): (number | string)[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, "...", total];
+  }
+  if (current >= total - 3) {
+    return [1, "...", total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [1, "...", current - 1, current, current + 1, "...", total];
+}
+
 export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, notify }: Props) {
   // 1. Core State & Currency
   const [currency, setCurrency] = useState<CurrencyCode>("USD");
@@ -74,20 +89,17 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
 
   // Active Category & Selected Weapon
   const [activeMegaCategory, setActiveMegaCategory] = useState<string>("Rifles");
-  const [selectedSubWeapon, setSelectedSubWeapon] = useState<string>("AK-47");
+  const [selectedSubWeapon, setSelectedSubWeapon] = useState<string>("All");
 
   // Grid Search & Sort
   const [gridSearch, setGridSearch] = useState("");
   const [gridSort, setGridSort] = useState<string>("popularity");
 
-  // Chosen Skin for In-Depth Detail Overview (Photo 5)
-  const [selectedSkin, setSelectedSkin] = useState<CSFloatItem>(() => {
-    return (
-      items.find((i) => i.weaponName === "AK-47" && i.skinName === "Slate") ||
-      items.find((i) => i.weaponName === "AK-47") ||
-      items[0]
-    );
-  });
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Chosen Skin for In-Depth Detail Overview (NULL initially until a skin card is clicked!)
+  const [selectedSkin, setSelectedSkin] = useState<CSFloatItem | null>(null);
 
   // 3D Inspector Modal State
   const [inspect3DItem, setInspect3DItem] = useState<CSFloatItem | null>(null);
@@ -110,36 +122,16 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
     const normalizedWep = wep.startsWith("All") ? "All" : wep;
     setActiveMegaCategory(cat);
     setSelectedSubWeapon(normalizedWep);
-
-    if (normalizedWep !== "All") {
-      const wepClean = normalizedWep.replace(/[★™\s]/g, "").toLowerCase();
-      const match = items.find(
-        (i) =>
-          i.weaponName.replace(/[★™\s]/g, "").toLowerCase() === wepClean ||
-          i.marketHashName.replace(/[★™\s]/g, "").toLowerCase().startsWith(wepClean) ||
-          i.weaponName.toLowerCase().includes(wepClean)
-      );
-      if (match) setSelectedSkin(match);
-    } else {
-      const matchCat = items.find((i) => {
-        const c = cat.toUpperCase();
-        if (c === "KNIVES") return i.category === "KNIVES";
-        if (c === "GLOVES") return i.category === "GLOVES";
-        if (c === "RIFLES") return i.category === "RIFLES";
-        if (c === "PISTOLS") return i.category === "PISTOLS";
-        if (c === "MID-TIER" || c === "SMGS") return i.category === "SMGS" || i.category === "HEAVY";
-        if (c === "HEAVY") return i.category === "HEAVY";
-        if (c === "CONTAINERS" || c === "CASES") return i.category === "CASES";
-        return true;
-      });
-      if (matchCat) setSelectedSkin(matchCat);
-    }
+    setCurrentPage(1);
+    // Detail overview only opens when user clicks a skin card in the grid!
+    setSelectedSkin(null);
   };
 
   const handleApplyAdvancedSearch = (params: AdvancedSearchParams) => {
     setAdvancedParams(params);
     if (params.query) setGridSearch(params.query);
     if (params.orderBy) setGridSort(params.orderBy);
+    setCurrentPage(1);
 
     if (params.weapon && params.weapon !== "Any") {
       setSelectedSubWeapon(params.weapon);
@@ -152,6 +144,11 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
     }
     notify("Applied Advanced Search filters");
   };
+
+  // Reset pagination when category, weapon, search, sort, or advanced filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeMegaCategory, selectedSubWeapon, gridSearch, gridSort, advancedParams]);
 
   // Dynamic Image Enrichment from CSGO-API on Mount
   useEffect(() => {
@@ -186,7 +183,7 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
       .catch(() => {});
   }, []);
 
-  // Filtered & Sorted Skins for 4-Column Grid (Photo 3)
+  // Filtered & Sorted Skins
   const displayedSkins = useMemo(() => {
     let result = items;
 
@@ -294,10 +291,14 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
     });
   }, [items, selectedSubWeapon, activeMegaCategory, gridSearch, gridSort, advancedParams]);
 
-  // Current Sub-Weapons for Navigation Pills Bar
-  const currentSubWeapons = activeMegaCategory ? SUB_WEAPONS[activeMegaCategory] || [] : [];
+  // Total pages and paginated slice (24 skins per page)
+  const totalPages = Math.max(1, Math.ceil(displayedSkins.length / PAGE_SIZE));
+  const paginatedSkins = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return displayedSkins.slice(start, start + PAGE_SIZE);
+  }, [displayedSkins, currentPage]);
 
-  // Hero Section Dynamic Information
+  // Hero Section Dynamic Information (Matching Photo 2)
   const activeHeroTitle =
     selectedSubWeapon !== "All"
       ? `${selectedSubWeapon} Skins`
@@ -343,7 +344,7 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
         onOpenAdvancedSearch={() => setIsAdvancedSearchOpen(true)}
       />
 
-      {/* 2. WEAPON HERO SECTION (MATCHING PHOTO 3 & 4) */}
+      {/* 2. WEAPON HERO SECTION (MATCHING PHOTO 2) */}
       <section className="csgoskins-hero-section">
         <div className="csgoskins-hero-inner">
           <div className="csgoskins-hero-left">
@@ -377,39 +378,23 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
       </section>
 
       {/* 3. MAIN CATALOG & WEAPON GRID CONTAINER */}
-      <div className="csgoskins-weapon-page-container">
-        {/* Sub-Weapon Pills Bar (e.g. All, MAC-10, MP5-SD, MP7...) */}
-        {currentSubWeapons.length > 0 && (
-          <div className="csf-subweapon-pills-bar">
-            {currentSubWeapons.map((wep) => {
-              const isActive =
-                selectedSubWeapon === wep || (wep === "All" && selectedSubWeapon === "All");
-              return (
-                <button
-                  key={wep}
-                  type="button"
-                  className={`csf-subweapon-pill ${isActive ? "active" : ""}`}
-                  onClick={() => handleSelectWeapon(activeMegaCategory || "Rifles", wep)}
-                >
-                  {wep}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* 4-Column Responsive Skins Grid matching Photo 3 */}
+      <div className="csgoskins-weapon-page-container" id="skins-grid-anchor">
+        {/* 4-Column Responsive Skins Grid */}
         <section className="csgoskins-grid-section">
           {/* Grid Toolbar: Finishes count on left, search & sort on right */}
           <div className="csgoskins-grid-toolbar">
             <div className="csgoskins-grid-count">
               Showing{" "}
-              <strong>{displayedSkins.length}</strong>{" "}
+              <strong>
+                {displayedSkins.length > 0
+                  ? `${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, displayedSkins.length)} of ${displayedSkins.length}`
+                  : "0"}
+              </strong>{" "}
               {selectedSubWeapon !== "All" ? selectedSubWeapon : activeMegaCategory} finishes
             </div>
             <div className="csgoskins-grid-toolbar-right">
               <div className="csgoskins-grid-search">
-                <span style={{ fontSize: 13, color: "#64748b" }}>🔍</span>
+                <span style={{ fontSize: 13, color: "#8f9995" }}>🔍</span>
                 <input
                   type="text"
                   placeholder={`Search in ${selectedSubWeapon !== "All" ? selectedSubWeapon : activeMegaCategory}...`}
@@ -424,7 +409,7 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
                     style={{
                       background: "none",
                       border: "none",
-                      color: "#94a3b8",
+                      color: "#8f9995",
                       cursor: "pointer",
                       fontSize: 12,
                     }}
@@ -448,7 +433,7 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
 
           {/* Responsive 4-Column Grid */}
           <div className="csgoskins-catalog-grid">
-            {displayedSkins.map((item) => {
+            {paginatedSkins.map((item) => {
               const isSelected = selectedSkin?.id === item.id;
               const rarityColor = getRarityGlowColor(item.rarity, item.category);
               const rarityLabel = getRarityLabel(item);
@@ -474,8 +459,10 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
                   className={`csgoskins-card-item ${isSelected ? "selected-active" : ""}`}
                   onClick={() => {
                     setSelectedSkin(item);
-                    const el = document.getElementById("chosen-skin-overview");
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    setTimeout(() => {
+                      const el = document.getElementById("chosen-skin-overview");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 50);
                   }}
                   title={`Click to view ${item.weaponName} | ${item.skinName} live details & active offers`}
                 >
@@ -527,15 +514,94 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
               );
             })}
           </div>
+
+          {/* CSGOSKINS.GG 1:1 Pagination Controls */}
+          {totalPages > 1 && (
+            <nav className="csgoskins-pagination" aria-label="Skins Catalog Pagination">
+              <button
+                type="button"
+                className="csgoskins-page-nav-btn"
+                disabled={currentPage === 1}
+                onClick={() => {
+                  setCurrentPage(1);
+                  const el = document.getElementById("skins-grid-anchor");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                « First
+              </button>
+              <button
+                type="button"
+                className="csgoskins-page-nav-btn"
+                disabled={currentPage === 1}
+                onClick={() => {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                  const el = document.getElementById("skins-grid-anchor");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                ‹ Prev
+              </button>
+
+              <div className="csgoskins-page-numbers">
+                {getPageNumbers(currentPage, totalPages).map((p, idx) =>
+                  p === "..." ? (
+                    <span key={`dots-${idx}`} className="csgoskins-page-dots">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={`page-${p}`}
+                      type="button"
+                      className={`csgoskins-page-btn ${currentPage === p ? "active" : ""}`}
+                      onClick={() => {
+                        setCurrentPage(Number(p));
+                        const el = document.getElementById("skins-grid-anchor");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="csgoskins-page-nav-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  const el = document.getElementById("skins-grid-anchor");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                Next ›
+              </button>
+              <button
+                type="button"
+                className="csgoskins-page-nav-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => {
+                  setCurrentPage(totalPages);
+                  const el = document.getElementById("skins-grid-anchor");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                Last »
+              </button>
+            </nav>
+          )}
         </section>
 
-        {/* 4. CHOSEN SKIN DETAIL OVERVIEW (PHOTO 5: 3D INSPECT, WEAR SPECTRUM TABLE & ACTIVE OFFERS) */}
+        {/* 4. CHOSEN SKIN DETAIL OVERVIEW (ONLY SHOWN AFTER CLICKING A SKIN IN THE GRID!) */}
         {selectedSkin && (
           <div id="chosen-skin-overview">
             <SkinDetailOverview
               skin={selectedSkin}
               currency={currency}
               notify={notify}
+              onClose={() => setSelectedSkin(null)}
               onOpen3DModal={(s) => setInspect3DItem(s)}
               onSelectSkin={(s) => setSelectedSkin(s)}
               allSkins={items}

@@ -185,12 +185,12 @@ export const AdvancedSearchModal: FC<Props> = ({
         className="csgoskins-adv-modal-dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
-          backgroundColor: "#16202c",
-          border: "1px solid #233144",
+          backgroundColor: "#151818",
+          border: "1px solid #2b302f",
           borderRadius: 14,
           maxWidth: 620,
           width: "100%",
-          boxShadow: "0 25px 60px rgba(0,0,0,0.85), 0 0 40px rgba(37, 99, 235, 0.15)",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.85), 0 0 40px rgba(200, 241, 53, 0.08)",
           overflow: "hidden",
         }}
       >
@@ -198,7 +198,7 @@ export const AdvancedSearchModal: FC<Props> = ({
         <div
           style={{
             padding: "20px 24px 16px",
-            borderBottom: "1px solid #202b3a",
+            borderBottom: "1px solid #242826",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -234,8 +234,8 @@ export const AdvancedSearchModal: FC<Props> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               style={{
-                background: "#0e1520",
-                border: "1px solid #243245",
+                background: "#0d0f0f",
+                border: "1px solid #2b302f",
                 borderRadius: 8,
                 padding: "10px 14px",
                 color: "#f8fafc",
@@ -253,8 +253,8 @@ export const AdvancedSearchModal: FC<Props> = ({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  background: "#0e1520",
-                  border: "1px solid #243245",
+                  background: "#0d0f0f",
+                  border: "1px solid #2b302f",
                   borderRadius: 8,
                   overflow: "hidden",
                 }}
@@ -287,8 +287,8 @@ export const AdvancedSearchModal: FC<Props> = ({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  background: "#0e1520",
-                  border: "1px solid #243245",
+                  background: "#0d0f0f",
+                  border: "1px solid #2b302f",
                   borderRadius: 8,
                   overflow: "hidden",
                 }}
@@ -324,8 +324,8 @@ export const AdvancedSearchModal: FC<Props> = ({
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
                 style={{
-                  background: "#0e1520",
-                  border: "1px solid #243245",
+                  background: "#0d0f0f",
+                  border: "1px solid #2b302f",
                   borderRadius: 8,
                   padding: "10px 14px",
                   color: "#f8fafc",
@@ -348,8 +348,8 @@ export const AdvancedSearchModal: FC<Props> = ({
                 value={weapon}
                 onChange={(e) => setWeapon(e.target.value)}
                 style={{
-                  background: "#0e1520",
-                  border: "1px solid #243245",
+                  background: "#0d0f0f",
+                  border: "1px solid #2b302f",
                   borderRadius: 8,
                   padding: "10px 14px",
                   color: "#f8fafc",
@@ -375,8 +375,8 @@ export const AdvancedSearchModal: FC<Props> = ({
                 value={exterior}
                 onChange={(e) => setExterior(e.target.value)}
                 style={{
-                  background: "#0e1520",
-                  border: "1px solid #243245",
+                  background: "#0d0f0f",
+                  border: "1px solid #2b302f",
                   borderRadius: 8,
                   padding: "10px 14px",
                   color: "#f8fafc",
@@ -399,8 +399,8 @@ export const AdvancedSearchModal: FC<Props> = ({
                 value={variant}
                 onChange={(e) => setVariant(e.target.value)}
                 style={{
-                  background: "#0e1520",
-                  border: "1px solid #243245",
+                  background: "#0d0f0f",
+                  border: "1px solid #2b302f",
                   borderRadius: 8,
                   padding: "10px 14px",
                   color: "#f8fafc",
@@ -425,8 +425,8 @@ export const AdvancedSearchModal: FC<Props> = ({
               value={orderBy}
               onChange={(e) => setOrderBy(e.target.value)}
               style={{
-                background: "#0e1520",
-                border: "1px solid #243245",
+                background: "#0d0f0f",
+                border: "1px solid #2b302f",
                 borderRadius: 8,
                 padding: "10px 14px",
                 color: "#f8fafc",
@@ -452,7 +452,7 @@ export const AdvancedSearchModal: FC<Props> = ({
               gap: 16,
               marginTop: 10,
               paddingTop: 16,
-              borderTop: "1px solid #202b3a",
+              borderTop: "1px solid #242826",
             }}
           >
             <button
