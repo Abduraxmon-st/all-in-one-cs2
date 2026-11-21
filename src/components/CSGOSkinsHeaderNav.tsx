@@ -12,11 +12,16 @@ interface Props {
   onOpenAdvancedSearch: () => void;
 }
 
+interface MenuGroup {
+  groupTitle?: string;
+  items: string[];
+}
+
 interface NavMenu {
   id: string;
   label: string;
   category: string;
-  items: string[];
+  groups: MenuGroup[];
 }
 
 const NAV_MENUS: NavMenu[] = [
@@ -24,166 +29,229 @@ const NAV_MENUS: NavMenu[] = [
     id: "knives",
     label: "Knives",
     category: "Knives",
-    items: [
-      "All Knives",
-      "Bayonet",
-      "Bowie Knife",
-      "Butterfly Knife",
-      "Classic Knife",
-      "Falchion Knife",
-      "Flip Knife",
-      "Gut Knife",
-      "Huntsman Knife",
-      "Karambit",
-      "Kukri Knife",
-      "M9 Bayonet",
-      "Navaja Knife",
-      "Nomad Knife",
-      "Paracord Knife",
-      "Shadow Daggers",
-      "Skeleton Knife",
-      "Stiletto Knife",
-      "Survival Knife",
-      "Talon Knife",
-      "Ursus Knife",
+    groups: [
+      {
+        groupTitle: "POPULAR KNIVES",
+        items: [
+          "All Knives",
+          "Karambit",
+          "Butterfly Knife",
+          "M9 Bayonet",
+          "Bayonet",
+          "Skeleton Knife",
+          "Talon Knife",
+          "Stiletto Knife",
+        ],
+      },
+      {
+        groupTitle: "ALL KNIVES",
+        items: [
+          "Bowie Knife",
+          "Classic Knife",
+          "Falchion Knife",
+          "Flip Knife",
+          "Gut Knife",
+          "Huntsman Knife",
+          "Kukri Knife",
+          "Navaja Knife",
+          "Nomad Knife",
+          "Paracord Knife",
+          "Shadow Daggers",
+          "Survival Knife",
+          "Ursus Knife",
+        ],
+      },
     ],
   },
   {
     id: "gloves",
     label: "Gloves",
     category: "Gloves",
-    items: [
-      "All Gloves",
-      "Bloodhound Gloves",
-      "Broken Fang Gloves",
-      "Driver Gloves",
-      "Hand Wraps",
-      "Hydra Gloves",
-      "Moto Gloves",
-      "Specialist Gloves",
-      "Sport Gloves",
+    groups: [
+      {
+        groupTitle: "GLOVE TYPES",
+        items: [
+          "All Gloves",
+          "Bloodhound Gloves",
+          "Broken Fang Gloves",
+          "Driver Gloves",
+          "Hand Wraps",
+          "Hydra Gloves",
+          "Moto Gloves",
+          "Specialist Gloves",
+          "Sport Gloves",
+        ],
+      },
     ],
   },
   {
     id: "rifles",
     label: "Rifles",
     category: "Rifles",
-    items: [
-      "All Rifles",
-      "AK-47",
-      "AUG",
-      "AWP",
-      "FAMAS",
-      "G3SG1",
-      "Galil AR",
-      "M4A1-S",
-      "M4A4",
-      "SCAR-20",
-      "SG 553",
-      "SSG 08",
+    groups: [
+      {
+        groupTitle: "ASSAULT RIFLES",
+        items: [
+          "All Rifles",
+          "AK-47",
+          "AUG",
+          "FAMAS",
+          "Galil AR",
+          "M4A1-S",
+          "M4A4",
+          "SG 553",
+        ],
+      },
+      {
+        groupTitle: "SNIPER RIFLES",
+        items: [
+          "AWP",
+          "G3SG1",
+          "SCAR-20",
+          "SSG 08",
+        ],
+      },
     ],
   },
   {
     id: "pistols",
     label: "Pistols",
     category: "Pistols",
-    items: [
-      "All Pistols",
-      "CZ75-Auto",
-      "Desert Eagle",
-      "Dual Berettas",
-      "Five-SeveN",
-      "Glock-18",
-      "P2000",
-      "P250",
-      "R8 Revolver",
-      "Tec-9",
-      "USP-S",
+    groups: [
+      {
+        groupTitle: "PISTOLS",
+        items: [
+          "All Pistols",
+          "CZ75-Auto",
+          "Desert Eagle",
+          "Dual Berettas",
+          "Five-SeveN",
+          "Glock-18",
+          "P2000",
+          "P250",
+          "R8 Revolver",
+          "Tec-9",
+          "USP-S",
+        ],
+      },
     ],
   },
   {
     id: "mid-tier",
     label: "Mid-Tier",
     category: "SMGs",
-    items: [
-      "All Mid-Tier",
-      "MAC-10",
-      "MP5-SD",
-      "MP7",
-      "MP9",
-      "P90",
-      "PP-Bizon",
-      "UMP-45",
-      "MAG-7",
-      "Nova",
-      "Sawed-Off",
-      "XM1014",
-      "M249",
-      "Negev",
+    groups: [
+      {
+        groupTitle: "SUBMACHINE GUNS",
+        items: [
+          "All Mid-Tier",
+          "MAC-10",
+          "MP5-SD",
+          "MP7",
+          "MP9",
+          "P90",
+          "PP-Bizon",
+          "UMP-45",
+        ],
+      },
+      {
+        groupTitle: "SHOTGUNS & HEAVY",
+        items: [
+          "MAG-7",
+          "Nova",
+          "Sawed-Off",
+          "XM1014",
+          "M249",
+          "Negev",
+        ],
+      },
     ],
   },
   {
     id: "cases",
     label: "Cases",
     category: "Containers",
-    items: [
-      "All Cases",
-      "Fracture Case",
-      "Clutch Case",
-      "Kilowatt Case",
-      "Dreams & Nightmares Case",
-      "Recoil Case",
-      "Snakebite Case",
-      "Glove Case",
-      "Revolution Case",
+    groups: [
+      {
+        groupTitle: "WEAPON CASES",
+        items: [
+          "All Cases",
+          "Fracture Case",
+          "Clutch Case",
+          "Kilowatt Case",
+          "Dreams & Nightmares Case",
+          "Recoil Case",
+          "Snakebite Case",
+          "Glove Case",
+          "Revolution Case",
+        ],
+      },
     ],
   },
   {
     id: "collections",
     label: "Collections",
     category: "Collections",
-    items: [
-      "All Collections",
-      "The Armory Collection",
-      "The Mirage 2021 Collection",
-      "The Dust 2 2021 Collection",
-      "The Cobblestone Collection",
-      "The Control Collection",
+    groups: [
+      {
+        groupTitle: "POPULAR COLLECTIONS",
+        items: [
+          "All Collections",
+          "The Armory Collection",
+          "The Mirage 2021 Collection",
+          "The Dust 2 2021 Collection",
+          "The Cobblestone Collection",
+          "The Control Collection",
+        ],
+      },
     ],
   },
   {
     id: "stickers",
     label: "Stickers",
     category: "Stickers",
-    items: [
-      "All Stickers",
-      "Katowice 2014",
-      "Cologne 2014",
-      "Stockholm 2021",
-      "Antwerp 2022",
-      "Paris 2023",
+    groups: [
+      {
+        groupTitle: "MAJOR TOURNAMENTS",
+        items: [
+          "All Stickers",
+          "Katowice 2014",
+          "Cologne 2014",
+          "Stockholm 2021",
+          "Antwerp 2022",
+          "Paris 2023",
+          "Copenhagen 2024",
+        ],
+      },
     ],
   },
   {
     id: "other",
     label: "Other",
     category: "Other",
-    items: [
-      "All Other",
-      "Music Kits",
-      "Storage Units",
-      "Agents",
-      "Patches",
-      "Pins",
+    groups: [
+      {
+        groupTitle: "CUSTOMIZATION",
+        items: [
+          "All Other",
+          "Music Kits",
+          "Storage Units",
+          "Agents",
+          "Patches",
+          "Pins",
+        ],
+      },
     ],
   },
 ];
 
 // Clean miniature silhouette icon for dropdown entries
-function getMiniIcon(menuId: string): string {
+function getMiniIcon(menuId: string, itemName: string): string {
+  const name = itemName.toLowerCase();
+  if (name.includes("awp") || name.includes("ssg") || name.includes("scar") || name.includes("g3sg1")) return "🎯";
   if (menuId === "knives") return "🗡️";
   if (menuId === "gloves") return "🧤";
-  if (menuId === "rifles") return "🎯";
+  if (menuId === "rifles") return "🔫";
   if (menuId === "pistols") return "🔫";
   if (menuId === "mid-tier") return "⚡";
   if (menuId === "cases") return "📦";
@@ -219,17 +287,20 @@ export const CSGOSkinsHeaderNav: FC<Props> = ({
   }, []);
 
   return (
-    <header className="csgoskins-main-nav" ref={navRef}>
+    <header className="clutch-main-nav csgoskins-main-nav" ref={navRef}>
       <div className="csgoskins-nav-inner">
-        {/* Left: Brand Logo */}
+        {/* Left: Clutch Labs Weapon Brand (Replacing third-party logo!) */}
         <div
-          className="csgoskins-brand"
+          className="clutch-nav-brand"
           onClick={() => onSelectWeapon("Rifles", "All")}
           style={{ cursor: "pointer" }}
+          title="Clutch Labs Loadout Arsenal"
         >
-          <span className="brand-csgo">CSGO</span>
-          <span className="brand-skins">SKINS</span>
-          <span className="brand-gg">.GG</span>
+          <div className="clutch-nav-badge">
+            <span className="clutch-nav-dot" />
+            <span className="clutch-nav-tag">CLUTCH</span>
+          </div>
+          <span className="clutch-nav-title">LOADOUT ARSENAL</span>
         </div>
 
         {/* Center: Dropdown Navigation Menus */}
@@ -257,27 +328,38 @@ export const CSGOSkinsHeaderNav: FC<Props> = ({
                   <span className="csgoskins-caret">⌄</span>
                 </button>
 
-                {/* Dropdown Panel with Weapon Silhouette Icons */}
+                {/* Dropdown Panel with Grouped Categories matching Photo 4 */}
                 {isOpen && (
-                  <div className="csgoskins-dropdown-panel">
-                    {menu.items.map((item) => {
-                      const isItemActive = activeWeapon === item;
-                      const icon = getMiniIcon(menu.id);
+                  <div className="csgoskins-dropdown-panel clutch-dropdown-panel">
+                    {menu.groups.map((grp, gIdx) => (
+                      <div key={gIdx} className="clutch-dropdown-group">
+                        {grp.groupTitle && (
+                          <div className="clutch-dropdown-group-title">
+                            {grp.groupTitle}
+                          </div>
+                        )}
+                        <div className="clutch-dropdown-group-items">
+                          {grp.items.map((item) => {
+                            const isItemActive = activeWeapon === item;
+                            const icon = getMiniIcon(menu.id, item);
 
-                      return (
-                        <div
-                          key={item}
-                          className={`csgoskins-dropdown-item ${isItemActive ? "active" : ""}`}
-                          onClick={() => {
-                            onSelectWeapon(menu.category, item);
-                            setOpenDropdown(null);
-                          }}
-                        >
-                          <span className="csgoskins-item-icon">{icon}</span>
-                          <span className="csgoskins-item-name">{item}</span>
+                            return (
+                              <div
+                                key={item}
+                                className={`csgoskins-dropdown-item clutch-dropdown-item ${isItemActive ? "active" : ""}`}
+                                onClick={() => {
+                                  onSelectWeapon(menu.category, item);
+                                  setOpenDropdown(null);
+                                }}
+                              >
+                                <span className="csgoskins-item-icon">{icon}</span>
+                                <span className="csgoskins-item-name">{item}</span>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -291,7 +373,7 @@ export const CSGOSkinsHeaderNav: FC<Props> = ({
           <div className="csgoskins-settings-wrapper" style={{ position: "relative" }}>
             <button
               type="button"
-              className="csgoskins-settings-btn"
+              className="csgoskins-settings-btn clutch-settings-btn"
               onClick={() => setShowSettings(!showSettings)}
               title="Display & Currency Settings"
             >
@@ -299,8 +381,8 @@ export const CSGOSkinsHeaderNav: FC<Props> = ({
             </button>
 
             {showSettings && (
-              <div className="csgoskins-settings-popover">
-                <div style={{ fontSize: 11, fontWeight: 800, color: "#94a3b8", marginBottom: 8 }}>
+              <div className="csgoskins-settings-popover clutch-settings-popover">
+                <div style={{ fontSize: 11, fontWeight: 800, color: "#bef264", marginBottom: 8, letterSpacing: "0.05em" }}>
                   SELECT CURRENCY
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
@@ -322,12 +404,12 @@ export const CSGOSkinsHeaderNav: FC<Props> = ({
             )}
           </div>
 
-          {/* Top Search Input matching Screenshot 1 */}
-          <div className="csgoskins-header-search">
+          {/* Top Search Input */}
+          <div className="csgoskins-header-search clutch-header-search">
             <span className="csgoskins-search-icon">🔍</span>
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search weapons or skins..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="csgoskins-search-input"

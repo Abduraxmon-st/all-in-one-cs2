@@ -3,6 +3,7 @@ import { useAuth } from "../features/identity/AuthProvider";
 import { csfloatCatalogData, type CSFloatItem, formatPrice, type CurrencyCode } from "../features/loadouts/csfloatCatalogData";
 import { CSGOSkinsModal } from "../components/CSGOSkinsModal";
 import { CSGOSkinsHeaderNav } from "../components/CSGOSkinsHeaderNav";
+import { SkinDetailOverview } from "../components/SkinDetailOverview";
 import { AdvancedSearchModal, type AdvancedSearchParams } from "../components/AdvancedSearchModal";
 import { getWeaponSilhouetteSvg } from "../components/WeaponSilhouette";
 import {
@@ -143,6 +144,37 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const [activeMegaCategory, setActiveMegaCategory] = useState<MegaCategory | null>("Knives");
   const [selectedSubWeapon, setSelectedSubWeapon] = useState<string>("All");
   const carouselScrollRef = useRef<HTMLDivElement>(null);
+
+  // Chosen Skin State for Direct On-Page Detailed Information (Photo 5)
+  const [selectedSkin, setSelectedSkin] = useState<CSFloatItem>(() => {
+    return items.find((i) => i.skinName === "Slate" || i.weaponName === "AK-47") || items[0];
+  });
+
+  const handleSelectWeapon = (cat: string, wep: string) => {
+    setActiveMegaCategory(cat as MegaCategory);
+    setSelectedSubWeapon(wep);
+    if (wep !== "All") {
+      const match = items.find(
+        (i) =>
+          i.weaponName.toLowerCase() === wep.toLowerCase() ||
+          i.marketHashName.toLowerCase().startsWith(wep.toLowerCase()) ||
+          i.weaponName.toLowerCase().includes(wep.toLowerCase())
+      );
+      if (match) setSelectedSkin(match);
+    } else {
+      const matchCat = items.find((i) => {
+        const c = cat.toUpperCase();
+        if (c === "KNIVES") return i.category === "KNIVES";
+        if (c === "GLOVES") return i.category === "GLOVES";
+        if (c === "RIFLES") return i.category === "RIFLES";
+        if (c === "PISTOLS") return i.category === "PISTOLS";
+        if (c === "SMGS") return i.category === "SMGS";
+        if (c === "CONTAINERS" || c === "CASES") return i.category === "CASES";
+        return true;
+      });
+      if (matchCat) setSelectedSkin(matchCat);
+    }
+  };
 
   // Advanced Search Modal State
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
@@ -517,7 +549,52 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
   const totalCtValue = equippedCt.reduce((acc, i) => acc + i.priceUsd, 0);
   const totalTValue = equippedT.reduce((acc, i) => acc + i.priceUsd, 0);
 
-  const currentShowcaseItems = activeMegaCategory ? SHOWCASE_DATA[activeMegaCategory] || [] : [];
+  // Dynamic Carousel Items strictly matching selected weapon / category
+  const currentShowcaseItems = useMemo(() => {
+    if (selectedSubWeapon && selectedSubWeapon !== "All") {
+      const matched = items.filter(
+        (i) =>
+          i.weaponName.toLowerCase().includes(selectedSubWeapon.toLowerCase()) ||
+          i.marketHashName.toLowerCase().includes(selectedSubWeapon.toLowerCase())
+      );
+      if (matched.length > 0) {
+        return matched.slice(0, 12).map((i) => ({
+          id: i.id,
+          rawItem: i,
+          name: i.marketHashName,
+          weapon: i.weaponName,
+          price: i.priceUsd,
+          image: i.imageUrl,
+          rarityColor: getRarityGlowColor(i.rarity, i.category),
+        }));
+      }
+    }
+    if (activeMegaCategory) {
+      const catUpper = activeMegaCategory.toUpperCase();
+      const matched = items.filter((i) => {
+        if (catUpper === "KNIVES") return i.category === "KNIVES";
+        if (catUpper === "GLOVES") return i.category === "GLOVES";
+        if (catUpper === "RIFLES") return i.category === "RIFLES";
+        if (catUpper === "PISTOLS") return i.category === "PISTOLS";
+        if (catUpper === "SMGS") return i.category === "SMGS";
+        if (catUpper === "CONTAINERS" || catUpper === "CASES") return i.category === "CASES";
+        return true;
+      });
+      if (matched.length > 0) {
+        return matched.slice(0, 12).map((i) => ({
+          id: i.id,
+          rawItem: i,
+          name: i.marketHashName,
+          weapon: i.weaponName,
+          price: i.priceUsd,
+          image: i.imageUrl,
+          rarityColor: getRarityGlowColor(i.rarity, i.category),
+        }));
+      }
+    }
+    return [];
+  }, [selectedSubWeapon, activeMegaCategory, items]);
+
   const currentSubWeapons = activeMegaCategory ? SUB_WEAPONS[activeMegaCategory] || [] : [];
 
   // CSGOSKINS.GG Hero Information
@@ -542,14 +619,11 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
 
   return (
     <div className="csf-page">
-      {/* 1. CSGOSKINS.GG TOP HEADER NAV BAR */}
+      {/* 1. CLUTCH LABS ARSENAL HEADER NAV */}
       <CSGOSkinsHeaderNav
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onSelectWeapon={(cat, wep) => {
-          setActiveMegaCategory(cat as MegaCategory);
-          setSelectedSubWeapon(wep);
-        }}
+        onSelectWeapon={handleSelectWeapon}
         activeCategory={activeMegaCategory}
         activeWeapon={selectedSubWeapon}
         currency={currency}
@@ -557,7 +631,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         onOpenAdvancedSearch={() => setIsAdvancedSearchOpen(true)}
       />
 
-      {/* 2. CSGOSKINS.GG WEAPON HERO SECTION MATCHING SCREENSHOT 1 */}
+      {/* 2. WEAPON HERO SECTION */}
       <section className="csgoskins-hero-section">
         <div className="csgoskins-hero-inner">
           <div className="csgoskins-hero-left">
@@ -600,7 +674,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                   key={wep}
                   type="button"
                   className={`csf-subweapon-pill ${selectedSubWeapon === wep ? "active" : ""}`}
-                  onClick={() => setSelectedSubWeapon(wep)}
+                  onClick={() => handleSelectWeapon(activeMegaCategory, wep)}
                 >
                   {wep}
                 </button>
@@ -624,7 +698,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                 {/* First Card: Category / View All */}
                 <div
                   className="csf-showcase-card csf-showcase-viewall"
-                  onClick={() => setSelectedSubWeapon("All")}
+                  onClick={() => handleSelectWeapon(activeMegaCategory, "All")}
                 >
                   <div className="csf-showcase-header">
                     <h5 className="csf-showcase-title">{activeMegaCategory}</h5>
@@ -632,18 +706,22 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                   </div>
                   <div className="csf-showcase-img-stage">
                     <img
-                      src={getWeaponSilhouetteSvg(activeMegaCategory)}
+                      src={
+                        currentShowcaseItems[0]?.image ||
+                        getWeaponSilhouetteSvg(selectedSubWeapon !== "All" ? selectedSubWeapon : (activeMegaCategory || "Knives"))
+                      }
                       alt="View All"
                       className="csf-showcase-img"
-                      style={{ opacity: 0.6 }}
+                      style={{ opacity: 0.9 }}
                     />
                   </div>
-                  <span style={{ fontSize: 10, color: "#3b82f6", fontWeight: 800 }}>EXPLORE →</span>
+                  <span style={{ fontSize: 10, color: "#bef264", fontWeight: 800 }}>EXPLORE →</span>
                 </div>
 
                 {/* Showcase Cards */}
                 {currentShowcaseItems.map((sc, scIdx) => {
                   const matchingItem =
+                    sc.rawItem ||
                     items.find((i) => i.skinName.toLowerCase().includes(sc.name.split("|")[1]?.trim().toLowerCase() || "")) ||
                     items[0];
 
@@ -651,8 +729,8 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                     <div
                       key={scIdx}
                       className="csf-showcase-card"
-                      onClick={() => setInspect3DItem(matchingItem)}
-                      title={`Inspect ${sc.name} in 3D`}
+                      onClick={() => setSelectedSkin(matchingItem)}
+                      title={`Select ${sc.name} to view details & market offers`}
                     >
                       <div className="csf-showcase-header">
                         <h5 className="csf-showcase-title" title={sc.name}>
@@ -711,6 +789,16 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
             </div>
           )}
         </section>
+      )}
+
+      {/* 3. CHOSEN SKIN DETAIL OVERVIEW (MATCHING PHOTO 5 IN CLUTCH LABS UI DESIGN) */}
+      {selectedSkin && (
+        <SkinDetailOverview
+          skin={selectedSkin}
+          currency={currency}
+          notify={notify}
+          onOpen3DModal={(s) => setInspect3DItem(s)}
+        />
       )}
 
       {/* 3. TOP TOOLBAR */}
@@ -1081,9 +1169,9 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
 
           {/* Right Market Stage */}
           <main className="csf-market-content">
-            {/* CSGOSKINS.GG Color Palette Bar */}
+            {/* Color Palette Bar */}
             <div className="csgoskins-color-palette-bar">
-              <span className="csgoskins-palette-label">🎨 CSGOSKINS.GG PALETTES:</span>
+              <span className="csgoskins-palette-label">🎨 COLOR PALETTES:</span>
               {CSGOSKINS_PALETTES.map((c) => (
                 <button
                   key={c.id}
@@ -1129,7 +1217,8 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                     <article
                       key={item.id}
                       className="csf-item-card csgoskins-card-item"
-                      onClick={() => setInspect3DItem(item)}
+                      onClick={() => setSelectedSkin(item)}
+                      title={`Select ${item.marketHashName} to view full market offers & wear details`}
                     >
                       {/* CSGOSKINS.GG Top Header matching Screenshot 1 */}
                       <h4 className="csgoskins-card-top-title" title={item.skinName || item.marketHashName}>
@@ -1242,7 +1331,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
                           type="button"
                           className="csf-compare-markets-btn"
                           onClick={() => setInspect3DItem(item)}
-                          title="Open CSGOSKINS.GG 7-Market Comparison & 3D Inspector"
+                          title="Open 7-Market Comparison & 3D Inspector"
                         >
                           Compare ↗
                         </button>
