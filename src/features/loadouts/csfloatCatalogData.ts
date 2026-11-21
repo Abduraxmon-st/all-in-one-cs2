@@ -1,3 +1,5 @@
+import allCs2Skins from "./allCs2Skins.json";
+
 export interface MarketOffer {
   market: string;
   price: number;
@@ -101,6 +103,11 @@ export interface CSFloatItem {
   marketPrices?: MarketOffer[];
   wearPrices?: WearPriceInfo[];
   description?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  statTrakMin?: number;
+  statTrakMax?: number;
+  offersCount?: string;
 }
 
 const STICKER_TITAN_HOLO: CSFloatSticker = {
@@ -2258,4 +2265,11 @@ export function enrichItemWithCSGOSkins(item: CSFloatItem): CSFloatItem {
   };
 }
 
-export const csfloatCatalogData: CSFloatItem[] = RAW_CATALOG_DATA.map(enrichItemWithCSGOSkins);
+const RAW_AND_ALL_DATA: any[] = [
+  ...RAW_CATALOG_DATA,
+  ...(allCs2Skins as any[]).filter(
+    (s) => !RAW_CATALOG_DATA.some((r) => r.marketHashName.toLowerCase() === s.marketHashName.toLowerCase())
+  ),
+];
+
+export const csfloatCatalogData: CSFloatItem[] = RAW_AND_ALL_DATA.map(enrichItemWithCSGOSkins);

@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { useAuth } from "../features/identity/AuthProvider";
+import { useEffect, useMemo, useState } from "react";
 import { csfloatCatalogData, type CSFloatItem, formatPrice, type CurrencyCode } from "../features/loadouts/csfloatCatalogData";
 import { CSGOSkinsModal } from "../components/CSGOSkinsModal";
 import { CSGOSkinsHeaderNav } from "../components/CSGOSkinsHeaderNav";
@@ -7,21 +6,9 @@ import { SkinDetailOverview } from "../components/SkinDetailOverview";
 import { AdvancedSearchModal, type AdvancedSearchParams } from "../components/AdvancedSearchModal";
 import { getWeaponSilhouetteSvg } from "../components/WeaponSilhouette";
 import { getWeaponIconUrl } from "../features/loadouts/weaponIconResolver";
-import {
-  generateLoadout,
-  getCommunity,
-  toggleUpvote,
-} from "../features/loadouts/api";
-import type {
-  Color,
-  CommunityDetail,
-  CommunityLoadout,
-  GeneratedLoadout,
-  Page,
-  SkinClassValue,
-  Wear,
-} from "../features/loadouts/types";
+import type { Wear } from "../features/loadouts/types";
 import "./LoadoutPage.css";
+import "./CSGOSkinsGrid.css";
 
 type Props = {
   budget: number;
@@ -29,157 +16,81 @@ type Props = {
   notify: (message: string) => void;
 };
 
-type ViewTab = "all" | "stickers" | "unique" | "matrix" | "community";
-type SortOption = "deals" | "lowest_float" | "lowest_price" | "highest_price";
-
-// 13 Top Categories
-const MEGA_CATEGORIES = [
-  "Rifles",
-  "Pistols",
-  "SMGs",
-  "Heavy",
-  "Knives",
-  "Gloves",
-  "Agents",
-  "Containers",
-  "Stickers",
-  "Keychains",
-  "Patches",
-  "Collectibles",
-  "Music Kits",
-] as const;
-
-type MegaCategory = (typeof MEGA_CATEGORIES)[number];
-
 // Sub-Weapon Pills by Category
 const SUB_WEAPONS: Record<string, string[]> = {
   Rifles: ["All", "AK-47", "AUG", "AWP", "FAMAS", "G3SG1", "Galil AR", "M4A1-S", "M4A4", "SCAR-20", "SG 553", "SSG 08"],
-  Pistols: ["All", "USP-S", "Glock-18", "Desert Eagle", "P250", "Five-SeveN", "Tec-9", "CZ75-Auto", "Dual Berettas", "P2000", "R8 Revolver"],
-  Knives: ["All", "Karambit", "Butterfly Knife", "M9 Bayonet", "Bayonet", "Skeleton Knife", "Talon Knife", "Stiletto Knife", "Nomad Knife"],
-  Gloves: ["All", "Sport Gloves", "Specialist Gloves", "Moto Gloves", "Driver Gloves", "Hand Wraps", "Bloodhound Gloves"],
-  SMGs: ["All", "MP9", "MAC-10", "MP7", "UMP-45", "P90", "MP5-SD", "PP-Bizon"],
-  Heavy: ["All", "Negev", "M249", "MAG-7", "XM1014", "Nova", "Sawed-Off"],
-  Containers: ["All", "Fracture Case", "Clutch Case", "Kilowatt Case", "Dreams & Nightmares Case", "Recoil Case", "Snakebite Case", "Storage Unit", "Revolution Case"],
-  Stickers: ["All", "Katowice 2014", "Cologne 2014", "Stockholm 2021", "Antwerp 2022", "Paris 2023"],
-  "Music Kits": ["All", "Daniel Sadowski, Dead Shot", "The Verkkars", "Denzel Curry", "Knock2"],
-  Collectibles: ["All", "Daniel Sadowski, Dead Shot", "Fracture Case", "Clutch Case"],
+  Pistols: ["All", "CZ75-Auto", "Desert Eagle", "Dual Berettas", "Five-SeveN", "Glock-18", "P2000", "P250", "R8 Revolver", "Tec-9", "USP-S"],
+  Knives: ["All", "Karambit", "Butterfly Knife", "M9 Bayonet", "Bayonet", "Skeleton Knife", "Talon Knife", "Stiletto Knife", "Bowie Knife", "Classic Knife", "Falchion Knife", "Flip Knife", "Gut Knife", "Huntsman Knife", "Kukri Knife", "Navaja Knife", "Nomad Knife", "Paracord Knife", "Shadow Daggers", "Survival Knife", "Ursus Knife"],
+  Gloves: ["All", "Bloodhound Gloves", "Broken Fang Gloves", "Driver Gloves", "Hand Wraps", "Hydra Gloves", "Moto Gloves", "Specialist Gloves", "Sport Gloves"],
+  "Mid-Tier": ["All", "MAC-10", "MP5-SD", "MP7", "MP9", "P90", "PP-Bizon", "UMP-45", "MAG-7", "Nova", "Sawed-Off", "XM1014", "M249", "Negev"],
+  SMGs: ["All", "MAC-10", "MP5-SD", "MP7", "MP9", "P90", "PP-Bizon", "UMP-45", "MAG-7", "Nova", "Sawed-Off", "XM1014", "M249", "Negev"],
+  Heavy: ["All", "MAG-7", "Nova", "Sawed-Off", "XM1014", "M249", "Negev"],
+  Cases: ["All", "Danger Zone Case", "CS20 Case", "Revolution Case", "Dreams & Nightmares Case", "Clutch Case", "Fracture Case", "Kilowatt Case", "Recoil Case", "Snakebite Case"],
+  Containers: ["All", "Danger Zone Case", "CS20 Case", "Revolution Case", "Dreams & Nightmares Case", "Clutch Case", "Fracture Case", "Kilowatt Case", "Recoil Case", "Snakebite Case"],
+  Collections: ["All", "The Armory Collection", "The Mirage 2021 Collection", "The Dust 2 2021 Collection", "The Cobblestone Collection", "The Control Collection"],
+  Stickers: ["All", "Katowice 2014", "Cologne 2014", "Stockholm 2021", "Antwerp 2022", "Paris 2023", "Copenhagen 2024"],
+  Other: ["All", "Music Kits", "Storage Units", "Agents", "Patches", "Pins"],
 };
 
-// Showcase Cards Definition
-const SHOWCASE_DATA: Record<string, { name: string; weapon: string; price: number; image: string; rarityColor: string }[]> = {
-  Rifles: [
-    { name: "AWP | Gungnir", weapon: "AWP", price: 5812.77, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#eb4b4b" },
-    { name: "AWP | Dragon Lore", weapon: "AWP", price: 4237.17, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqYaF7IfysCnWRxuF4j-B-Xxa_nBovp3Pdwtj9cC_GaAd0DZdwQu9fuhS4kNy0NePntVTbjYpCyyT_3CgY5i9j_a9cBkcCWUKV", rarityColor: "#eb4b4b" },
-    { name: "M4A4 | Howl", weapon: "M4A4", price: 4089.71, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwiFO0P_6afVSKP-EAm6extF6ueZhW2exwkl2tmTXwt39eCiUPQR2DMN4TOVetUK8xoLgM-K341eM2otDnC6okGoXufBz_TAB", rarityColor: "#eb4b4b" },
-    { name: "AK-47 | Wild Lotus", weapon: "AK-47", price: 3981.43, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwlcK3wiFO0PSneqF-JeKDC2mE_u995LZWTTuygxIYvzSCkpu3cnvFPQB2DpUkROFY4Rntw93lP7i241DbiI1BxSuviHlKunk_6-sHU71lpPMTRLyP4Q", rarityColor: "#eb4b4b" },
-    { name: "M4A1-S | Knight", weapon: "M4A1-S", price: 2429.79, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwiFO0P_6afVSKP-EAm6extF6ueZhW2exwkl2tmTXwt39eCiUPQR2DMN4TOVetUK8xoLgM-K341eM2otDnC6okGoXufBz_TAB", rarityColor: "#d32ce6" },
-    { name: "AWP | Medusa", weapon: "AWP", price: 1661.21, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#eb4b4b" },
-    { name: "AWP | The Prince", weapon: "AWP", price: 1449.42, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#eb4b4b" },
-  ],
-  Knives: [
-    { name: "★ Karambit | Gamma Doppler (Emerald)", weapon: "Karambit", price: 11450.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Q7uCvZaZkNM-SA1iVzOtkse1tcCSyhx8rtjSfn4vGLSLANkI-X8MjTLFYskTsw9bnZOuwsgSIj4sTniz-2i5A7yY6tbwGV6Nx-qGEjxaBb-MuPavopw", rarityColor: "#e4ae39" },
-    { name: "★ Skeleton Knife | Doppler (Ruby)", weapon: "Skeleton Knife", price: 5900.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1I5PeibbBiLs-SA1iSze91u_FsTju_qhAmoT-Jn4bjJC_4Ml93UtZuR7JYtEO-mtzjN-_gs1DXjN9MyHr92n4d7S89sL4AWaR2_vbSigzFZKp9v8c7W1qI3g", rarityColor: "#e4ae39" },
-    { name: "★ Butterfly Knife | Fade", weapon: "Butterfly Knife", price: 4150.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Z-ua6bbZrLOmsD2avx-9ytd5lRi67gVNwsDvSwtqqc3iXZg4kCZYjReYLtRbum9XgYuvm5wbWjtgUzCn3iSsf8G81tFEeH9rw", rarityColor: "#e4ae39" },
-    { name: "★ M9 Bayonet | Gamma Doppler", weapon: "M9 Bayonet", price: 2294.80, image: "https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf3qr3czxb49KzgL-KmsjxPr7Dl2dV18hwmOvN8IXvjVCLpxo7Oy3tIYKVIVNtYFjS_FC2yLvogMK4vM7NmHQ36CMgsHfbmhHkh0tEO-dtg-veFwv998pqQw", rarityColor: "#e4ae39" },
-    { name: "★ Talon Knife | Fade", weapon: "Talon Knife", price: 2150.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1M5vahf6lsK_WBMWaR_uh3tORWQyC0nQlpsmXcnNaoeHuTZwUiWMZzRrVZsxm9x9ThNrzj4QCPjdhNmHj73S9KujErvbhX2ACGeQ", rarityColor: "#e4ae39" },
-    { name: "★ Butterfly Knife | Doppler (Phase 4)", weapon: "Butterfly Knife", price: 3450.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Z-ua6bbZrLOmsD2qvw-J3s-p5SiihmSIqsi-HlorwOy7DAVRPVssnHaMUuhe9xIHlMuvqtgPf2IoTyC383Sod7CY-sr4DVfZ2qKPU3g-TNuE-545DeqjFvb87vg", rarityColor: "#e4ae39" },
-    { name: "★ Karambit | Lore", weapon: "Karambit", price: 2850.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Q7uCvZaZkNM-QG1ibwPx3vd5lQDu2qhEutDWR1IqrIHLCZlUmDJYlTLFb50HuwdyxPu2w4lCKjI5HniT2jS1PuCxj5e0cEf1y9ZCADXU", rarityColor: "#e4ae39" },
-    { name: "★ Nomad Knife | Case Hardened", weapon: "Nomad Knife", price: 1950.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1U-uaqZ6t_H_GCMWiZzetyj-1gSCGn2xhz5GyHwtr_dS7EOlR1DZtyEe8MsBO-xNKyNbnq7w3b2d8WzC7-jSNXrnE8rdGSE7w", rarityColor: "#e4ae39" },
-    { name: "★ M9 Bayonet | Marble Fade", weapon: "M9 Bayonet", price: 1680.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL6kJ_m-B1Wts2sab1iLvWHMWad_uN3ouNlSha1lBkijDGMnYftb3OTbVRyD8Z1RrNctkS6kobkZLzi7gTW2NpFxH33hi9Nuno65uxXAqs7uvqA7lyFHH4", rarityColor: "#e4ae39" },
-  ],
-  Gloves: [
-    { name: "★ Moto Gloves | Spearmint", weapon: "Moto Gloves", price: 4890.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu4r7_lb1QgTykpPf-i5U-fe9V6liNP-BDX6TzetJvehnWxanhxQmvTqJn7D1KCzPKhgnW5UmRO4DsxXrlYbhPurmtAXai98UzS73in5I6S5p4OsAU_Zx-KHWkUifZsxBQgc2", rarityColor: "#e4ae39" },
-    { name: "★ Specialist Gloves | Crimson Kimono", weapon: "Specialist Gloves", price: 3600.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Tk71ruQBH4jYLf-i5U-fe9V7d9JfOaD2uZ0vpJtuBtSha_nBovp3PQy42sdX6eagIjW5AlQOVetBXuk92xNLvg4gOMjd5AmC2ointB53w__a9cBqntWBk3", rarityColor: "#e4ae39" },
-    { name: "★ Sport Gloves | Vice", weapon: "Sport Gloves", price: 3100.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu4r7_lb1QgTykpPf-i5U-fe9V6liNP-BDX6TzetJvehnWxanhxQmvTqJn7D1KCzPKhgnW5UmRO4DsxXrlYbhPurmtAXai98UzS73in5I6S5p4OsAU_Zx-KHWkUifZsxBQgc2", rarityColor: "#e4ae39" },
-    { name: "★ Driver Gloves | King Snake", weapon: "Driver Gloves", price: 2200.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Tk71ruQBH4jYLf-i5U-fe9V7d9JfOaD2uZ0vpJtuBtSha_nBovp3PQy42sdX6eagIjW5AlQOVetBXuk92xNLvg4gOMjd5AmC2ointB53w__a9cBqntWBk3", rarityColor: "#e4ae39" },
-  ],
-  Pistols: [
-    { name: "Glock-18 | Fade", weapon: "Glock-18", price: 1980.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#d32ce6" },
-    { name: "Desert Eagle | Blaze", weapon: "Desert Eagle", price: 980.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#d32ce6" },
-    { name: "USP-S | Kill Confirmed", weapon: "USP-S", price: 650.00, image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk4veqfbdsH_GEHlicyOl-pK85TC23wk12tWSGnNr6JXqRPVUnA5J5RLIKshS-l4HuYbji7lfajdgU02yg2bOcOBD3", rarityColor: "#eb4b4b" },
-  ],
-};
+function formatPriceRange(min?: number, max?: number, currency: CurrencyCode = "USD"): string {
+  if (min === undefined || min === null) return "Check Offers";
+  if (max === undefined || max === null || max === min) return formatPrice(min, currency);
+  return `${formatPrice(min, currency)} - ${formatPrice(max, currency)}`;
+}
 
-// CSGOSKINS.GG Palette Definitions
-const CSGOSKINS_PALETTES = [
-  { id: "ALL", label: "All Colors", dot: "🎨" },
-  { id: "RED", label: "🔴 All Red Skins", dot: "#ef4444" },
-  { id: "BLUE", label: "🔵 All Blue Skins", dot: "#3b82f6" },
-  { id: "PURPLE", label: "🟣 All Purple Skins", dot: "#a855f7" },
-  { id: "GREEN", label: "🟢 All Green Skins", dot: "#22c55e" },
-  { id: "GOLD", label: "🟡 All Gold Skins", dot: "#eab308" },
-  { id: "WHITE", label: "⚪ All White Skins", dot: "#f8fafc" },
-  { id: "BLACK", label: "⚫ All Black Skins", dot: "#0f172a" },
-  { id: "ORANGE", label: "🟠 All Orange Skins", dot: "#f97316" },
-  { id: "PINK", label: "🌸 All Pink Skins", dot: "#ec4899" },
-];
-
-const SPECTRUM_SEGMENTS = [
-  { wear: "FN", width: "7%", color: "#22c55e", label: "0.00 - 0.07" },
-  { wear: "MW", width: "8%", color: "#84cc16", label: "0.07 - 0.15" },
-  { wear: "FT", width: "23%", color: "#eab308", label: "0.15 - 0.38" },
-  { wear: "WW", width: "7%", color: "#f97316", label: "0.38 - 0.45" },
-  { wear: "BS", width: "55%", color: "#ef4444", label: "0.45 - 1.00" },
-];
-
-function getRarityGlowColor(rarity: string, category: string): string {
-  if (category === "KNIVES" || category === "GLOVES") return "#e4ae39";
+function getRarityGlowColor(rarity?: string, category?: string): string {
+  if (category === "KNIVES" || category === "GLOVES") return "#ffd700";
   const r = (rarity || "").toLowerCase();
-  if (r.includes("covert") || r.includes("contraband")) return "#eb4b4b";
+  if (r.includes("covert") || r.includes("extraordinary") || r.includes("contraband")) return "#eb4b4b";
   if (r.includes("classified")) return "#d32ce6";
   if (r.includes("restricted")) return "#8847ff";
   if (r.includes("mil-spec")) return "#4b69ff";
-  return "#e4ae39";
+  if (r.includes("industrial")) return "#5e98d9";
+  if (r.includes("consumer")) return "#b0c3d9";
+  return "#8847ff";
 }
 
-export default function LoadoutPage({ budget, setBudget, notify }: Props) {
-  const { user, token } = useAuth();
+function getRarityLabel(item: CSFloatItem): string {
+  if (item.category === "KNIVES") return "★ Covert Knife";
+  if (item.category === "GLOVES") return "★ Extraordinary Gloves";
+  const r = item.rarity || "Covert";
+  const cat =
+    item.category === "SMGS"
+      ? "SMG"
+      : item.category === "RIFLES"
+      ? "Rifle"
+      : item.category === "PISTOLS"
+      ? "Pistol"
+      : item.category === "HEAVY"
+      ? "Heavy"
+      : "";
+  return cat ? `${r} ${cat}` : r;
+}
 
-  // 1. Core State & CSGOSKINS.GG Currency / Palette
+export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, notify }: Props) {
+  // 1. Core State & Currency
   const [currency, setCurrency] = useState<CurrencyCode>("USD");
-  const [colorFilter, setColorFilter] = useState<string>("ALL");
-  const money = (val: number) => formatPrice(val, currency);
-
   const [items, setItems] = useState<CSFloatItem[]>(csfloatCatalogData);
-  const [viewTab, setViewTab] = useState<ViewTab>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("deals");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Category Mega-Bar & Showcase
-  const [activeMegaCategory, setActiveMegaCategory] = useState<MegaCategory | null>("Knives");
-  const [selectedSubWeapon, setSelectedSubWeapon] = useState<string>("All");
-  const carouselScrollRef = useRef<HTMLDivElement>(null);
+  // Active Category & Selected Weapon
+  const [activeMegaCategory, setActiveMegaCategory] = useState<string>("Rifles");
+  const [selectedSubWeapon, setSelectedSubWeapon] = useState<string>("AK-47");
 
-  // Chosen Skin State for Direct On-Page Detailed Information (Photo 5)
+  // Grid Search & Sort
+  const [gridSearch, setGridSearch] = useState("");
+  const [gridSort, setGridSort] = useState<string>("popularity");
+
+  // Chosen Skin for In-Depth Detail Overview (Photo 5)
   const [selectedSkin, setSelectedSkin] = useState<CSFloatItem>(() => {
-    return items.find((i) => i.skinName === "Slate") || items.find((i) => i.weaponName === "AK-47") || items[0];
+    return (
+      items.find((i) => i.weaponName === "AK-47" && i.skinName === "Slate") ||
+      items.find((i) => i.weaponName === "AK-47") ||
+      items[0]
+    );
   });
 
-  const handleSelectWeapon = (cat: string, wep: string) => {
-    setActiveMegaCategory(cat as MegaCategory);
-    setSelectedSubWeapon(wep);
-    if (wep !== "All") {
-      const match = items.find(
-        (i) =>
-          i.weaponName.toLowerCase() === wep.toLowerCase() ||
-          i.marketHashName.toLowerCase().startsWith(wep.toLowerCase()) ||
-          i.weaponName.toLowerCase().includes(wep.toLowerCase())
-      );
-      if (match) setSelectedSkin(match);
-    } else {
-      const matchCat = items.find((i) => {
-        const c = cat.toUpperCase();
-        if (c === "KNIVES") return i.category === "KNIVES";
-        if (c === "GLOVES") return i.category === "GLOVES";
-        if (c === "RIFLES") return i.category === "RIFLES";
-        if (c === "PISTOLS") return i.category === "PISTOLS";
-        if (c === "SMGS") return i.category === "SMGS";
-        if (c === "CONTAINERS" || c === "CASES") return i.category === "CASES";
-        return true;
-      });
-      if (matchCat) setSelectedSkin(matchCat);
-    }
-  };
+  // 3D Inspector Modal State
+  const [inspect3DItem, setInspect3DItem] = useState<CSFloatItem | null>(null);
 
   // Advanced Search Modal State
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
@@ -194,114 +105,55 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
     orderBy: "popularity",
   });
 
+  // Weapon / Category Selection Handler
+  const handleSelectWeapon = (cat: string, wep: string) => {
+    const normalizedWep = wep.startsWith("All") ? "All" : wep;
+    setActiveMegaCategory(cat);
+    setSelectedSubWeapon(normalizedWep);
+
+    if (normalizedWep !== "All") {
+      const wepClean = normalizedWep.replace(/[★™\s]/g, "").toLowerCase();
+      const match = items.find(
+        (i) =>
+          i.weaponName.replace(/[★™\s]/g, "").toLowerCase() === wepClean ||
+          i.marketHashName.replace(/[★™\s]/g, "").toLowerCase().startsWith(wepClean) ||
+          i.weaponName.toLowerCase().includes(wepClean)
+      );
+      if (match) setSelectedSkin(match);
+    } else {
+      const matchCat = items.find((i) => {
+        const c = cat.toUpperCase();
+        if (c === "KNIVES") return i.category === "KNIVES";
+        if (c === "GLOVES") return i.category === "GLOVES";
+        if (c === "RIFLES") return i.category === "RIFLES";
+        if (c === "PISTOLS") return i.category === "PISTOLS";
+        if (c === "MID-TIER" || c === "SMGS") return i.category === "SMGS" || i.category === "HEAVY";
+        if (c === "HEAVY") return i.category === "HEAVY";
+        if (c === "CONTAINERS" || c === "CASES") return i.category === "CASES";
+        return true;
+      });
+      if (matchCat) setSelectedSkin(matchCat);
+    }
+  };
+
   const handleApplyAdvancedSearch = (params: AdvancedSearchParams) => {
     setAdvancedParams(params);
-    if (params.query !== undefined) setSearchQuery(params.query);
-    setPriceMin(params.minPrice);
-    setPriceMax(params.maxPrice);
-
-    if (params.color && params.color !== "Any") {
-      setColorFilter(params.color.toUpperCase());
-    } else {
-      setColorFilter("ALL");
-    }
+    if (params.query) setGridSearch(params.query);
+    if (params.orderBy) setGridSort(params.orderBy);
 
     if (params.weapon && params.weapon !== "Any") {
       setSelectedSubWeapon(params.weapon);
       for (const [cat, weps] of Object.entries(SUB_WEAPONS)) {
         if (weps.includes(params.weapon)) {
-          setActiveMegaCategory(cat as MegaCategory);
+          setActiveMegaCategory(cat);
           break;
         }
       }
-    } else {
-      setSelectedSubWeapon("All");
     }
-
-    if (params.exterior && params.exterior !== "Any") {
-      const codeMap: Record<string, Wear> = {
-        "Factory New": "FN",
-        "Minimal Wear": "MW",
-        "Field-Tested": "FT",
-        "Well-Worn": "WW",
-        "Battle-Scarred": "BS",
-      };
-      if (codeMap[params.exterior]) {
-        setSelectedTiers(new Set([codeMap[params.exterior]]));
-      }
-    }
-
-    if (params.variant === "StatTrak") {
-      setFilterStatTrak(true);
-      setFilterSouvenir(false);
-    } else if (params.variant === "Souvenir") {
-      setFilterSouvenir(true);
-      setFilterStatTrak(false);
-    } else if (params.variant === "Normal") {
-      setFilterNormal(true);
-      setFilterStatTrak(false);
-      setFilterSouvenir(false);
-    }
-
-    if (params.orderBy === "price-asc") setSortBy("lowest_price");
-    else if (params.orderBy === "price-desc") setSortBy("highest_price");
-    else if (params.orderBy === "float-asc") setSortBy("lowest_float");
-    else setSortBy("deals");
-
-    notify(`Applied Advanced Search filters`);
+    notify("Applied Advanced Search filters");
   };
 
-  // 2. Filter State
-  const [searchQuery, setSearchQuery] = useState("");
-  const [priceMin, setPriceMin] = useState<number | "">("");
-  const [priceMax, setPriceMax] = useState<number | "">("");
-  const [selectedTiers, setSelectedTiers] = useState<Set<Wear>>(new Set());
-  const [filterStatTrak, setFilterStatTrak] = useState(false);
-  const [filterSouvenir, setFilterSouvenir] = useState(false);
-  const [filterHighlight, setFilterHighlight] = useState(false);
-  const [filterNormal, setFilterNormal] = useState(false);
-  const [filterSeed, setFilterSeed] = useState("");
-  const [minFade, setMinFade] = useState(80);
-
-  // Collapsible Sections
-  const [openSections, setOpenSections] = useState({
-    price: true,
-    wear: true,
-    special: true,
-    patterns: true,
-  });
-
-  // Favorites & Equipped Loadouts
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [equippedCt, setEquippedCt] = useState<CSFloatItem[]>(() => {
-    try {
-      const raw = localStorage.getItem("csf_equipped_ct");
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [equippedT, setEquippedT] = useState<CSFloatItem[]>(() => {
-    try {
-      const raw = localStorage.getItem("csf_equipped_t");
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // 3D Inspector Modal State
-  const [inspect3DItem, setInspect3DItem] = useState<CSFloatItem | null>(null);
-
-  // Save equipped items
-  useEffect(() => {
-    try {
-      localStorage.setItem("csf_equipped_ct", JSON.stringify(equippedCt));
-      localStorage.setItem("csf_equipped_t", JSON.stringify(equippedT));
-    } catch {}
-  }, [equippedCt, equippedT]);
-
-  // Dynamic ByMykel API Enrichment on Client Load
+  // Dynamic Image Enrichment from CSGO-API on Mount
   useEffect(() => {
     fetch("https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json")
       .then((r) => (r.ok ? r.json() : null))
@@ -334,275 +186,118 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
       .catch(() => {});
   }, []);
 
-  // Generator & Matrix state
-  const [generatorBusy, setGeneratorBusy] = useState(false);
-  const [generatorError, setGeneratorError] = useState("");
-  const [selectedColor, setSelectedColor] = useState<Color>("PURPLE");
-  const [selectedSkinClass, setSelectedSkinClass] = useState<SkinClassValue>("ANY");
+  // Filtered & Sorted Skins for 4-Column Grid (Photo 3)
+  const displayedSkins = useMemo(() => {
+    let result = items;
 
-  // Community state
-  const [communityData, setCommunityData] = useState<Page<CommunityLoadout> | null>(null);
-  const [communityBusy, setCommunityBusy] = useState(false);
-
-  function toggleEquip(item: CSFloatItem, side: "CT" | "T") {
-    if (side === "CT") {
-      setEquippedCt((prev) => {
-        const exists = prev.some((i) => i.id === item.id);
-        if (exists) {
-          notify(`Removed ${item.marketHashName} from CT Loadout`);
-          return prev.filter((i) => i.id !== item.id);
-        } else {
-          notify(`Equipped ${item.marketHashName} to CT Loadout!`);
-          return [...prev, item];
-        }
-      });
-    } else {
-      setEquippedT((prev) => {
-        const exists = prev.some((i) => i.id === item.id);
-        if (exists) {
-          notify(`Removed ${item.marketHashName} from T Loadout`);
-          return prev.filter((i) => i.id !== item.id);
-        } else {
-          notify(`Equipped ${item.marketHashName} to T Loadout!`);
-          return [...prev, item];
-        }
-      });
-    }
-  }
-
-  function toggleFavorite(id: string) {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function toggleTier(tier: Wear) {
-    setSelectedTiers((prev) => {
-      const next = new Set(prev);
-      if (next.has(tier)) next.delete(tier);
-      else next.add(tier);
-      return next;
-    });
-  }
-
-  function copyInspect(item: CSFloatItem) {
-    const link =
-      item.inspectLink ||
-      `steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20S76561198000000000A${item.paintSeed}D${Math.floor(
-        item.floatValue * 1000000
-      )}`;
-    navigator.clipboard.writeText(link).then(
-      () => notify(`Copied CS2 inspect link for ${item.skinName}!`),
-      () => notify("Unable to access clipboard")
-    );
-  }
-
-  function scrollCarousel(direction: "left" | "right") {
-    if (!carouselScrollRef.current) return;
-    const offset = direction === "left" ? -350 : 350;
-    carouselScrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
-  }
-
-  function resetFilters() {
-    setSearchQuery("");
-    setPriceMin("");
-    setPriceMax("");
-    setSelectedTiers(new Set());
-    setFilterStatTrak(false);
-    setFilterSouvenir(false);
-    setFilterHighlight(false);
-    setFilterNormal(false);
-    setFilterSeed("");
-    setMinFade(80);
-    setSelectedSubWeapon("All");
-    notify("Market filters reset");
-  }
-
-  // Budget Generator Handler
-  async function handleGenerate(e: FormEvent) {
-    e.preventDefault();
-    setGeneratorBusy(true);
-    setGeneratorError("");
-    try {
-      await generateLoadout({
-        budgetUsd: budget,
-        themeColor: selectedColor,
-        preferredCtRifle: "weapon_m4a1_silencer",
-        includeKnifeAndGloves: true,
-        skinClass: selectedSkinClass !== "ANY" ? selectedSkinClass : undefined,
-      });
-      notify("Generated optimized CSFloat loadout!");
-    } catch (err) {
-      setGeneratorError(err instanceof Error ? err.message : "Loadout generation failed");
-    } finally {
-      setGeneratorBusy(false);
-    }
-  }
-
-  useEffect(() => {
-    if (viewTab !== "community") return;
-    setCommunityBusy(true);
-    getCommunity({ page: 0, size: 20 })
-      .then((data) => setCommunityData(data))
-      .catch(() => {})
-      .finally(() => setCommunityBusy(false));
-  }, [viewTab]);
-
-  // Filtered & Sorted CSFloat Items
-  const filteredItems = useMemo(() => {
-    return items
-      .filter((item) => {
-        // Search Query
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const matches =
-            item.marketHashName.toLowerCase().includes(q) ||
-            item.weaponName.toLowerCase().includes(q) ||
-            item.skinName.toLowerCase().includes(q);
-          if (!matches) return false;
-        }
-
-        // CSGOSKINS.GG Color Palette Filter
-        if (colorFilter !== "ALL") {
-          const itemColor = (item.primaryColor || "").toUpperCase();
-          if (itemColor !== colorFilter.toUpperCase()) return false;
-        }
-
-        // Mega Category Filter
-        if (activeMegaCategory) {
-          if (activeMegaCategory === "Rifles" && item.category !== "RIFLES") return false;
-          if (activeMegaCategory === "Pistols" && item.category !== "PISTOLS") return false;
-          if (activeMegaCategory === "Knives" && item.category !== "KNIVES") return false;
-          if (activeMegaCategory === "Gloves" && item.category !== "GLOVES") return false;
-          if (activeMegaCategory === "SMGs" && item.category !== "SMGS") return false;
-          if (activeMegaCategory === "Heavy" && item.category !== "HEAVY") return false;
-          if (activeMegaCategory === "Containers" && item.category !== "CASES") return false;
-          if (activeMegaCategory === "Music Kits" && item.category !== "MUSIC_KITS") return false;
-          if (activeMegaCategory === "Stickers" && (!item.stickers || item.stickers.length === 0)) return false;
-        }
-
-        // Sub-Weapon Filter
-        if (selectedSubWeapon !== "All") {
-          const wepClean = item.weaponName.replace(/[★™\s]/g, "").toLowerCase();
-          const targetClean = selectedSubWeapon.replace(/[★™\s]/g, "").toLowerCase();
-          if (!wepClean.includes(targetClean) && !targetClean.includes(wepClean)) {
-            return false;
-          }
-        }
-
-        // View Tabs
-        if (viewTab === "stickers" && (!item.stickers || item.stickers.length === 0)) {
-          return false;
-        }
-        if (viewTab === "unique") {
-          const isLowFloat = item.floatValue < 0.015;
-          const isRank1 = (item.patternRank ?? 99) <= 2;
-          const isRubyOrEmerald = item.skinName.includes("Ruby") || item.skinName.includes("Emerald");
-          if (!isLowFloat && !isRank1 && !isRubyOrEmerald) return false;
-        }
-
-        // Price Filter
-        if (priceMin !== "" && item.priceUsd < priceMin) return false;
-        if (priceMax !== "" && item.priceUsd > priceMax) return false;
-
-        // Wear Tiers
-        if (selectedTiers.size > 0 && !selectedTiers.has(item.wearTier)) return false;
-
-        // Specials
-        if (filterStatTrak && !item.isStatTrak) return false;
-        if (filterSouvenir && !item.isSouvenir) return false;
-        if (filterHighlight && item.discountPercent > -20) return false;
-        if (filterNormal && (item.isStatTrak || item.isSouvenir)) return false;
-
-        // Paint Seed
-        if (filterSeed.trim() && !String(item.paintSeed).includes(filterSeed.trim())) return false;
-
-        // Fade %
-        if (item.fadePercentage !== undefined && item.fadePercentage < minFade) return false;
-
-        return true;
-      })
-      .sort((a, b) => {
-        if (sortBy === "deals") return a.discountPercent - b.discountPercent;
-        if (sortBy === "lowest_float") return a.floatValue - b.floatValue;
-        if (sortBy === "lowest_price") return a.priceUsd - b.priceUsd;
-        if (sortBy === "highest_price") return b.priceUsd - a.priceUsd;
-        return 0;
-      });
-  }, [
-    items,
-    searchQuery,
-    selectedSubWeapon,
-    viewTab,
-    colorFilter,
-    activeMegaCategory,
-    priceMin,
-    priceMax,
-    selectedTiers,
-    filterStatTrak,
-    filterSouvenir,
-    filterHighlight,
-    filterNormal,
-    filterSeed,
-    minFade,
-    sortBy,
-  ]);
-
-  const totalCtValue = equippedCt.reduce((acc, i) => acc + i.priceUsd, 0);
-  const totalTValue = equippedT.reduce((acc, i) => acc + i.priceUsd, 0);
-
-  // Dynamic Carousel Items strictly matching selected weapon / category
-  const currentShowcaseItems = useMemo(() => {
+    // 1. Weapon or Category Filter
     if (selectedSubWeapon && selectedSubWeapon !== "All") {
-      const matched = items.filter(
-        (i) =>
-          i.weaponName.toLowerCase().includes(selectedSubWeapon.toLowerCase()) ||
-          i.marketHashName.toLowerCase().includes(selectedSubWeapon.toLowerCase())
-      );
-      if (matched.length > 0) {
-        return matched.slice(0, 12).map((i) => ({
-          id: i.id,
-          rawItem: i,
-          name: i.marketHashName,
-          weapon: i.weaponName,
-          price: i.priceUsd,
-          image: i.imageUrl,
-          rarityColor: getRarityGlowColor(i.rarity, i.category),
-        }));
-      }
-    }
-    if (activeMegaCategory) {
-      const catUpper = activeMegaCategory.toUpperCase();
-      const matched = items.filter((i) => {
-        if (catUpper === "KNIVES") return i.category === "KNIVES";
-        if (catUpper === "GLOVES") return i.category === "GLOVES";
-        if (catUpper === "RIFLES") return i.category === "RIFLES";
-        if (catUpper === "PISTOLS") return i.category === "PISTOLS";
-        if (catUpper === "SMGS") return i.category === "SMGS";
-        if (catUpper === "CONTAINERS" || catUpper === "CASES") return i.category === "CASES";
-        return true;
+      const wepClean = selectedSubWeapon.replace(/[★™\s]/g, "").toLowerCase();
+      result = result.filter((i) => {
+        const itemWep = i.weaponName.replace(/[★™\s]/g, "").toLowerCase();
+        const itemHash = i.marketHashName.replace(/[★™\s]/g, "").toLowerCase();
+        return itemWep === wepClean || itemWep.includes(wepClean) || itemHash.startsWith(wepClean);
       });
-      if (matched.length > 0) {
-        return matched.slice(0, 12).map((i) => ({
-          id: i.id,
-          rawItem: i,
-          name: i.marketHashName,
-          weapon: i.weaponName,
-          price: i.priceUsd,
-          image: i.imageUrl,
-          rarityColor: getRarityGlowColor(i.rarity, i.category),
-        }));
+    } else if (activeMegaCategory) {
+      const cat = activeMegaCategory.toLowerCase();
+      if (cat === "knives") result = result.filter((i) => i.category === "KNIVES");
+      else if (cat === "gloves") result = result.filter((i) => i.category === "GLOVES");
+      else if (cat === "rifles") result = result.filter((i) => i.category === "RIFLES");
+      else if (cat === "pistols") result = result.filter((i) => i.category === "PISTOLS");
+      else if (cat === "mid-tier" || cat === "smgs" || cat === "heavy") {
+        result = result.filter((i) => i.category === "SMGS" || i.category === "HEAVY");
+      } else if (cat === "cases" || cat === "containers") {
+        result = result.filter((i) => i.category === "CASES");
       }
     }
-    return [];
-  }, [selectedSubWeapon, activeMegaCategory, items]);
 
+    // 2. Search Query (within current view)
+    if (gridSearch.trim()) {
+      const q = gridSearch.trim().toLowerCase();
+      result = result.filter(
+        (i) =>
+          i.skinName.toLowerCase().includes(q) ||
+          i.weaponName.toLowerCase().includes(q) ||
+          i.marketHashName.toLowerCase().includes(q)
+      );
+    }
+
+    // 3. Advanced Search: Price Range
+    if (advancedParams.minPrice !== "" && advancedParams.minPrice !== undefined) {
+      const minP = Number(advancedParams.minPrice);
+      if (!isNaN(minP)) {
+        result = result.filter((i) => (i.minPrice ?? i.priceUsd) >= minP);
+      }
+    }
+    if (advancedParams.maxPrice !== "" && advancedParams.maxPrice !== undefined) {
+      const maxP = Number(advancedParams.maxPrice);
+      if (!isNaN(maxP)) {
+        result = result.filter((i) => (i.maxPrice ?? i.priceUsd) <= maxP);
+      }
+    }
+
+    // 4. Advanced Search: Color Filter
+    if (advancedParams.color && advancedParams.color !== "Any") {
+      const col = advancedParams.color.toUpperCase();
+      result = result.filter((i) => (i.primaryColor || "").toUpperCase() === col);
+    }
+
+    // 5. Advanced Search: Exterior / Wear Tier
+    if (advancedParams.exterior && advancedParams.exterior !== "Any") {
+      const codeMap: Record<string, Wear> = {
+        "Factory New": "FN",
+        "Minimal Wear": "MW",
+        "Field-Tested": "FT",
+        "Well-Worn": "WW",
+        "Battle-Scarred": "BS",
+      };
+      const targetWear = codeMap[advancedParams.exterior];
+      if (targetWear) {
+        result = result.filter(
+          (i) =>
+            i.wearTier === targetWear ||
+            (i.wearPrices && i.wearPrices.some((w) => w.wear === targetWear))
+        );
+      }
+    }
+
+    // 6. Advanced Search: Variant (StatTrak / Souvenir / Normal)
+    if (advancedParams.variant === "StatTrak") {
+      result = result.filter((i) => i.isStatTrak || i.statTrakMin !== undefined);
+    } else if (advancedParams.variant === "Souvenir") {
+      result = result.filter((i) => i.isSouvenir);
+    } else if (advancedParams.variant === "Normal") {
+      result = result.filter((i) => !i.isStatTrak && !i.isSouvenir);
+    }
+
+    // 7. Sorting
+    return [...result].sort((a, b) => {
+      if (gridSort === "price-asc") return (a.minPrice ?? a.priceUsd) - (b.minPrice ?? b.priceUsd);
+      if (gridSort === "price-desc") return (b.maxPrice ?? b.priceUsd) - (a.maxPrice ?? a.priceUsd);
+      if (gridSort === "name-asc") return a.skinName.localeCompare(b.skinName);
+
+      // Default Popularity sort (Covert first, then by offers)
+      const rarityRank = (r?: string) => {
+        const lr = (r || "").toLowerCase();
+        if (lr.includes("covert") || lr.includes("extraordinary")) return 10;
+        if (lr.includes("classified")) return 8;
+        if (lr.includes("restricted")) return 6;
+        if (lr.includes("mil-spec")) return 4;
+        if (lr.includes("industrial")) return 2;
+        return 1;
+      };
+      const rDiff = rarityRank(b.rarity) - rarityRank(a.rarity);
+      if (rDiff !== 0) return rDiff;
+      const countB = typeof b.offersCount === "number" ? b.offersCount : parseInt(b.offersCount || "0", 10) || 0;
+      const countA = typeof a.offersCount === "number" ? a.offersCount : parseInt(a.offersCount || "0", 10) || 0;
+      return countB - countA;
+    });
+  }, [items, selectedSubWeapon, activeMegaCategory, gridSearch, gridSort, advancedParams]);
+
+  // Current Sub-Weapons for Navigation Pills Bar
   const currentSubWeapons = activeMegaCategory ? SUB_WEAPONS[activeMegaCategory] || [] : [];
 
-  // CSGOSKINS.GG Hero Information
+  // Hero Section Dynamic Information
   const activeHeroTitle =
     selectedSubWeapon !== "All"
       ? `${selectedSubWeapon} Skins`
@@ -619,17 +314,27 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
 
   const activeHeroThumbnail =
     (selectedSubWeapon !== "All" ? getWeaponIconUrl(selectedSubWeapon) : null) ||
-    getWeaponIconUrl(activeMegaCategory === "Knives" ? "Karambit" : activeMegaCategory === "Gloves" ? "Sport Gloves" : activeMegaCategory === "Rifles" ? "AK-47" : activeMegaCategory === "Pistols" ? "USP-S" : (activeMegaCategory || "AK-47")) ||
-    (filteredItems.length > 0
-      ? filteredItems[0].imageUrl
+    getWeaponIconUrl(
+      activeMegaCategory === "Knives"
+        ? "Karambit"
+        : activeMegaCategory === "Gloves"
+        ? "Sport Gloves"
+        : activeMegaCategory === "Rifles"
+        ? "AK-47"
+        : activeMegaCategory === "Pistols"
+        ? "USP-S"
+        : activeMegaCategory || "AK-47"
+    ) ||
+    (displayedSkins.length > 0
+      ? displayedSkins[0].imageUrl
       : "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8ypexwiFCzvfqffVsKfyFCEvFkeB-j7I3Xjeyxh5z52CGnNv4J3yRb1AnC8N5FO5U5kK6wI_sMrjX713XjN4SxC2vi35K4yq1t09e8H8D");
 
   return (
     <div className="csf-page">
-      {/* 1. CLUTCH LABS ARSENAL HEADER NAV */}
+      {/* 1. CLUTCH LABS ARSENAL TOP NAVIGATION BAR */}
       <CSGOSkinsHeaderNav
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        searchQuery={gridSearch}
+        onSearchChange={setGridSearch}
         onSelectWeapon={handleSelectWeapon}
         activeCategory={activeMegaCategory}
         activeWeapon={selectedSubWeapon}
@@ -649,7 +354,7 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
               onError={(e) => {
                 e.currentTarget.onerror = null;
                 e.currentTarget.src = getWeaponSilhouetteSvg(
-                  selectedSubWeapon !== "All" ? selectedSubWeapon : (activeMegaCategory || "Knives")
+                  selectedSubWeapon !== "All" ? selectedSubWeapon : activeMegaCategory || "AK-47"
                 );
               }}
             />
@@ -671,877 +376,192 @@ export default function LoadoutPage({ budget, setBudget, notify }: Props) {
         </div>
       </section>
 
-      {/* Sub-Weapon Pills Drawer & Showcase Carousel */}
-      {activeMegaCategory && (
-        <section className="csf-showcase-drawer">
-          {currentSubWeapons.length > 0 && (
-            <div className="csf-subweapon-pills">
-              {currentSubWeapons.map((wep) => (
+      {/* 3. MAIN CATALOG & WEAPON GRID CONTAINER */}
+      <div className="csgoskins-weapon-page-container">
+        {/* Sub-Weapon Pills Bar (e.g. All, MAC-10, MP5-SD, MP7...) */}
+        {currentSubWeapons.length > 0 && (
+          <div className="csf-subweapon-pills-bar">
+            {currentSubWeapons.map((wep) => {
+              const isActive =
+                selectedSubWeapon === wep || (wep === "All" && selectedSubWeapon === "All");
+              return (
                 <button
                   key={wep}
                   type="button"
-                  className={`csf-subweapon-pill ${selectedSubWeapon === wep ? "active" : ""}`}
-                  onClick={() => handleSelectWeapon(activeMegaCategory, wep)}
+                  className={`csf-subweapon-pill ${isActive ? "active" : ""}`}
+                  onClick={() => handleSelectWeapon(activeMegaCategory || "Rifles", wep)}
                 >
                   {wep}
                 </button>
-              ))}
-            </div>
-          )}
-
-          {/* Horizontal Showcase Carousel */}
-          {currentShowcaseItems.length > 0 && (
-            <div className="csf-carousel-wrapper">
-              <button
-                type="button"
-                className="csf-carousel-nav-btn left"
-                onClick={() => scrollCarousel("left")}
-                aria-label="Scroll left"
-              >
-                ‹
-              </button>
-
-              <div className="csf-carousel-scroll" ref={carouselScrollRef}>
-                {/* First Card: Category / View All */}
-                <div
-                  className="csf-showcase-card csf-showcase-viewall"
-                  onClick={() => handleSelectWeapon(activeMegaCategory, "All")}
-                >
-                  <div className="csf-showcase-header">
-                    <h5 className="csf-showcase-title">{activeMegaCategory}</h5>
-                    <span className="csf-showcase-price">View All Listings</span>
-                  </div>
-                  <div className="csf-showcase-img-stage">
-                    <img
-                      src={
-                        (selectedSubWeapon !== "All" ? getWeaponIconUrl(selectedSubWeapon) : null) ||
-                        getWeaponIconUrl(activeMegaCategory === "Knives" ? "Karambit" : activeMegaCategory === "Gloves" ? "Sport Gloves" : activeMegaCategory === "Rifles" ? "AK-47" : activeMegaCategory === "Pistols" ? "USP-S" : (activeMegaCategory || "AK-47")) ||
-                        currentShowcaseItems[0]?.image ||
-                        getWeaponSilhouetteSvg(selectedSubWeapon !== "All" ? selectedSubWeapon : (activeMegaCategory || "Knives"))
-                      }
-                      alt="View All"
-                      className="csf-showcase-img"
-                      style={{ opacity: 0.95 }}
-                    />
-                  </div>
-                  <span style={{ fontSize: 10, color: "#bef264", fontWeight: 800 }}>EXPLORE →</span>
-                </div>
-
-                {/* Showcase Cards */}
-                {currentShowcaseItems.map((sc, scIdx) => {
-                  const matchingItem =
-                    sc.rawItem ||
-                    items.find((i) => i.skinName.toLowerCase().includes(sc.name.split("|")[1]?.trim().toLowerCase() || "")) ||
-                    items[0];
-
-                  return (
-                    <div
-                      key={scIdx}
-                      className="csf-showcase-card"
-                      onClick={() => setSelectedSkin(matchingItem)}
-                      title={`Select ${sc.name} to view details & market offers`}
-                    >
-                      <div className="csf-showcase-header">
-                        <h5 className="csf-showcase-title" title={sc.name}>
-                          {sc.name.split("|")[1]?.trim() || sc.name}
-                        </h5>
-                        <span className="csf-showcase-price">from {money(sc.price)}</span>
-                      </div>
-
-                      <div className="csf-showcase-img-stage">
-                        <img
-                          src={sc.image}
-                          alt={sc.name}
-                          className="csf-showcase-img"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = getWeaponSilhouetteSvg(sc.weapon);
-                          }}
-                          loading="eager"
-                        />
-                      </div>
-
-                      {/* 🧊 3D Button in bottom-right corner */}
-                      <button
-                        type="button"
-                        className="csf-showcase-3d-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setInspect3DItem(matchingItem);
-                        }}
-                        title="Open Interactive 3D Inspector"
-                      >
-                        🧊 3D
-                      </button>
-
-                      {/* Bottom Rarity Glow Accent */}
-                      <div
-                        className="csf-showcase-glow"
-                        style={{
-                          backgroundColor: sc.rarityColor,
-                          boxShadow: `0 0 10px ${sc.rarityColor}`,
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-
-              <button
-                type="button"
-                className="csf-carousel-nav-btn right"
-                onClick={() => scrollCarousel("right")}
-                aria-label="Scroll right"
-              >
-                ›
-              </button>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* 3. CHOSEN SKIN DETAIL OVERVIEW (PHOTO 5: "and below of that page have information about skin that is chosen like 5th photo") */}
-      {selectedSkin && (
-        <div id="chosen-skin-overview">
-          <SkinDetailOverview
-            skin={selectedSkin}
-            currency={currency}
-            notify={notify}
-            onOpen3DModal={(s) => setInspect3DItem(s)}
-            onSelectSkin={(s) => setSelectedSkin(s)}
-            allSkins={items}
-          />
-        </div>
-      )}
-
-      {/* 4. TOP TOOLBAR & CATALOG */}
-      <header className="csf-toolbar">
-        <div className="csf-toolbar-left">
-          <button
-            type="button"
-            className="csf-sidebar-toggle-btn"
-            onClick={() => setSidebarOpen((v) => !v)}
-            title="Toggle Left Sidebar Filters"
-          >
-            <span>Filters</span>
-            <span style={{ fontSize: 13 }}>☰</span>
-          </button>
-
-          <button
-            type="button"
-            className="csf-refresh-btn"
-            onClick={() => {
-              setItems([...csfloatCatalogData]);
-              notify("Market listings refreshed");
-            }}
-            title="Refresh active listings"
-          >
-            <span>↻ Refresh</span>
-          </button>
-
-          {/* View Tabs */}
-          <div className="csf-view-tabs" role="tablist">
-            <button
-              type="button"
-              className={`csf-tab-btn ${viewTab === "all" ? "active" : ""}`}
-              onClick={() => setViewTab("all")}
-            >
-              All Items
-            </button>
-            <button
-              type="button"
-              className={`csf-tab-btn ${viewTab === "stickers" ? "active" : ""}`}
-              onClick={() => setViewTab("stickers")}
-            >
-              Sticker Combos
-            </button>
-            <button
-              type="button"
-              className={`csf-tab-btn ${viewTab === "unique" ? "active" : ""}`}
-              onClick={() => setViewTab("unique")}
-            >
-              Unique Items
-            </button>
-            <button
-              type="button"
-              className={`csf-tab-btn ${viewTab === "matrix" ? "active" : ""}`}
-              onClick={() => setViewTab("matrix")}
-            >
-              CT / T Loadout Matrix
-            </button>
-            <button
-              type="button"
-              className={`csf-tab-btn ${viewTab === "community" ? "active" : ""}`}
-              onClick={() => setViewTab("community")}
-            >
-              Community Builds
-            </button>
+              );
+            })}
           </div>
-        </div>
-
-        <div className="csf-toolbar-right">
-          {/* CSGOSKINS.GG Multi-Currency Switcher */}
-          <div className="csf-currency-switcher" title="CSGOSKINS.GG Currency Converter">
-            {(["USD", "EUR", "GBP", "CNY", "CAD", "AUD"] as CurrencyCode[]).map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={`csf-curr-btn ${currency === c ? "active" : ""}`}
-                onClick={() => setCurrency(c)}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-
-          <div className="csf-items-count-badge">
-            <strong>{filteredItems.length}</strong> Listings
-          </div>
-
-          <select
-            className="csf-sort-select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            aria-label="Sort listings"
-          >
-            <option value="deals">Best Deals</option>
-            <option value="lowest_float">Lowest Float</option>
-            <option value="lowest_price">Lowest Price</option>
-            <option value="highest_price">Highest Price</option>
-          </select>
-        </div>
-      </header>
-
-      {/* 4. CT / T LOADOUT SUMMARY DRAWER BAR */}
-      <div className="csf-loadout-drawer-bar">
-        <div className="csf-side-badge-group">
-          <div className="csf-side-indicator">
-            <span className="csf-side-pill-badge ct">CT LOADOUT</span>
-            <strong>{money(totalCtValue)}</strong>
-            <span style={{ color: "#9ca3af", fontSize: 10 }}>({equippedCt.length} items)</span>
-          </div>
-          <div className="csf-side-indicator">
-            <span className="csf-side-pill-badge t">T LOADOUT</span>
-            <strong>{money(totalTValue)}</strong>
-            <span style={{ color: "#9ca3af", fontSize: 10 }}>({equippedT.length} items)</span>
-          </div>
-        </div>
-        {(equippedCt.length > 0 || equippedT.length > 0) && (
-          <button
-            type="button"
-            className="csf-quick-equip-btn"
-            onClick={() => {
-              setEquippedCt([]);
-              setEquippedT([]);
-              notify("Cleared equipped loadouts");
-            }}
-          >
-            Clear Loadouts
-          </button>
         )}
-      </div>
 
-      {/* 5. MAIN MARKET LAYOUT (SIDEBAR + CARDS GRID) */}
-      {viewTab !== "matrix" && viewTab !== "community" && (
-        <div className="csf-market-layout">
-          {/* Left Sidebar (260px) */}
-          {sidebarOpen && (
-            <aside className="csf-sidebar">
-              <div className="csf-search-box">
+        {/* 4-Column Responsive Skins Grid matching Photo 3 */}
+        <section className="csgoskins-grid-section">
+          {/* Grid Toolbar: Finishes count on left, search & sort on right */}
+          <div className="csgoskins-grid-toolbar">
+            <div className="csgoskins-grid-count">
+              Showing{" "}
+              <strong>{displayedSkins.length}</strong>{" "}
+              {selectedSubWeapon !== "All" ? selectedSubWeapon : activeMegaCategory} finishes
+            </div>
+            <div className="csgoskins-grid-toolbar-right">
+              <div className="csgoskins-grid-search">
+                <span style={{ fontSize: 13, color: "#64748b" }}>🔍</span>
                 <input
                   type="text"
-                  className="csf-search-input"
-                  placeholder="Search for items..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  aria-label="Search items"
+                  placeholder={`Search in ${selectedSubWeapon !== "All" ? selectedSubWeapon : activeMegaCategory}...`}
+                  value={gridSearch}
+                  onChange={(e) => setGridSearch(e.target.value)}
+                  className="csgoskins-grid-search-input"
                 />
-                <span className="csf-search-badge">/</span>
-              </div>
-
-              {/* Price Section */}
-              <div className="csf-filter-section">
-                <button
-                  type="button"
-                  className="csf-section-header"
-                  onClick={() =>
-                    setOpenSections((prev) => ({ ...prev, price: !prev.price }))
-                  }
-                >
-                  <span>Price</span>
-                  <span className={`csf-chevron ${openSections.price ? "open" : ""}`}>▼</span>
-                </button>
-                {openSections.price && (
-                  <>
-                    <div className="csf-price-chips">
-                      <button
-                        type="button"
-                        className={`csf-price-chip ${priceMax === 10 ? "active" : ""}`}
-                        onClick={() => {
-                          setPriceMin(0);
-                          setPriceMax(10);
-                        }}
-                      >
-                        &lt;$10
-                      </button>
-                      <button
-                        type="button"
-                        className={`csf-price-chip ${priceMin === 10 && priceMax === 50 ? "active" : ""}`}
-                        onClick={() => {
-                          setPriceMin(10);
-                          setPriceMax(50);
-                        }}
-                      >
-                        $10 - $50
-                      </button>
-                      <button
-                        type="button"
-                        className={`csf-price-chip ${priceMin === 50 && priceMax === 250 ? "active" : ""}`}
-                        onClick={() => {
-                          setPriceMin(50);
-                          setPriceMax(250);
-                        }}
-                      >
-                        $50 - $250
-                      </button>
-                      <button
-                        type="button"
-                        className={`csf-price-chip ${priceMin === 250 && priceMax === "" ? "active" : ""}`}
-                        onClick={() => {
-                          setPriceMin(250);
-                          setPriceMax("");
-                        }}
-                      >
-                        &gt;$250
-                      </button>
-                    </div>
-                    <div className="csf-minmax-row">
-                      <input
-                        type="number"
-                        className="csf-minmax-input"
-                        placeholder="From $0"
-                        value={priceMin}
-                        onChange={(e) =>
-                          setPriceMin(e.target.value ? Number(e.target.value) : "")
-                        }
-                      />
-                      <span style={{ color: "#6b7280" }}>–</span>
-                      <input
-                        type="number"
-                        className="csf-minmax-input"
-                        placeholder="To $∞"
-                        value={priceMax}
-                        onChange={(e) =>
-                          setPriceMax(e.target.value ? Number(e.target.value) : "")
-                        }
-                      />
-                    </div>
-                  </>
+                {gridSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setGridSearch("")}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#94a3b8",
+                      cursor: "pointer",
+                      fontSize: 12,
+                    }}
+                  >
+                    ✕
+                  </button>
                 )}
               </div>
-
-              {/* Wear Section */}
-              <div className="csf-filter-section">
-                <button
-                  type="button"
-                  className="csf-section-header"
-                  onClick={() =>
-                    setOpenSections((prev) => ({ ...prev, wear: !prev.wear }))
-                  }
-                >
-                  <span>Wear</span>
-                  <span className={`csf-chevron ${openSections.wear ? "open" : ""}`}>▼</span>
-                </button>
-                {openSections.wear && (
-                  <>
-                    <div className="csf-wear-filter-bar">
-                      {SPECTRUM_SEGMENTS.map((s) => (
-                        <div
-                          key={s.wear}
-                          style={{ width: s.width, backgroundColor: s.color }}
-                          title={`${s.wear}: ${s.label}`}
-                        />
-                      ))}
-                    </div>
-                    <div className="csf-wear-btn-group">
-                      {(["FN", "MW", "FT", "WW", "BS"] as Wear[]).map((tier) => (
-                        <button
-                          key={tier}
-                          type="button"
-                          className={`csf-wear-tier-btn ${selectedTiers.has(tier) ? "active" : ""}`}
-                          onClick={() => toggleTier(tier)}
-                        >
-                          {tier}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Special Section */}
-              <div className="csf-filter-section">
-                <button
-                  type="button"
-                  className="csf-section-header"
-                  onClick={() =>
-                    setOpenSections((prev) => ({ ...prev, special: !prev.special }))
-                  }
-                >
-                  <span>Special</span>
-                  <span className={`csf-chevron ${openSections.special ? "open" : ""}`}>▼</span>
-                </button>
-                {openSections.special && (
-                  <div className="csf-checkbox-grid">
-                    <label className="csf-checkbox-item stattrak">
-                      <input
-                        type="checkbox"
-                        checked={filterStatTrak}
-                        onChange={(e) => setFilterStatTrak(e.target.checked)}
-                      />
-                      <span>StatTrak™</span>
-                    </label>
-                    <label className="csf-checkbox-item souvenir">
-                      <input
-                        type="checkbox"
-                        checked={filterSouvenir}
-                        onChange={(e) => setFilterSouvenir(e.target.checked)}
-                      />
-                      <span>Souvenir</span>
-                    </label>
-                    <label className="csf-checkbox-item highlight">
-                      <input
-                        type="checkbox"
-                        checked={filterHighlight}
-                        onChange={(e) => setFilterHighlight(e.target.checked)}
-                      />
-                      <span>Highlight</span>
-                    </label>
-                    <label className="csf-checkbox-item">
-                      <input
-                        type="checkbox"
-                        checked={filterNormal}
-                        onChange={(e) => setFilterNormal(e.target.checked)}
-                      />
-                      <span>Normal</span>
-                    </label>
-                  </div>
-                )}
-              </div>
-
-              {/* Patterns Section */}
-              <div className="csf-filter-section">
-                <button
-                  type="button"
-                  className="csf-section-header"
-                  onClick={() =>
-                    setOpenSections((prev) => ({ ...prev, patterns: !prev.patterns }))
-                  }
-                >
-                  <span>Patterns</span>
-                  <span className={`csf-chevron ${openSections.patterns ? "open" : ""}`}>▼</span>
-                </button>
-                {openSections.patterns && (
-                  <>
-                    <input
-                      type="text"
-                      className="csf-pattern-input"
-                      placeholder="Paint Seed (e.g. 445)"
-                      value={filterSeed}
-                      onChange={(e) => setFilterSeed(e.target.value)}
-                    />
-                    <div className="csf-slider-row">
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span>Minimum Fade %</span>
-                        <strong>{minFade}%</strong>
-                      </div>
-                      <input
-                        type="range"
-                        min="80"
-                        max="100"
-                        step="0.5"
-                        className="csf-range-slider"
-                        value={minFade}
-                        onChange={(e) => setMinFade(Number(e.target.value))}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <button
-                type="button"
-                className="csf-price-chip"
-                style={{ marginTop: 8 }}
-                onClick={resetFilters}
-              >
-                Reset All Filters
-              </button>
-            </aside>
-          )}
-
-          {/* Right Market Stage */}
-          <main className="csf-market-content">
-            {/* Color Palette Bar */}
-            <div className="csgoskins-color-palette-bar">
-              <span className="csgoskins-palette-label">🎨 COLOR PALETTES:</span>
-              {CSGOSKINS_PALETTES.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`csgoskins-color-pill ${colorFilter === c.id ? "active" : ""}`}
-                  onClick={() => setColorFilter(c.id)}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-
-            {filteredItems.length === 0 ? (
-              <div className="csf-empty-state">
-                <h3>No items match your active filters</h3>
-                <p>Try adjusting your search query, price range, or wear filters.</p>
-                <button
-                  type="button"
-                  className="csf-sidebar-toggle-btn"
-                  onClick={resetFilters}
-                >
-                  Clear All Filters
-                </button>
-              </div>
-            ) : (
-              <div className="csf-cards-grid">
-                {filteredItems.map((item, idx) => {
-                  const rarityGlow = getRarityGlowColor(item.rarity, item.category);
-                  const isFav = favorites.has(item.id);
-                  const isEquippedCtItem = equippedCt.some((i) => i.id === item.id);
-                  const isEquippedTItem = equippedT.some((i) => i.id === item.id);
-                  const needlePosition = Math.min(100, Math.max(0, item.floatValue * 100));
-
-                  const basePrice = item.priceUsd;
-                  const minPrice = item.wearPrices ? Math.min(...item.wearPrices.map((w) => w.price)) : basePrice * 0.85;
-                  const maxPrice = item.wearPrices ? Math.max(...item.wearPrices.map((w) => w.price * 1.45)) : basePrice * 1.55;
-                  const cleanSkinTitle = item.skinName.replace(/\s*\([^)]*\)\s*$/, "");
-                  const containerLabel = item.collectionName?.replace(" Collection", " Case") || "Glove Case +1";
-                  const offersCount = `${Math.floor((item.paintSeed % 20) + 5)}K`;
-                  const marketsCount = "34";
-
-                  return (
-                    <article
-                      key={item.id}
-                      className="csf-item-card csgoskins-card-item"
-                      onClick={() => setSelectedSkin(item)}
-                      title={`Select ${item.marketHashName} to view full market offers & wear details`}
-                    >
-                      {/* CSGOSKINS.GG Top Header matching Screenshot 1 */}
-                      <h4 className="csgoskins-card-top-title" title={item.skinName || item.marketHashName}>
-                        {cleanSkinTitle}
-                      </h4>
-                      <span
-                        className="csgoskins-card-rarity-badge"
-                        style={{
-                          backgroundColor: rarityGlow,
-                          boxShadow: `0 0 10px ${rarityGlow}88`,
-                        }}
-                      >
-                        {item.rarity} {item.category.replace(/S$/, "")}
-                      </span>
-
-                      {/* Image Stage */}
-                      <div className="csgoskins-card-img-stage csf-card-stage">
-                        {item.fadePercentage !== undefined && (
-                          <div className="csf-fade-badge">
-                            {item.fadePercentage}% Fade
-                          </div>
-                        )}
-
-                        {/* Top-Right Quick Stage Actions */}
-                        <div className="csf-stage-actions" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            className="csf-stage-icon-btn"
-                            onClick={() => copyInspect(item)}
-                            title="Copy CS2 Inspect Link"
-                          >
-                            📋
-                          </button>
-                          <button
-                            type="button"
-                            className="csf-stage-icon-btn"
-                            onClick={() => {
-                              const inspectUrl =
-                                item.inspectLink ||
-                                `steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20S76561198000000000A${item.paintSeed}D0`;
-                              navigator.clipboard.writeText(inspectUrl).catch(() => {});
-                              window.location.href = inspectUrl;
-                              notify(`Launching CS2 inspect for ${item.skinName}...`);
-                            }}
-                            title="Inspect in CS2 Game"
-                          >
-                            🎮
-                          </button>
-                          <button
-                            type="button"
-                            className="csf-stage-icon-btn"
-                            onClick={() => setInspect3DItem(item)}
-                            title="Open 3D Inspector Modal"
-                          >
-                            🧊
-                          </button>
-                        </div>
-
-                        {/* Main Skin PNG */}
-                        <img
-                          src={item.imageUrl}
-                          alt={item.skinName}
-                          className="csf-card-img"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = getWeaponSilhouetteSvg(item.weaponName);
-                          }}
-                          loading={idx < 12 ? "eager" : "lazy"}
-                        />
-
-                        {/* Bottom-Left Applied Sticker Icons */}
-                        {item.stickers && item.stickers.length > 0 && (
-                          <div className="csf-applied-stickers">
-                            {item.stickers.map((st, sIdx) => (
-                              <img
-                                key={sIdx}
-                                src={st.imageUrl}
-                                alt={st.name}
-                                title={st.name}
-                                className="csf-mini-sticker"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                }}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* CSGOSKINS.GG Price Range matching Screenshot 1 */}
-                      <div className="csgoskins-card-price-range csf-price-val">
-                        {money(minPrice)} - {money(maxPrice)}
-                      </div>
-
-                      {/* Container Source */}
-                      <div className="csgoskins-card-container-row">
-                        <span>📦</span>
-                        <span>{containerLabel}</span>
-                      </div>
-
-                      {/* Market Best Pill & Compare Button */}
-                      <div className="csf-card-market-meta" onClick={(e) => e.stopPropagation()}>
-                        <span
-                          className="csf-market-best-pill"
-                          title="Lowest verified offer across CSFloat, BUFF163, Skinport, DMarket"
-                        >
-                          🏷️ from {money(item.priceUsd * 0.96)} (CSFloat)
-                        </span>
-                        <button
-                          type="button"
-                          className="csf-compare-markets-btn"
-                          onClick={() => setInspect3DItem(item)}
-                          title="Open 7-Market Comparison & 3D Inspector"
-                        >
-                          Compare ↗
-                        </button>
-                      </div>
-
-                      {/* CSGOSKINS.GG Analytics Footer matching Screenshot 1 */}
-                      <div className="csgoskins-card-analytics-footer">
-                        <span>
-                          {offersCount} OFFERS · {marketsCount} MARKETS
-                        </span>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </main>
-        </div>
-      )}
-
-      {/* 6. CT / T LOADOUT MATRIX VIEW */}
-      {viewTab === "matrix" && (
-        <section className="csf-matrix-layout" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <form
-            onSubmit={handleGenerate}
-            style={{
-              background: "var(--csf-card-bg)",
-              padding: 16,
-              borderRadius: 8,
-              border: "1px solid var(--csf-border)",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 12,
-              alignItems: "flex-end",
-            }}
-          >
-            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 10, color: "#9ca3af" }}>
-              <span>BUDGET (USD)</span>
-              <input
-                type="number"
-                min="10"
-                max="50000"
-                value={budget}
-                onChange={(e) => setBudget(Number(e.target.value))}
-                className="csf-minmax-input"
-                style={{ width: 140 }}
-              />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 10, color: "#9ca3af" }}>
-              <span>THEME COLOR</span>
               <select
-                value={selectedColor}
-                onChange={(e) => setSelectedColor(e.target.value as Color)}
-                className="csf-sort-select"
+                className="csgoskins-grid-sort-select"
+                value={gridSort}
+                onChange={(e) => setGridSort(e.target.value)}
               >
-                {(["PURPLE", "BLUE", "RED", "GREEN", "GOLD", "WHITE"] as Color[]).map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+                <option value="popularity">Sort: Popularity</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="name-asc">Alphabetical: A-Z</option>
               </select>
-            </label>
-            <button
-              type="submit"
-              disabled={generatorBusy}
-              className="csf-tab-btn active"
-              style={{ padding: "8px 18px", fontSize: 12 }}
-            >
-              {generatorBusy ? "GENERATING..." : "⚡ GENERATE CSFLOAT MATRIX"}
-            </button>
-          </form>
+            </div>
+          </div>
 
-          {generatorError && <p style={{ color: "#ef4444" }}>{generatorError}</p>}
-
-          <div className="csf-matrix-grid">
-            {(["PISTOLS", "SMGS & HEAVY", "RIFLES", "KNIVES & GLOVES"] as const).map((col) => {
-              const colItems = items.filter((i) => {
-                if (col === "PISTOLS") return i.category === "PISTOLS";
-                if (col === "SMGS & HEAVY") return i.category === "SMGS" || i.category === "HEAVY";
-                if (col === "RIFLES") return i.category === "RIFLES";
-                return i.category === "KNIVES" || i.category === "GLOVES";
-              });
+          {/* Responsive 4-Column Grid */}
+          <div className="csgoskins-catalog-grid">
+            {displayedSkins.map((item) => {
+              const isSelected = selectedSkin?.id === item.id;
+              const rarityColor = getRarityGlowColor(item.rarity, item.category);
+              const rarityLabel = getRarityLabel(item);
+              const hasStatTrak = item.statTrakMin !== undefined || item.isStatTrak;
+              const hasSouvenir = item.isSouvenir;
+              const priceRangeStr = formatPriceRange(
+                item.minPrice ?? item.priceUsd,
+                item.maxPrice ?? item.priceUsd,
+                currency
+              );
+              const statTrakRangeStr = hasStatTrak
+                ? formatPriceRange(
+                    item.statTrakMin ?? Math.round((item.minPrice ?? item.priceUsd) * 1.6),
+                    item.statTrakMax ?? Math.round((item.maxPrice ?? item.priceUsd) * 2.2),
+                    currency
+                  )
+                : null;
+              const containerName = item.collectionName || "The CS2 Armory & Major Cases";
 
               return (
-                <div key={col} className="csf-matrix-column">
-                  <div className="csf-col-header">{col} ({colItems.length})</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {colItems.slice(0, 5).map((item) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          background: "#0e1115",
-                          padding: 8,
-                          borderRadius: 6,
-                          border: "1px solid #1f2730",
-                        }}
-                      >
-                        <img
-                          src={item.imageUrl}
-                          alt={item.skinName}
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = getWeaponSilhouetteSvg(item.weaponName);
-                          }}
-                          style={{ width: 48, height: 36, objectFit: "contain" }}
-                        />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <strong style={{ fontSize: 11, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {item.skinName}
-                          </strong>
-                          <span style={{ fontSize: 9, color: "#9ca3af" }}>{item.weaponName} · {money(item.priceUsd)}</span>
-                        </div>
-                        <button
-                          type="button"
-                          className="csf-quick-equip-btn"
-                          onClick={() => toggleEquip(item, "CT")}
-                        >
-                          + CT
-                        </button>
-                      </div>
-                    ))}
+                <article
+                  key={item.id}
+                  className={`csgoskins-card-item ${isSelected ? "selected-active" : ""}`}
+                  onClick={() => {
+                    setSelectedSkin(item);
+                    const el = document.getElementById("chosen-skin-overview");
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  title={`Click to view ${item.weaponName} | ${item.skinName} live details & active offers`}
+                >
+                  <h3 className="csgoskins-card-top-title">{item.skinName}</h3>
+                  <div
+                    className="csgoskins-card-rarity-bar"
+                    style={{ backgroundColor: rarityColor }}
+                  >
+                    {rarityLabel}
                   </div>
-                </div>
+
+                  <div className="csgoskins-card-badge-row">
+                    {hasStatTrak && (
+                      <span className="csgoskins-card-badge-stattrak">StatTrak</span>
+                    )}
+                    {hasSouvenir && (
+                      <span className="csgoskins-card-badge-souvenir">Souvenir</span>
+                    )}
+                  </div>
+
+                  <div className="csgoskins-card-img-stage">
+                    <img
+                      src={item.imageUrl}
+                      alt={`${item.weaponName} | ${item.skinName}`}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = getWeaponSilhouetteSvg(item.weaponName);
+                      }}
+                    />
+                  </div>
+
+                  <div className="csgoskins-card-price-block">
+                    <div className="csgoskins-card-price-range">{priceRangeStr}</div>
+                    {hasStatTrak && (
+                      <div className="csgoskins-card-stattrak-price">{statTrakRangeStr}</div>
+                    )}
+                  </div>
+
+                  <div className="csgoskins-card-container-row">
+                    <span style={{ fontSize: 13 }}>📦</span>
+                    <span className="csgoskins-card-container-text">{containerName}</span>
+                  </div>
+
+                  <div className="csgoskins-card-analytics-footer">
+                    <span>{item.offersCount || "14K OFFERS · 35 MARKETS"}</span>
+                  </div>
+                </article>
               );
             })}
           </div>
         </section>
-      )}
 
-      {/* 7. COMMUNITY BUILDS VIEW */}
-      {viewTab === "community" && (
-        <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {communityBusy && <p style={{ color: "#9ca3af" }}>Loading community crafts...</p>}
-          {communityData && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
-              {communityData.content.map((cb) => (
-                <article
-                  key={cb.id}
-                  style={{
-                    background: "var(--csf-card-bg)",
-                    border: "1px solid var(--csf-border)",
-                    borderRadius: 8,
-                    padding: 14,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8,
-                  }}
-                >
-                  <strong style={{ fontSize: 14 }}>{cb.title}</strong>
-                  <span style={{ fontSize: 11, color: "#9ca3af" }}>
-                    Author: {cb.author?.username || "Community Operator"} · Budget: {money(cb.budgetLimitUsd)}
-                  </span>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-                    <span style={{ color: "#eab308", fontSize: 11 }}>★ {cb.upvotes} upvotes</span>
-                    <button
-                      type="button"
-                      className="csf-tab-btn active"
-                      style={{ padding: "4px 10px", fontSize: 10 }}
-                      onClick={() => {
-                        if (!token) {
-                          notify("Sign in to upvote this loadout");
-                          return;
-                        }
-                        toggleUpvote(cb.id, token)
-                          .then((res) => notify(`Upvoted! Total: ${res.upvotes}`))
-                          .catch((err) => notify(err instanceof Error ? err.message : "Upvote failed"));
-                      }}
-                    >
-                      ▲ Upvote
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+        {/* 4. CHOSEN SKIN DETAIL OVERVIEW (PHOTO 5: 3D INSPECT, WEAR SPECTRUM TABLE & ACTIVE OFFERS) */}
+        {selectedSkin && (
+          <div id="chosen-skin-overview">
+            <SkinDetailOverview
+              skin={selectedSkin}
+              currency={currency}
+              notify={notify}
+              onOpen3DModal={(s) => setInspect3DItem(s)}
+              onSelectSkin={(s) => setSelectedSkin(s)}
+              allSkins={items}
+            />
+          </div>
+        )}
+      </div>
 
-      {/* 8. INTERACTIVE CSGOSKINS.GG MARKET COMPARISON & 3D INSPECTOR MODAL */}
+      {/* 5. INTERACTIVE CSGOSKINS.GG MARKET COMPARISON & 3D INSPECTOR MODAL */}
       {inspect3DItem && (
         <CSGOSkinsModal
           item={inspect3DItem}
           currency={currency}
           onClose={() => setInspect3DItem(null)}
           notify={notify}
-          onEquip={(side) => toggleEquip(inspect3DItem, side)}
+          onEquip={(side) => notify(`Equipped ${inspect3DItem.marketHashName} to ${side} Loadout`)}
         />
       )}
 
-      {/* 9. ADVANCED SEARCH FILTER MODAL (CSGOSKINS.GG 1:1) */}
+      {/* 6. ADVANCED SEARCH FILTER MODAL (CSGOSKINS.GG 1:1) */}
       <AdvancedSearchModal
         isOpen={isAdvancedSearchOpen}
         onClose={() => setIsAdvancedSearchOpen(false)}
-        onApply={handleApplyAdvancedSearch}
         currentParams={advancedParams}
         currency={currency}
+        onApply={handleApplyAdvancedSearch}
       />
     </div>
   );

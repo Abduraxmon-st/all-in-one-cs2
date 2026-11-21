@@ -1,0 +1,278 @@
+
+/* =========================================================
+   CSGOSKINS.GG 1:1 WEAPON SKINS GRID SUITE (PHOTO 3 ALIGNMENT)
+   ========================================================= */
+
+.csgoskins-weapon-page-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 24px 60px;
+}
+
+.csf-subweapon-pills-bar {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  padding: 14px 0 20px;
+  gap: 8px;
+  scrollbar-width: thin;
+}
+
+.csf-subweapon-pills-bar::-webkit-scrollbar {
+  height: 4px;
+}
+.csf-subweapon-pills-bar::-webkit-scrollbar-thumb {
+  background: #233144;
+  border-radius: 2px;
+}
+
+.csgoskins-grid-section {
+  margin-top: 10px;
+  margin-bottom: 40px;
+}
+
+.csgoskins-grid-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: #0f1724;
+  border: 1px solid #1e2b3c;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.csgoskins-grid-count {
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+.csgoskins-grid-count strong {
+  color: #bef264;
+  font-weight: 800;
+}
+
+.csgoskins-grid-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.csgoskins-grid-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #080d14;
+  border: 1px solid #233144;
+  border-radius: 8px;
+  padding: 6px 12px;
+  min-width: 220px;
+}
+
+.csgoskins-grid-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f8fafc;
+  font-size: 12px;
+  width: 100%;
+}
+.csgoskins-grid-search-input::placeholder {
+  color: #64748b;
+}
+
+.csgoskins-grid-sort-select {
+  background: #080d14;
+  border: 1px solid #233144;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* 4-Column Responsive Grid matching Photo 3 */
+.csgoskins-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+@media (max-width: 1280px) {
+  .csgoskins-catalog-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .csgoskins-catalog-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .csgoskins-catalog-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card Design matching Photo 3 */
+.csgoskins-card-item {
+  background: #111827;
+  border: 1px solid #1f293d;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  cursor: pointer;
+}
+
+.csgoskins-card-item:hover {
+  transform: translateY(-4px);
+  border-color: #bef264;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.7), 0 0 20px rgba(190, 242, 100, 0.18);
+}
+
+.csgoskins-card-item.selected-active {
+  border-color: #bef264;
+  background: #131d2e;
+  box-shadow: 0 0 0 2px rgba(190, 242, 100, 0.4), 0 14px 34px rgba(0, 0, 0, 0.8);
+}
+
+.csgoskins-card-top-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.csgoskins-card-rarity-bar {
+  display: block;
+  text-align: center;
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+.csgoskins-card-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  min-height: 20px;
+}
+
+.csgoskins-card-badge-stattrak {
+  background: rgba(234, 179, 8, 0.18);
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  color: #fbbf24;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+
+.csgoskins-card-badge-souvenir {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #f59e0b;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+
+.csgoskins-card-img-stage {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 12px 0 8px;
+  position: relative;
+}
+
+.csgoskins-card-img-stage img {
+  max-width: 100%;
+  max-height: 145px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.8));
+  transition: transform 0.25s ease;
+}
+
+.csgoskins-card-item:hover .csgoskins-card-img-stage img {
+  transform: scale(1.08);
+}
+
+.csgoskins-card-price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.csgoskins-card-price-range {
+  font-size: 15px;
+  font-weight: 900;
+  color: #f8fafc;
+}
+
+.csgoskins-card-stattrak-price {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+.csgoskins-card-container-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 8px;
+}
+
+.csgoskins-card-container-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.csgoskins-card-analytics-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #1e293b;
+  text-transform: uppercase;
+}
+
+#chosen-skin-overview {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #1e293b;
+}
