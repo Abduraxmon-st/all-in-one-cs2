@@ -1103,7 +1103,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #0f172a;
+  background: #151818;
   padding: 4px;
   border-radius: 8px;
   border: 1px solid #2b302f;
@@ -1127,9 +1127,9 @@
 }
 
 .csf-curr-btn.active {
-  background: #2563eb;
-  color: #ffffff;
-  box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+  background: #c8f135;
+  color: #0d0f0f;
+  box-shadow: 0 0 10px rgba(200, 241, 53, 0.4);
 }
 
 .csgoskins-color-palette-bar {
@@ -1138,8 +1138,8 @@
   gap: 8px;
   padding: 10px 16px;
   margin-bottom: 16px;
-  background: linear-gradient(90deg, #0b0f17 0%, #151818 100%);
-  border: 1px solid #1f293d;
+  background: #151818;
+  border: 1px solid #242826;
   border-radius: 10px;
   overflow-x: auto;
   scrollbar-width: thin;
@@ -1157,8 +1157,8 @@
 }
 
 .csgoskins-color-pill {
-  background: #131c2a;
-  border: 1px solid #243247;
+  background: #1b1f1e;
+  border: 1px solid #2b302f;
   color: #94a3b8;
   font-size: 11px;
   font-weight: 700;
@@ -1173,16 +1173,16 @@
 }
 
 .csgoskins-color-pill:hover {
-  border-color: #3b82f6;
+  border-color: #c8f135;
   color: #f1f5f9;
-  background: #1a2436;
+  background: #242826;
 }
 
 .csgoskins-color-pill.active {
-  background: #1e3a8a;
-  border-color: #60a5fa;
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+  background: #c8f135;
+  border-color: #c8f135;
+  color: #0d0f0f;
+  box-shadow: 0 0 12px rgba(200, 241, 53, 0.4);
 }
 
 .csf-compare-markets-btn {
@@ -1432,15 +1432,16 @@
 
 .csgoskins-curr-select-btn:hover,
 .csgoskins-curr-select-btn.active {
-  background: #2563eb;
-  color: #ffffff;
-  border-color: #3b82f6;
+  background: #c8f135;
+  color: #0d0f0f;
+  border-color: #c8f135;
+  font-weight: 800;
 }
 
 .csgoskins-header-search {
   display: flex;
   align-items: center;
-  background: #131c28;
+  background: #1b1f1e;
   border: 1px solid #2b302f;
   border-radius: 8px;
   padding: 6px 12px;
@@ -1464,7 +1465,7 @@
 
 /* Hero Section */
 .csgoskins-hero-section {
-  background: linear-gradient(180deg, #121a26 0%, #0d131c 100%);
+  background: linear-gradient(180deg, #151818 0%, #0d0f0f 100%);
   border-bottom: 1px solid #242826;
   padding: 28px 32px;
 }
@@ -1525,10 +1526,10 @@
 }
 
 .csgoskins-adv-search-btn:hover {
-  background: #2563eb;
-  border-color: #3b82f6;
-  color: #ffffff;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+  background: #c8f135;
+  border-color: #c8f135;
+  color: #0d0f0f;
+  box-shadow: 0 4px 16px rgba(200, 241, 53, 0.4);
 }
 
 /* Card Enhancements Matching Screenshot 1 */

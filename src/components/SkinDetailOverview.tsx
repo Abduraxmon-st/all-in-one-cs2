@@ -20,17 +20,19 @@ interface WearTierDef {
   min: number;
   max: number;
   defaultFloat: number;
+  color: string;
 }
 
 const ALL_WEAR_TIERS: WearTierDef[] = [
-  { tier: "FN", name: "Factory New", floatRange: "0.00 – 0.07", multiplier: 1.40, min: 0.00, max: 0.07, defaultFloat: 0.03 },
-  { tier: "MW", name: "Minimal Wear", floatRange: "0.07 – 0.15", multiplier: 1.15, min: 0.07, max: 0.15, defaultFloat: 0.10 },
-  { tier: "FT", name: "Field-Tested", floatRange: "0.15 – 0.38", multiplier: 0.95, min: 0.15, max: 0.38, defaultFloat: 0.22 },
-  { tier: "WW", name: "Well-Worn", floatRange: "0.38 – 0.45", multiplier: 0.82, min: 0.38, max: 0.45, defaultFloat: 0.41 },
-  { tier: "BS", name: "Battle-Scarred", floatRange: "0.45 – 1.00", multiplier: 0.70, min: 0.45, max: 1.00, defaultFloat: 0.65 },
+  { tier: "FN", name: "Factory New", floatRange: "0.00 – 0.07", multiplier: 1.40, min: 0.00, max: 0.07, defaultFloat: 0.03, color: "#10b981" },
+  { tier: "MW", name: "Minimal Wear", floatRange: "0.07 – 0.15", multiplier: 1.15, min: 0.07, max: 0.15, defaultFloat: 0.10, color: "#84cc16" },
+  { tier: "FT", name: "Field-Tested", floatRange: "0.15 – 0.38", multiplier: 0.95, min: 0.15, max: 0.38, defaultFloat: 0.22, color: "#eab308" },
+  { tier: "WW", name: "Well-Worn", floatRange: "0.38 – 0.45", multiplier: 0.82, min: 0.38, max: 0.45, defaultFloat: 0.41, color: "#f97316" },
+  { tier: "BS", name: "Battle-Scarred", floatRange: "0.45 – 1.00", multiplier: 0.70, min: 0.45, max: 1.00, defaultFloat: 0.65, color: "#ef4444" },
 ];
 
 const TIMEFRAMES = ["24h", "7d", "30d", "90d", "1y", "All"] as const;
+type Timeframe = typeof TIMEFRAMES[number];
 
 const CRATE_RELEASE_DATES: Record<string, string> = {
   "Gallery Case": "October 2, 2024",
@@ -71,17 +73,17 @@ const CRATE_RELEASE_DATES: Record<string, string> = {
 };
 
 const PRO_PLAYERS_MAP: Record<string, string> = {
-  "AWP": "s1mple, m0NESY, ZywOo, dev1ce, and kennyS",
+  AWP: "s1mple, m0NESY, ZywOo, dev1ce, and kennyS",
   "AK-47": "NiKo, b1t, Ax1Le, electroNic, and Twistzz",
   "M4A1-S": "blameF, ropz, frozen, and EliGE",
-  "M4A4": "ZywOo, rain, Twistzz, and cadiaN",
+  M4A4: "ZywOo, rain, Twistzz, and cadiaN",
   "Desert Eagle": "NiKo, donk, Twistzz, and broky",
   "USP-S": "broky, ropz, blameF, and Perfecto",
   "Glock-18": "donk, ZywOo, electroNic, and apEX",
-  "MP9": "donk, b1t, jks, and frozen",
+  MP9: "donk, b1t, jks, and frozen",
   "MAC-10": "arT, blameF, stavn, and jabbi",
   "Galil AR": "b1t, frozen, ropz, and flameZ",
-  "FAMAS": "ZywOo, rain, spinx, and NiKo",
+  FAMAS: "ZywOo, rain, spinx, and NiKo",
   "SSG 08": "m0NESY, s1mple, hallzerk, and dev1ce",
 };
 
@@ -100,8 +102,8 @@ export const SkinDetailOverview: FC<Props> = ({
   onSelectSkin,
   allSkins = [],
 }) => {
-  const minFloat = skin.minFloat !== undefined ? skin.minFloat : 0.00;
-  const maxFloat = skin.maxFloat !== undefined ? skin.maxFloat : 1.00;
+  const minFloat = skin.minFloat !== undefined ? skin.minFloat : 0.0;
+  const maxFloat = skin.maxFloat !== undefined ? skin.maxFloat : 1.0;
 
   // Active Variant: normal, stattrak, souvenir
   const [activeVariant, setActiveVariant] = useState<"normal" | "stattrak" | "souvenir">(
@@ -128,27 +130,103 @@ export const SkinDetailOverview: FC<Props> = ({
   const [customFloat, setCustomFloat] = useState<number>(initialFloat);
 
   const [offersTab, setOffersTab] = useState<"BUY" | "SELL" | "TRADE">("BUY");
-  const [activeTimeframe, setActiveTimeframe] = useState<string>("30d");
+  const [activeTimeframe, setActiveTimeframe] = useState<Timeframe>("30d");
   const [studioMode, setStudioMode] = useState<"wear" | "3d">("wear");
   const [userRating, setUserRating] = useState<number>(5);
 
-  // Webm Video Engine from csgoskins.gg
-  const [videoAvailable, setVideoAvailable] = useState<boolean>(true);
-  const [videoLoaded, setVideoLoaded] = useState<boolean>(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const videoSlug = useMemo(() => getCsgoskinsSlug(skin.weaponName, skin.skinName), [skin.weaponName, skin.skinName]);
-  const videoUrl = `https://cdn.csgoskins.gg/public/videos/floats/v3/embedding/${videoSlug}.webm`;
+  // 3D In-Place Stage Controls
+  const [rotateX, setRotateX] = useState<number>(-5);
+  const [rotateY, setRotateY] = useState<number>(20);
+  const [zoom, setZoom] = useState<number>(1.0);
+  const [autoSpin, setAutoSpin] = useState<boolean>(true);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const lastMousePos = useRef<{ x: number; y: number } | null>(null);
+
+  // Auto-spin 3D animation loop
+  useEffect(() => {
+    if (!autoSpin || isDragging || studioMode !== "3d") return;
+    const interval = setInterval(() => {
+      setRotateY((y) => (y + 0.6) % 360);
+    }, 16);
+    return () => clearInterval(interval);
+  }, [autoSpin, isDragging, studioMode]);
+
+  const handleStageMouseDown = (e: React.MouseEvent) => {
+    if (studioMode !== "3d") return;
+    setIsDragging(true);
+    lastMousePos.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleStageMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !lastMousePos.current || studioMode !== "3d") return;
+    const dx = e.clientX - lastMousePos.current.x;
+    const dy = e.clientY - lastMousePos.current.y;
+    setRotateY((y) => y + dx * 0.6);
+    setRotateX((x) => Math.max(-55, Math.min(55, x - dy * 0.5)));
+    lastMousePos.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleStageMouseUp = () => {
+    setIsDragging(false);
+    lastMousePos.current = null;
+  };
 
   const money = (usd: number) => formatPrice(usd, currency);
 
-  // Sync customFloat with video current frame
+  // Webm Video Engine from csgoskins.gg
+  const [videoLoaded, setVideoLoaded] = useState<boolean>(false);
+  const [videoError, setVideoError] = useState<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoSlug = useMemo(() => getCsgoskinsSlug(skin.weaponName, skin.skinName), [skin.weaponName, skin.skinName]);
+  const videoUrl = `https://cdn.csgoskins.gg/public/videos/floats/v3/embedding/${videoSlug}.webm`;
+
+  // Sync customFloat with video seek
   useEffect(() => {
-    if (videoRef.current && videoLoaded && videoRef.current.duration) {
+    if (videoRef.current && videoLoaded && !videoError && videoRef.current.duration) {
       const dur = videoRef.current.duration;
-      const targetTime = Math.min(Math.max(0, customFloat * dur), dur - 0.05);
+      const targetTime = Math.min(Math.max(0, customFloat * dur), Math.max(0.01, dur - 0.05));
       videoRef.current.currentTime = targetTime;
     }
-  }, [customFloat, videoLoaded]);
+  }, [customFloat, videoLoaded, videoError]);
+
+  // Fallback Canvas Renderer: draws wear degradation onto the weapon ONLY (background stays 100% transparent)
+  useEffect(() => {
+    if (!videoError && videoLoaded) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = skin.imageUrl;
+    img.onload = () => {
+      canvas.width = img.naturalWidth || 512;
+      canvas.height = img.naturalHeight || 384;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 1. Draw crisp base weapon
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // 2. Composite wear abrasion ONLY on weapon pixels
+      if (customFloat > 0.08) {
+        ctx.save();
+        ctx.globalCompositeOperation = "source-atop";
+
+        // Abrasion scratches
+        const wearAlpha = Math.min(0.65, (customFloat - 0.08) * 0.75);
+        ctx.fillStyle = `rgba(30, 26, 22, ${wearAlpha})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Desaturation patina
+        ctx.fillStyle = `rgba(100, 90, 80, ${wearAlpha * 0.4})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.restore();
+      }
+    };
+  }, [skin.imageUrl, customFloat, videoLoaded, videoError]);
 
   // Variant Multiplier
   const variantMultiplier = activeVariant === "stattrak" ? 1.55 : activeVariant === "souvenir" ? 1.70 : 1.0;
@@ -168,16 +246,6 @@ export const SkinDetailOverview: FC<Props> = ({
     return "March 22, 2023";
   }, [primaryCrate, caseDetails]);
 
-  // Dynamic wear degradation CSS filter
-  const wearFilter = useMemo(() => {
-    const f = Math.min(1.0, Math.max(0.0, customFloat));
-    const brightness = Math.round((1.0 - f * 0.22) * 100);
-    const contrast = Math.round((1.0 + f * 0.16) * 100);
-    const saturate = Math.round((1.0 - f * 0.28) * 100);
-    const sepia = Math.round(f * 20);
-    return `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturate}%) sepia(${sepia}%) drop-shadow(0 12px 24px rgba(0, 0, 0, 0.85))`;
-  }, [customFloat]);
-
   // Dynamic wear table prices and validity
   const wearTable = useMemo(() => {
     return ALL_WEAR_TIERS.map((tier) => {
@@ -195,11 +263,11 @@ export const SkinDetailOverview: FC<Props> = ({
 
   // Derive wear tier label from custom float
   const currentFloatTier = useMemo(() => {
-    if (customFloat < 0.07) return { label: "Factory New", badge: "FN" as const };
-    if (customFloat < 0.15) return { label: "Minimal Wear", badge: "MW" as const };
-    if (customFloat < 0.38) return { label: "Field-Tested", badge: "FT" as const };
-    if (customFloat < 0.45) return { label: "Well-Worn", badge: "WW" as const };
-    return { label: "Battle-Scarred", badge: "BS" as const };
+    if (customFloat < 0.07) return { label: "Factory New", badge: "FN" as const, color: "#10b981" };
+    if (customFloat < 0.15) return { label: "Minimal Wear", badge: "MW" as const, color: "#84cc16" };
+    if (customFloat < 0.38) return { label: "Field-Tested", badge: "FT" as const, color: "#eab308" };
+    if (customFloat < 0.45) return { label: "Well-Worn", badge: "WW" as const, color: "#f97316" };
+    return { label: "Battle-Scarred", badge: "BS" as const, color: "#ef4444" };
   }, [customFloat]);
 
   // Update selected wear tier when scrubbing float
@@ -212,7 +280,7 @@ export const SkinDetailOverview: FC<Props> = ({
     else if (val < 0.45) matchedTier = "WW";
     else matchedTier = "BS";
 
-    const isSupported = matchedTier !== "FN" || (0.07 > minFloat && 0.00 < maxFloat);
+    const isSupported = matchedTier !== "FN" || (0.07 > minFloat && 0.0 < maxFloat);
     if (isSupported) {
       setSelectedWear(matchedTier);
     }
@@ -229,65 +297,313 @@ export const SkinDetailOverview: FC<Props> = ({
     setCustomFloat(targetFloat);
   };
 
-  // Dynamic live market offers calculated for this skin and chosen wear
+  // DYNAMIC LIVE MARKET OFFERS FOR BUY / SELL / TRADE
   const marketOffers = useMemo(() => {
     const currentWearPrice = wearTable.find((w) => w.tier === selectedWear)?.price || activeBasePrice;
     const seed = skin.paintSeed || skin.finishCatalog || 100;
 
-    return [
-      {
-        id: "csmoney",
-        market: "CS.MONEY",
-        rating: 4.7,
-        reviews: "9.2K reviews",
-        activeOffers: `${Math.floor((seed % 280) + 180)}`,
-        price: currentWearPrice * 1.033,
-        promoted: true,
-        logoBg: "#ec4899",
-      },
-      {
-        id: "dmarket",
-        market: "DMarket",
-        rating: 3.9,
-        reviews: "22.2K reviews",
-        activeOffers: `${Math.floor((seed % 190) + 120)}`,
-        price: currentWearPrice * 0.985,
-        bestValue: true,
-        promoted: false,
-        logoBg: "#10b981",
-      },
-      {
-        id: "ntskins",
-        market: "NTSkins",
-        rating: 3.8,
-        reviews: "15 reviews",
-        activeOffers: `${Math.floor((seed % 150) + 90)}`,
-        price: currentWearPrice * 0.995,
-        promoted: false,
-        logoBg: "#8b5cf6",
-      },
-      {
-        id: "csfloat",
-        market: "CSFloat",
-        rating: 4.8,
-        reviews: "9.9K reviews",
-        activeOffers: `${Math.floor((seed % 350) + 210)}`,
-        price: currentWearPrice * 1.01,
-        promoted: false,
-        logoBg: "#3b82f6",
-      },
-      {
-        id: "skinvault",
-        market: "Skinvault",
-        rating: 4.2,
-        reviews: "213 reviews",
-        activeOffers: `${Math.floor((seed % 110) + 60)}`,
-        price: currentWearPrice * 1.02,
-        promoted: false,
-        logoBg: "#f59e0b",
-      },
-    ];
-  }, [skin, activeBasePrice, selectedWear, wearTable]);
+    if (offersTab === "BUY") {
+      return [
+        {
+          id: "csfloat",
+          market: "CSFloat",
+          badge: "BEST PRICE",
+          tag: "Low 2% Fee",
+          rating: 4.8,
+          reviews: "9.9K reviews",
+          count: `${Math.floor((seed % 350) + 380)} active offers`,
+          price: currentWearPrice * 0.985,
+          actionText: "VIEW OFFER",
+          url: `https://csfloat.com/search?query=${encodeURIComponent(skin.marketHashName)}`,
+          logoBg: "#3b82f6",
+          promoted: false,
+        },
+        {
+          id: "dmarket",
+          market: "DMarket",
+          badge: null,
+          tag: "Instant Trade",
+          rating: 4.5,
+          reviews: "22.2K reviews",
+          count: `${Math.floor((seed % 280) + 210)} active offers`,
+          price: currentWearPrice * 0.992,
+          actionText: "VIEW OFFER",
+          url: `https://dmarket.com/ingame-items/item-list/csgo-skins?title=${encodeURIComponent(skin.marketHashName)}`,
+          logoBg: "#10b981",
+          promoted: false,
+        },
+        {
+          id: "csmoney",
+          market: "CS.MONEY",
+          badge: "PROMOTED",
+          tag: "Verified Bot",
+          rating: 4.7,
+          reviews: "9.2K reviews",
+          count: `${Math.floor((seed % 240) + 180)} active offers`,
+          price: currentWearPrice * 1.025,
+          actionText: "VIEW OFFER",
+          url: `https://cs.money/csgo/store/?search=${encodeURIComponent(skin.marketHashName)}`,
+          logoBg: "#ec4899",
+          promoted: true,
+        },
+        {
+          id: "skinport",
+          market: "Skinport",
+          badge: null,
+          tag: "Trusted Escrow",
+          rating: 4.9,
+          reviews: "34K reviews",
+          count: `${Math.floor((seed % 190) + 140)} active offers`,
+          price: currentWearPrice * 1.015,
+          actionText: "VIEW OFFER",
+          url: `https://skinport.com/market?search=${encodeURIComponent(skin.marketHashName)}`,
+          logoBg: "#f97316",
+          promoted: false,
+        },
+        {
+          id: "skinvault",
+          market: "Skinvault",
+          badge: null,
+          tag: "Instant Transfer",
+          rating: 4.2,
+          reviews: "213 reviews",
+          count: `${Math.floor((seed % 110) + 80)} active offers`,
+          price: currentWearPrice * 1.02,
+          actionText: "VIEW OFFER",
+          url: `https://skinvault.gg/`,
+          logoBg: "#eab308",
+          promoted: false,
+        },
+      ];
+    } else if (offersTab === "SELL") {
+      return [
+        {
+          id: "skinport-cashout",
+          market: "Skinport Cashout",
+          badge: "TOP PAYOUT",
+          tag: "Instant Visa / SEPA Bank",
+          rating: 4.9,
+          reviews: "34K reviews",
+          count: "Instant cashout in <1 hour",
+          price: currentWearPrice * 0.925,
+          actionText: "SELL NOW",
+          url: "https://skinport.com/sell",
+          logoBg: "#f97316",
+          promoted: false,
+        },
+        {
+          id: "csfloat-cashout",
+          market: "CSFloat P2P Cashout",
+          badge: "LOWEST FEE (2%)",
+          tag: "Stripe / Direct Deposit",
+          rating: 4.8,
+          reviews: "9.9K reviews",
+          count: "0% deposit fee · 2% sales fee",
+          price: currentWearPrice * 0.955,
+          actionText: "SELL NOW",
+          url: "https://csfloat.com/sell",
+          logoBg: "#3b82f6",
+          promoted: false,
+        },
+        {
+          id: "dmarket-instant",
+          market: "DMarket Instant Cash",
+          badge: "FASTEST (<5 MIN)",
+          tag: "Crypto (USDT) / Visa / MC",
+          rating: 4.5,
+          reviews: "22.2K reviews",
+          count: "Direct to wallet in 5 minutes",
+          price: currentWearPrice * 0.895,
+          actionText: "SELL NOW",
+          url: "https://dmarket.com/",
+          logoBg: "#10b981",
+          promoted: false,
+        },
+        {
+          id: "skinvault-cashout",
+          market: "Skinvault Cashout",
+          badge: null,
+          tag: "No KYC under $1,000",
+          rating: 4.2,
+          reviews: "213 reviews",
+          count: "Instant SEPA & Crypto Payout",
+          price: currentWearPrice * 0.91,
+          actionText: "SELL NOW",
+          url: "https://skinvault.gg/",
+          logoBg: "#eab308",
+          promoted: false,
+        },
+        {
+          id: "bitskins-cashout",
+          market: "BitSkins Instant",
+          badge: null,
+          tag: "Bitcoin / Ethereum / Visa",
+          rating: 4.1,
+          reviews: "12K reviews",
+          count: "Instant automated withdrawal",
+          price: currentWearPrice * 0.885,
+          actionText: "SELL NOW",
+          url: "https://bitskins.com/",
+          logoBg: "#6366f1",
+          promoted: false,
+        },
+      ];
+    } else {
+      // TRADE TAB
+      return [
+        {
+          id: "tradeit",
+          market: "Tradeit.gg",
+          badge: "+35% TRADE BONUS",
+          tag: "800K+ skins in bot pool",
+          rating: 4.8,
+          reviews: "18K reviews",
+          count: "Instant bot exchange (<30s)",
+          price: currentWearPrice * 1.35,
+          actionText: "TRADE NOW",
+          url: "https://tradeit.gg/",
+          logoBg: "#ef4444",
+          promoted: true,
+        },
+        {
+          id: "csmoney-trade",
+          market: "CS.MONEY Trade",
+          badge: "+30% DEPOSIT BONUS",
+          tag: "1.2M+ items available",
+          rating: 4.7,
+          reviews: "9.2K reviews",
+          count: "Virtual 3D item trade lock buffer",
+          price: currentWearPrice * 1.30,
+          actionText: "TRADE NOW",
+          url: "https://cs.money/",
+          logoBg: "#ec4899",
+          promoted: false,
+        },
+        {
+          id: "swapgg",
+          market: "Swap.gg",
+          badge: "+32% BONUS",
+          tag: "Multi-game items (CS2/Rust)",
+          rating: 4.6,
+          reviews: "7.8K reviews",
+          count: "Fast P2P & bot trade network",
+          price: currentWearPrice * 1.32,
+          actionText: "TRADE NOW",
+          url: "https://swap.gg/",
+          logoBg: "#06b6d4",
+          promoted: false,
+        },
+        {
+          id: "skinsmonkey",
+          market: "SkinsMonkey",
+          badge: "FREE $5 PROMO",
+          tag: "+35% on all CS2 deposits",
+          rating: 4.7,
+          reviews: "11K reviews",
+          count: "Instant automated trade bots",
+          price: currentWearPrice * 1.35,
+          actionText: "TRADE NOW",
+          url: "https://skinsmonkey.com/",
+          logoBg: "#f59e0b",
+          promoted: false,
+        },
+        {
+          id: "dmarket-trade",
+          market: "DMarket Trade",
+          badge: "+25% BONUS",
+          tag: "Direct inventory swap",
+          rating: 4.5,
+          reviews: "22.2K reviews",
+          count: "Target trade offers matched",
+          price: currentWearPrice * 1.25,
+          actionText: "TRADE NOW",
+          url: "https://dmarket.com/",
+          logoBg: "#10b981",
+          promoted: false,
+        },
+      ];
+    }
+  }, [offersTab, wearTable, selectedWear, activeBasePrice, skin]);
+
+  // DYNAMIC PRICE HISTORY DATA GENERATOR
+  const priceHistoryStats = useMemo(() => {
+    const base = activeBasePrice;
+    switch (activeTimeframe) {
+      case "24h":
+        return {
+          gainLabel: "▲ +$0.42 (+1.9%)",
+          gainColor: "#22c55e",
+          periodText: "Past 24 hours",
+          svgLine: "M 0 135 C 100 140, 200 125, 300 130 C 400 135, 500 115, 600 110 L 700 95",
+          svgArea: "M 0 135 C 100 140, 200 125, 300 130 C 400 135, 500 115, 600 110 L 700 95 L 700 180 L 0 180 Z",
+          high: base * 1.025,
+          low: base * 0.985,
+          volume: "182 units",
+          marketCap: "$2.4M",
+        };
+      case "7d":
+        return {
+          gainLabel: "▲ +$1.20 (+5.4%)",
+          gainColor: "#22c55e",
+          periodText: "Past 7 days",
+          svgLine: "M 0 145 C 120 150, 240 135, 350 120 C 460 105, 580 115, 700 85",
+          svgArea: "M 0 145 C 120 150, 240 135, 350 120 C 460 105, 580 115, 700 85 L 700 180 L 0 180 Z",
+          high: base * 1.08,
+          low: base * 0.94,
+          volume: "1,240 units",
+          marketCap: "$2.4M",
+        };
+      case "30d":
+        return {
+          gainLabel: "▲ +$2.84 (+11.8%)",
+          gainColor: "#22c55e",
+          periodText: "Past 30 days",
+          svgLine: "M 0 150 C 140 155, 260 130, 380 115 C 500 100, 600 75, 700 55",
+          svgArea: "M 0 150 C 140 155, 260 130, 380 115 C 500 100, 600 75, 700 55 L 700 180 L 0 180 Z",
+          high: base * 1.18,
+          low: base * 0.88,
+          volume: "4,620 units",
+          marketCap: "$2.5M",
+        };
+      case "90d":
+        return {
+          gainLabel: "▲ +$6.10 (+28.2%)",
+          gainColor: "#22c55e",
+          periodText: "Past 90 days",
+          svgLine: "M 0 160 C 130 145, 220 165, 360 125 C 480 85, 590 95, 700 45",
+          svgArea: "M 0 160 C 130 145, 220 165, 360 125 C 480 85, 590 95, 700 45 L 700 180 L 0 180 Z",
+          high: base * 1.36,
+          low: base * 0.76,
+          volume: "13,800 units",
+          marketCap: "$2.6M",
+        };
+      case "1y":
+        return {
+          gainLabel: "▲ +$14.80 (+64.5%)",
+          gainColor: "#22c55e",
+          periodText: "Past 1 year",
+          svgLine: "M 0 165 C 150 170, 270 140, 410 95 C 540 60, 620 50, 700 35",
+          svgArea: "M 0 165 C 150 170, 270 140, 410 95 C 540 60, 620 50, 700 35 L 700 180 L 0 180 Z",
+          high: base * 1.68,
+          low: base * 0.60,
+          volume: "52,400 units",
+          marketCap: "$2.8M",
+        };
+      case "All":
+      default:
+        return {
+          gainLabel: "▲ +$32.50 (+148.0%)",
+          gainColor: "#22c55e",
+          periodText: "All time",
+          svgLine: "M 0 170 C 160 175, 280 150, 420 85 C 540 45, 620 40, 700 25",
+          svgArea: "M 0 170 C 160 175, 280 150, 420 85 C 540 45, 620 40, 700 25 L 700 180 L 0 180 Z",
+          high: base * 2.10,
+          low: base * 0.42,
+          volume: "195,000 units",
+          marketCap: "$3.2M",
+        };
+    }
+  }, [activeTimeframe, activeBasePrice]);
 
   // Dominant palette colors
   const paletteColors = useMemo(() => {
@@ -325,12 +641,12 @@ export const SkinDetailOverview: FC<Props> = ({
       },
       {
         name: "Battle Scarred (Holo)",
-        priceUsd: 14.50,
+        priceUsd: 14.5,
         image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJai0ki7VeTHjM-sJnCW8Vli_YTxuAm2FVLll4Lh8x1T4P6hJqZrJfHAXjXGkr0i4rc_GSjixEh35GSAnNr8IyqSbg8kA8ciRrQJshGm0oqwlCzKr50",
       },
       {
         name: "FURIA (Holo) | Stockholm 2021",
-        priceUsd: 18.20,
+        priceUsd: 18.2,
         image: "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJai0ki7VeTHjNm1PHic4ERmpsj3-FbwTyL3kZ_ssycDt6v4PvU_dvTGDWGWl-xwtLZoS36ykB4ltTvXy42seS_EPFQpC8BuBbldJQkRI1c",
       },
     ];
@@ -413,7 +729,7 @@ export const SkinDetailOverview: FC<Props> = ({
             type="button"
             className="clutch-open-3d-btn"
             onClick={() => onOpen3DModal(skin)}
-            title="Open Full 3D Interactive Inspector & Unboxing Simulator"
+            title="Open Full 3D Interactive Comparison Modal"
           >
             <span>🧊 3D INSPECT & COMPARISON</span>
             <span style={{ color: "#c8f135" }}>↗</span>
@@ -466,45 +782,173 @@ export const SkinDetailOverview: FC<Props> = ({
             </button>
           </div>
 
-          {/* Large Skin Render Stage with Dynamic Visual Wear Engine */}
-          <div className="clutch-skin-stage">
-            <img
-              src={skin.imageUrl}
-              alt={skin.marketHashName}
-              className="clutch-skin-big-img"
-              style={{
-                filter: wearFilter,
-              }}
-              loading="eager"
-            />
+          {/* Large Skin Render Stage: Switches in-place between [Wear] and [3D View] */}
+          <div
+            className="clutch-skin-stage"
+            onMouseDown={handleStageMouseDown}
+            onMouseMove={handleStageMouseMove}
+            onMouseUp={handleStageMouseUp}
+            style={{
+              cursor: studioMode === "3d" ? (isDragging ? "grabbing" : "grab") : "default",
+            }}
+          >
+            {/* MODE A: WEAR SCRUBBER (Canvas/Video degrading weapon ONLY, stage background stays pure) */}
+            {studioMode === "wear" && (
+              <>
+                {/* Official Webm float video from csgoskins.gg if supported */}
+                {!videoError && (
+                  <video
+                    ref={videoRef}
+                    src={videoUrl}
+                    className="clutch-skin-video-frame"
+                    style={{
+                      display: videoLoaded ? "block" : "none",
+                      maxWidth: "88%",
+                      maxHeight: "220px",
+                      objectFit: "contain",
+                    }}
+                    muted
+                    playsInline
+                    preload="auto"
+                    onLoadedData={() => setVideoLoaded(true)}
+                    onError={() => setVideoError(true)}
+                  />
+                )}
 
-            {/* Abrasive Scratches & Oxidation Overlay */}
-            {customFloat > 0.08 && (
+                {/* Composite Canvas fallback: weapon degraded pixel-by-pixel, 0% background modification */}
+                {(!videoLoaded || videoError) && (
+                  <canvas
+                    ref={canvasRef}
+                    style={{
+                      maxWidth: "88%",
+                      maxHeight: "220px",
+                      objectFit: "contain",
+                    }}
+                  />
+                )}
+
+                {skin.fadePercentage !== undefined && (
+                  <div className="clutch-fade-tag">{skin.fadePercentage}% Fade</div>
+                )}
+                {activeVariant === "stattrak" && (
+                  <div className="clutch-stattrak-tag">StatTrak™</div>
+                )}
+                {activeVariant === "souvenir" && (
+                  <div className="clutch-souvenir-tag">Souvenir</div>
+                )}
+
+                {/* Float badge indicator on stage */}
+                <div className="clutch-stage-wear-badge">
+                  <span
+                    className={`wear-pill wear-${currentFloatTier.badge.toLowerCase()}`}
+                    style={{ backgroundColor: currentFloatTier.color, color: "#0d0f0f", fontWeight: 800 }}
+                  >
+                    {currentFloatTier.badge}
+                  </span>
+                  <span>Float: {customFloat.toFixed(4)}</span>
+                </div>
+              </>
+            )}
+
+            {/* MODE B: 3D VIEW (Interactive in-place 360-degree rotation & zoom) */}
+            {studioMode === "3d" && (
               <div
-                className="clutch-wear-abrasion-overlay"
                 style={{
-                  opacity: Math.min(0.72, (customFloat - 0.08) * 0.85),
+                  perspective: 1000,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  userSelect: "none",
                 }}
-              />
-            )}
+              >
+                <div
+                  style={{
+                    transform: `scale(${zoom}) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
+                    transformStyle: "preserve-3d",
+                    transition: isDragging ? "none" : "transform 0.15s ease-out",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  <img
+                    src={skin.imageUrl}
+                    alt={skin.marketHashName}
+                    style={{
+                      maxWidth: "85%",
+                      maxHeight: "210px",
+                      objectFit: "contain",
+                      filter: "drop-shadow(0 20px 30px rgba(0, 0, 0, 0.85))",
+                      pointerEvents: "none",
+                    }}
+                  />
+                </div>
 
-            {skin.fadePercentage !== undefined && (
-              <div className="clutch-fade-tag">{skin.fadePercentage}% Fade</div>
+                {/* In-Place 3D View Overlay Controls */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 12,
+                    left: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: "rgba(13, 15, 15, 0.85)",
+                    border: "1px solid #2b302f",
+                    borderRadius: 8,
+                    padding: "4px 8px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRotateX(-5);
+                      setRotateY(20);
+                      setZoom(1.0);
+                    }}
+                    style={{
+                      background: "#1b1f1e",
+                      border: "1px solid #2b302f",
+                      color: "#cbd5e1",
+                      borderRadius: 4,
+                      padding: "3px 8px",
+                      fontSize: 11,
+                      cursor: "pointer",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Reset View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAutoSpin(!autoSpin);
+                    }}
+                    style={{
+                      background: autoSpin ? "#c8f135" : "#1b1f1e",
+                      border: "1px solid #2b302f",
+                      color: autoSpin ? "#0d0f0f" : "#cbd5e1",
+                      borderRadius: 4,
+                      padding: "3px 8px",
+                      fontSize: 11,
+                      cursor: "pointer",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {autoSpin ? "⏸ Pause Spin" : "▶ Auto Spin"}
+                  </button>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>
+                    Drag to rotate · Zoom: {Math.round(zoom * 100)}%
+                  </span>
+                </div>
+              </div>
             )}
-            {activeVariant === "stattrak" && (
-              <div className="clutch-stattrak-tag">StatTrak™</div>
-            )}
-            {activeVariant === "souvenir" && (
-              <div className="clutch-souvenir-tag">Souvenir</div>
-            )}
-
-            {/* Float badge indicator on stage */}
-            <div className="clutch-stage-wear-badge">
-              <span className={`wear-pill wear-${currentFloatTier.badge.toLowerCase()}`}>
-                {currentFloatTier.badge}
-              </span>
-              <span>Float: {customFloat.toFixed(4)}</span>
-            </div>
           </div>
 
           {/* Variant Selector Tabs */}
@@ -545,7 +989,14 @@ export const SkinDetailOverview: FC<Props> = ({
                   title={tier.isSupported ? `Select ${tier.name}` : `Not available on ${skin.skinName}`}
                 >
                   <div className="clutch-wear-left">
-                    <span className={`clutch-wear-badge wear-${tier.tier.toLowerCase()}`}>
+                    <span
+                      className="clutch-wear-badge"
+                      style={{
+                        backgroundColor: tier.isSupported ? tier.color : "#334155",
+                        color: tier.isSupported ? "#0d0f0f" : "#64748b",
+                        fontWeight: 900,
+                      }}
+                    >
                       {tier.tier}
                     </span>
                     <div className="clutch-wear-texts">
@@ -599,7 +1050,7 @@ export const SkinDetailOverview: FC<Props> = ({
               </div>
               <div className="clutch-meta-kv-row">
                 <span className="kv-label">Popularity</span>
-                <span className="kv-val" style={{ color: "#bef264", fontWeight: 800 }}>
+                <span className="kv-val" style={{ color: "#c8f135", fontWeight: 800 }}>
                   {skin.rarity === "Covert" || skin.rarity === "Extraordinary"
                     ? "98% (Extremely High)"
                     : skin.rarity === "Classified"
@@ -666,7 +1117,7 @@ export const SkinDetailOverview: FC<Props> = ({
             <div className="clutch-liquidity-bar-wrap">
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
                 <span style={{ color: "#94a3b8", fontWeight: 700 }}>Liquidity Rating:</span>
-                <strong style={{ color: "#bef264" }}>
+                <strong style={{ color: "#c8f135" }}>
                   {skin.rarity === "Covert" || skin.rarity === "Extraordinary" ? "95% (Very High)" : "82% (High)"}
                 </strong>
               </div>
@@ -730,13 +1181,13 @@ export const SkinDetailOverview: FC<Props> = ({
 
         {/* ================= RIGHT COLUMN ================= */}
         <div className="clutch-skin-right-col">
-          {/* 1. Active Offers Aggregator */}
+          {/* 1. Active Offers Aggregator (BUY / SELL / TRADE dynamic data) */}
           <div className="clutch-offers-header">
             <div className="clutch-offers-title-wrap">
               <h3 className="clutch-offers-title">Active Offers</h3>
               <span
                 className="clutch-offers-info-icon"
-                title="Real-time live quotes tracked from 7 verified CS2 marketplaces"
+                title="Real-time quotes tracked from 7 verified CS2 marketplaces"
               >
                 ⓘ
               </span>
@@ -761,12 +1212,21 @@ export const SkinDetailOverview: FC<Props> = ({
             {marketOffers.map((mo) => (
               <div
                 key={mo.id}
-                className={`clutch-market-card ${mo.promoted ? "promoted" : ""} ${mo.bestValue ? "best-value" : ""}`}
+                className={`clutch-market-card ${mo.promoted ? "promoted" : ""} ${mo.badge ? "best-value" : ""}`}
               >
-                {mo.promoted && (
-                  <div className="clutch-market-promoted-badge">
-                    <span>Promoted</span>
-                    <span style={{ fontSize: 11 }}>ⓘ</span>
+                {mo.badge && (
+                  <div
+                    className="clutch-market-promoted-badge"
+                    style={{
+                      background: mo.badge.includes("BONUS")
+                        ? "linear-gradient(90deg, #ef4444, #f97316)"
+                        : mo.badge.includes("CASH") || mo.badge.includes("FEE")
+                        ? "linear-gradient(90deg, #10b981, #059669)"
+                        : "linear-gradient(90deg, #c8f135, #84cc16)",
+                      color: mo.badge.includes("BONUS") || mo.badge.includes("CASH") ? "#ffffff" : "#0d0f0f",
+                    }}
+                  >
+                    <span>{mo.badge}</span>
                   </div>
                 )}
 
@@ -778,9 +1238,7 @@ export const SkinDetailOverview: FC<Props> = ({
                         style={{ backgroundColor: mo.logoBg }}
                       />
                       <strong className="clutch-market-name">{mo.market}</strong>
-                      {mo.bestValue && (
-                        <span className="clutch-market-best-tag">BEST PRICE</span>
-                      )}
+                      <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: 6 }}>{mo.tag}</span>
                     </div>
                     <div className="clutch-market-stars">
                       <span className="clutch-star-rating">
@@ -792,25 +1250,32 @@ export const SkinDetailOverview: FC<Props> = ({
                   </div>
 
                   <div className="clutch-market-offers-count">
-                    <span className="clutch-count-num">{mo.activeOffers}</span>
-                    <span className="clutch-count-label">active offers</span>
+                    <span className="clutch-count-num" style={{ fontSize: 12, fontWeight: 700, color: "#f8fafc" }}>
+                      {mo.count}
+                    </span>
                   </div>
 
                   <div className="clutch-market-price-col">
-                    <span className="clutch-price-from-label">from</span>
-                    <span className="clutch-market-price-val">{money(mo.price)}</span>
+                    <span className="clutch-price-from-label">
+                      {offersTab === "BUY" ? "from" : offersTab === "SELL" ? "get net" : "trade val"}
+                    </span>
+                    <span
+                      className="clutch-market-price-val"
+                      style={{
+                        color: offersTab === "SELL" ? "#34d399" : offersTab === "TRADE" ? "#fbbf24" : "#bef264",
+                      }}
+                    >
+                      {money(mo.price)}
+                    </span>
                     <button
                       type="button"
                       className="clutch-view-offer-btn"
                       onClick={() => {
-                        notify(`Navigating to ${mo.market} offer for ${skin.marketHashName}...`);
-                        window.open(
-                          `https://www.google.com/search?q=${encodeURIComponent(mo.market + " " + skin.marketHashName)}`,
-                          "_blank"
-                        );
+                        notify(`Opening ${mo.market} for ${skin.marketHashName}...`);
+                        window.open(mo.url, "_blank");
                       }}
                     >
-                      <span>VIEW OFFER</span>
+                      <span>{mo.actionText}</span>
                       <span style={{ fontSize: 13 }}>&gt;</span>
                     </button>
                   </div>
@@ -826,11 +1291,19 @@ export const SkinDetailOverview: FC<Props> = ({
                 <h4 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#f8fafc" }}>
                   Inspect & Wear Studio
                 </h4>
-                <span className="clutch-studio-badge">
+                <span
+                  className="clutch-studio-badge"
+                  style={{
+                    backgroundColor: currentFloatTier.color,
+                    color: "#0d0f0f",
+                    fontWeight: 800,
+                  }}
+                >
                   {currentFloatTier.badge} · {customFloat.toFixed(4)}
                 </span>
               </div>
 
+              {/* In-Place Mode Switcher Tabs */}
               <div className="clutch-studio-mode-tabs">
                 <button
                   type="button"
@@ -842,9 +1315,9 @@ export const SkinDetailOverview: FC<Props> = ({
                 <button
                   type="button"
                   className={`clutch-studio-tab ${studioMode === "3d" ? "active" : ""}`}
-                  onClick={() => onOpen3DModal(skin)}
+                  onClick={() => setStudioMode("3d")}
                 >
-                  3D View ↗
+                  3D View 🧊
                 </button>
               </div>
             </div>
@@ -854,17 +1327,60 @@ export const SkinDetailOverview: FC<Props> = ({
                 <span>
                   Float Scrubber ({minFloat.toFixed(2)} {currentFloatTier.label} to {maxFloat.toFixed(2)} Battle-Scarred)
                 </span>
-                <strong style={{ color: "#bef264" }}>{currentFloatTier.label}</strong>
+                <strong style={{ color: currentFloatTier.color }}>{currentFloatTier.label}</strong>
               </div>
-              <input
-                type="range"
-                min={minFloat.toString()}
-                max={maxFloat.toString()}
-                step="0.005"
-                value={customFloat}
-                onChange={(e) => handleScrubberChange(parseFloat(e.target.value))}
-                className="clutch-float-range-slider"
-              />
+
+              {/* 5-Color Segmented Track matching csgoskins.gg Photo 4 */}
+              <div style={{ position: "relative", marginTop: 26, marginBottom: 14 }}>
+                {/* Floating Tooltip Bubble */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: -26,
+                    left: `${Math.min(94, Math.max(6, ((customFloat - minFloat) / Math.max(0.01, maxFloat - minFloat)) * 100))}%`,
+                    transform: "translateX(-50%)",
+                    background: "#1b1f1e",
+                    border: `1px solid ${currentFloatTier.color}`,
+                    color: "#f8fafc",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                    whiteSpace: "nowrap",
+                    pointerEvents: "none",
+                  }}
+                >
+                  {customFloat.toFixed(3)} {currentFloatTier.badge}
+                </div>
+
+                {/* 5 Wear Color Segmented Bars */}
+                <div
+                  style={{
+                    display: "flex",
+                    height: 8,
+                    borderRadius: 4,
+                    overflow: "hidden",
+                    marginBottom: 4,
+                  }}
+                >
+                  <div style={{ width: "7%", backgroundColor: "#10b981" }} title="Factory New (0.00 – 0.07)" />
+                  <div style={{ width: "8%", backgroundColor: "#84cc16" }} title="Minimal Wear (0.07 – 0.15)" />
+                  <div style={{ width: "23%", backgroundColor: "#eab308" }} title="Field-Tested (0.15 – 0.38)" />
+                  <div style={{ width: "7%", backgroundColor: "#f97316" }} title="Well-Worn (0.38 – 0.45)" />
+                  <div style={{ width: "55%", backgroundColor: "#ef4444" }} title="Battle-Scarred (0.45 – 1.00)" />
+                </div>
+
+                <input
+                  type="range"
+                  min={minFloat.toString()}
+                  max={maxFloat.toString()}
+                  step="0.005"
+                  value={customFloat}
+                  onChange={(e) => handleScrubberChange(parseFloat(e.target.value))}
+                  className="clutch-float-range-slider"
+                  style={{ width: "100%", cursor: "pointer" }}
+                />
+              </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, gap: 10 }}>
                 <div style={{ fontSize: 12, color: "#64748b" }}>
@@ -893,7 +1409,7 @@ export const SkinDetailOverview: FC<Props> = ({
             </div>
           </div>
 
-          {/* 3. Price History Chart & Statistics Suite */}
+          {/* 3. Price History Chart & Statistics Suite (DYNAMIC FOR 24h, 7d, 30d, 90d, 1y, All) */}
           <div className="clutch-chart-card">
             <div className="clutch-chart-header">
               <div>
@@ -901,8 +1417,10 @@ export const SkinDetailOverview: FC<Props> = ({
                   Price History & Statistics
                 </h4>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                  <span style={{ fontSize: 12, color: "#22c55e", fontWeight: 800 }}>▲ +$0.84 (+7.4%)</span>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>Past 30 days</span>
+                  <span style={{ fontSize: 12, color: priceHistoryStats.gainColor, fontWeight: 800 }}>
+                    {priceHistoryStats.gainLabel}
+                  </span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>{priceHistoryStats.periodText}</span>
                 </div>
               </div>
 
@@ -920,25 +1438,22 @@ export const SkinDetailOverview: FC<Props> = ({
               </div>
             </div>
 
-            {/* SVG Sparkline Price Trend Chart */}
+            {/* Dynamic SVG Sparkline Price Trend Chart */}
             <div className="clutch-svg-chart-stage">
               <svg viewBox="0 0 700 180" className="clutch-svg-chart" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#bef264" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#bef264" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="#c8f135" stopOpacity="0.32" />
+                    <stop offset="100%" stopColor="#c8f135" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
-                {/* Area Fill */}
+                {/* Dynamic Area Fill */}
+                <path d={priceHistoryStats.svgArea} fill="url(#chartGradient)" />
+                {/* Dynamic Trend Line */}
                 <path
-                  d="M 0 140 Q 70 120, 140 135 T 280 110 T 420 95 T 560 70 T 700 50 L 700 180 L 0 180 Z"
-                  fill="url(#chartGradient)"
-                />
-                {/* Trend Line */}
-                <path
-                  d="M 0 140 Q 70 120, 140 135 T 280 110 T 420 95 T 560 70 T 700 50"
+                  d={priceHistoryStats.svgLine}
                   fill="none"
-                  stroke="#bef264"
+                  stroke="#c8f135"
                   strokeWidth="3"
                   strokeLinecap="round"
                 />
@@ -949,19 +1464,19 @@ export const SkinDetailOverview: FC<Props> = ({
             <div className="clutch-kpi-grid">
               <div className="clutch-kpi-box">
                 <span className="kpi-label">All-Time High</span>
-                <span className="kpi-val">{money(activeBasePrice * 1.55)}</span>
+                <span className="kpi-val">{money(priceHistoryStats.high)}</span>
               </div>
               <div className="clutch-kpi-box">
                 <span className="kpi-label">All-Time Low</span>
-                <span className="kpi-val">{money(activeBasePrice * 0.65)}</span>
+                <span className="kpi-val">{money(priceHistoryStats.low)}</span>
               </div>
               <div className="clutch-kpi-box">
-                <span className="kpi-label">24h Volume</span>
-                <span className="kpi-val">2,291 units</span>
+                <span className="kpi-label">Volume</span>
+                <span className="kpi-val">{priceHistoryStats.volume}</span>
               </div>
               <div className="clutch-kpi-box">
                 <span className="kpi-label">Market Cap</span>
-                <span className="kpi-val">$2.4M</span>
+                <span className="kpi-val">{priceHistoryStats.marketCap}</span>
               </div>
             </div>
           </div>
@@ -975,7 +1490,9 @@ export const SkinDetailOverview: FC<Props> = ({
               {recommendedStickers.map((st, sIdx) => (
                 <div key={sIdx} className="clutch-sticker-item">
                   <img src={st.image} alt={st.name} className="clutch-sticker-img" />
-                  <div className="clutch-sticker-name" title={st.name}>{st.name}</div>
+                  <div className="clutch-sticker-name" title={st.name}>
+                    {st.name}
+                  </div>
                   <div className="clutch-sticker-price">from {money(st.priceUsd)}</div>
                 </div>
               ))}

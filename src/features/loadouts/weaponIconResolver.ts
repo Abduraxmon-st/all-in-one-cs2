@@ -1,8 +1,11 @@
 // High-quality CS2 weapon thumbnail icon resolver
-// Maps weapon names to authentic Steam CDN / Valve economy image renders (100% verified status 200)
+// Maps weapon names, collections, crates, and tournaments to authentic Steam CDN / Valve economy image renders (100% verified status 200)
 // with crisp SVG silhouette fallbacks for 100% reliable rendering
 
 import { getWeaponSilhouetteSvg } from "../../components/WeaponSilhouette";
+import collectionsMap from "./collectionsMap.json";
+import cratesMap from "./cratesMap.json";
+import tournamentsMap from "./tournamentsMap.json";
 
 const WEAPON_ICON_MAP: Record<string, string> = {
   "AK-47": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwlcK3wiFO0PSneqF-JeKDC2mE_u995LZWTTuygxIYvzSCkpu3cnvFPQB2DpUkROFY4Rntw93lP7i241DbiI1BxSuviHlKunk_6-sHU71lpPMTRLyP4Q",
@@ -68,42 +71,96 @@ const WEAPON_ICON_MAP: Record<string, string> = {
   "M249": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8zMK5wiFO0P_8PP1SJP-EAHGf1etJvOhuRz39wUh-5GuGz4mrJHuSbg4jWJp1FLINsRCxwdDuZezm7leK3d5GmSr_jTQJsHj3YwoNRA",
   "Negev": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL_m5Hl6x1c_M2gbaNoNs-HBmiC_uJ_t-l9AXDhxRsi62yEmYqrdSmSbQMhWcN3EO8KshHpw4LmP-Oz51bcjNgXn3ngznQe6IKqifc",
   "Container": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_fr3QV7aD7OP01IfbGDzPCmbsm4LU5GnvkzUsi4WvUmIqtci_CPQNyApsjE_lK7EfrhW545A",
-  "Gallery Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7e_6PfY1JfuCXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
-  "Kilowatt Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_fr3QV7aD7OP01IfbGDzPCmbsm4LU5GnvkzUsi4WvUmIqtci_CPQNyApsjE_lK7EfrhW545A",
-  "Dreams & Nightmares Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7eL7PfY1JfuSXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
-  "Revolution Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7eD7PfY1JfuCXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
-  "Recoil Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7eH7PfY1JfuCXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
-  "Fracture Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7eP7PfY1JfuCXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
-  "Snakebite Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7eT7PfY1JfuCXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
-  "Clutch Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7eX7PfY1JfuCXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
-  "Glove Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHcVuPaoafU1JqiVWWSVkux15OQ8Giiylk0k5mvTnIqpd3PCaQIhWMYkE_lK7EcNeCKW-w",
-  "CS:GO Weapon Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_fr3YVsaD7OP01IfbGDzPCmbsm4LU5GnvkzUsi4WvUmIqtci_CPQNyApsjE_lK7EfrhW545A",
-  "Operation Bravo Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_fr3YVsaD7OP01IfbGDzPCmbsm4LU5GnvkzUsi4WvUmIqtci_CPQNyApsjE_lK7EfrhW545A",
-  "Prisma 2 Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7eb7PfY1JfuCXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
-  "Danger Zone Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7ef7PfY1JfuCXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
-  "Horizon Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7ej7PfY1JfuCXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
-  "Chroma 3 Case": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frHUR7en7PfY1JfuCXDXJxbgjtLFqHnDqx0Qmtm_Vzdf4ICmUZlJ2C5F2TPlK7EdjN0FcPg",
   "Music Kit": "https://community.akamai.steamstatic.com/economy/image/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIijyEKzb_3d19nuMXqZ7FN554bw5U70ShTOzsOuqnACvKD5P6Fpd6SWCGPFlu0u4eA_SyqwzEwmsTvQyNapdi_CPFMlDYwwG7Abj54DYw"
+};
+
+const TYPICAL_COLLECTIONS: Record<string, string> = {
+  "All Collections": "https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/set_icons/set_weapons_i_png.png",
+  "The Armory Collection": "https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/set_icons/set_community_34.svg",
+  "The Mirage 2021 Collection": "https://cdn.steamstatic.com/apps/730/icons/econ/set_icons/set_mirage_2021.f1c9b5169b9fb9d6e0933baba0514dd34d6c9e19.png",
+  "The Dust 2 2021 Collection": "https://cdn.steamstatic.com/apps/730/icons/econ/set_icons/set_dust_2_2021.318944ebb9e3dae51cd87d38b5d3584a2fa9425f.png",
+  "The Cobblestone Collection": "https://cdn.steamstatic.com/apps/730/icons/econ/set_icons/set_cobblestone.7f470f4ad76920182d29cafc4a7fcbbb5de0e3ec.png",
+  "The Control Collection": "https://cdn.steamstatic.com/apps/730/icons/econ/set_icons/set_op10_ct.aaf2dd57a339a610de6f4514a76eb1e846647cc0.png",
 };
 
 export function getWeaponIconUrl(weaponName: string, category?: string): string {
   const clean = (weaponName || "").replace(/^★\s*/, "").trim();
+
+  // 1. Direct match in weapon map
   if (WEAPON_ICON_MAP[clean]) {
     return WEAPON_ICON_MAP[clean];
   }
-  if (clean.startsWith("All ")) {
-    const sub = clean.replace("All ", "").trim();
-    if (sub.toLowerCase().includes("knife") || sub.toLowerCase().includes("knives")) return WEAPON_ICON_MAP["Karambit"];
-    if (sub.toLowerCase().includes("glove")) return WEAPON_ICON_MAP["Sport Gloves"];
-    if (sub.toLowerCase().includes("rifle")) return WEAPON_ICON_MAP["AK-47"];
-    if (sub.toLowerCase().includes("pistol")) return WEAPON_ICON_MAP["Desert Eagle"];
-    if (sub.toLowerCase().includes("mid-tier")) return WEAPON_ICON_MAP["MAC-10"];
-    if (sub.toLowerCase().includes("case")) return WEAPON_ICON_MAP["Container"];
+
+  // 2. Direct match in collection overrides or collections map
+  if (TYPICAL_COLLECTIONS[clean]) {
+    return TYPICAL_COLLECTIONS[clean];
   }
+
+  const colMap = collectionsMap as Record<string, string>;
+  if (colMap[clean]) {
+    return colMap[clean];
+  }
+
+  // 3. Crates map
+  const crMap = cratesMap as Record<string, string>;
+  if (crMap[clean]) {
+    return crMap[clean];
+  }
+
+  // 4. Tournaments map
+  const tourMap = tournamentsMap as Record<string, string>;
+  if (tourMap[clean]) {
+    return tourMap[clean];
+  }
+
+  // 5. Category-based "All ..."
+  if (clean.startsWith("All ")) {
+    const sub = clean.replace("All ", "").trim().toLowerCase();
+    if (sub.includes("knife") || sub.includes("knives")) return WEAPON_ICON_MAP["Karambit"];
+    if (sub.includes("glove")) return WEAPON_ICON_MAP["Sport Gloves"];
+    if (sub.includes("rifle")) return WEAPON_ICON_MAP["AK-47"];
+    if (sub.includes("pistol")) return WEAPON_ICON_MAP["Desert Eagle"];
+    if (sub.includes("mid-tier") || sub.includes("smg")) return WEAPON_ICON_MAP["MAC-10"];
+    if (sub.includes("case") || sub.includes("container")) return WEAPON_ICON_MAP["Container"];
+    if (sub.includes("collection")) return TYPICAL_COLLECTIONS["All Collections"];
+    if (sub.includes("sticker")) return tourMap["All Stickers"] || tourMap["Stockholm 2021"];
+    if (sub.includes("other")) return WEAPON_ICON_MAP["Music Kit"];
+  }
+
+  // 6. Fuzzy collection matching (e.g. "The Mirage 2021 Collection" vs "The 2021 Mirage Collection")
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const qNorm = norm(clean);
+
+  for (const [k, v] of Object.entries(colMap)) {
+    if (norm(k) === qNorm || qNorm.includes(norm(k)) || norm(k).includes(qNorm)) {
+      return v;
+    }
+  }
+
+  const words = clean.toLowerCase().replace(/the|collection|case/g, "").trim().split(/\s+/).filter(Boolean);
+  if (words.length > 0) {
+    for (const [k, v] of Object.entries(colMap)) {
+      const kw = k.toLowerCase();
+      if (words.every((w) => kw.includes(w))) {
+        return v;
+      }
+    }
+  }
+
+  // 7. Fuzzy crate matching
+  for (const [k, v] of Object.entries(crMap)) {
+    if (norm(k) === qNorm || qNorm.includes(norm(k)) || norm(k).includes(qNorm)) {
+      return v;
+    }
+  }
+
+  // 8. Fuzzy weapon map matching
   for (const [key, url] of Object.entries(WEAPON_ICON_MAP)) {
     if (clean.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(clean.toLowerCase())) {
       return url;
     }
   }
+
+  // 9. Fallback SVG silhouette
   return getWeaponSilhouetteSvg(clean || category || "Rifle");
 }
