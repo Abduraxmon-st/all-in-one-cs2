@@ -1,4 +1,4 @@
-import { useState, useMemo, type FC } from "react";
+import { useState, useMemo, useRef, useEffect, type FC } from "react";
 import type { CSFloatItem, CurrencyCode } from "../features/loadouts/csfloatCatalogData";
 import { formatPrice, getCaseDetails } from "../features/loadouts/csfloatCatalogData";
 
@@ -12,22 +12,84 @@ interface Props {
   allSkins?: CSFloatItem[];
 }
 
-interface WearTierInfo {
+interface WearTierDef {
   tier: "FN" | "MW" | "FT" | "WW" | "BS";
   name: string;
   floatRange: string;
   multiplier: number;
+  min: number;
+  max: number;
+  defaultFloat: number;
 }
 
-const WEAR_TIERS: WearTierInfo[] = [
-  { tier: "FN", name: "Factory New", floatRange: "0.00 – 0.07", multiplier: 1.4 },
-  { tier: "MW", name: "Minimal Wear", floatRange: "0.07 – 0.15", multiplier: 1.15 },
-  { tier: "FT", name: "Field-Tested", floatRange: "0.15 – 0.38", multiplier: 0.95 },
-  { tier: "WW", name: "Well-Worn", floatRange: "0.38 – 0.45", multiplier: 0.82 },
-  { tier: "BS", name: "Battle-Scarred", floatRange: "0.45 – 1.00", multiplier: 0.70 },
+const ALL_WEAR_TIERS: WearTierDef[] = [
+  { tier: "FN", name: "Factory New", floatRange: "0.00 – 0.07", multiplier: 1.40, min: 0.00, max: 0.07, defaultFloat: 0.03 },
+  { tier: "MW", name: "Minimal Wear", floatRange: "0.07 – 0.15", multiplier: 1.15, min: 0.07, max: 0.15, defaultFloat: 0.10 },
+  { tier: "FT", name: "Field-Tested", floatRange: "0.15 – 0.38", multiplier: 0.95, min: 0.15, max: 0.38, defaultFloat: 0.22 },
+  { tier: "WW", name: "Well-Worn", floatRange: "0.38 – 0.45", multiplier: 0.82, min: 0.38, max: 0.45, defaultFloat: 0.41 },
+  { tier: "BS", name: "Battle-Scarred", floatRange: "0.45 – 1.00", multiplier: 0.70, min: 0.45, max: 1.00, defaultFloat: 0.65 },
 ];
 
 const TIMEFRAMES = ["24h", "7d", "30d", "90d", "1y", "All"] as const;
+
+const CRATE_RELEASE_DATES: Record<string, string> = {
+  "Gallery Case": "October 2, 2024",
+  "Kilowatt Case": "February 6, 2024",
+  "Revolution Case": "February 9, 2023",
+  "Recoil Case": "July 1, 2022",
+  "Dreams & Nightmares Case": "January 20, 2022",
+  "Operation Riptide Case": "September 21, 2021",
+  "Snakebite Case": "May 3, 2021",
+  "Operation Broken Fang Case": "December 3, 2020",
+  "Fracture Case": "August 6, 2020",
+  "Prisma 2 Case": "March 31, 2020",
+  "CS20 Case": "October 18, 2019",
+  "Prisma Case": "March 13, 2019",
+  "Danger Zone Case": "December 6, 2018",
+  "Horizon Case": "August 2, 2018",
+  "Clutch Case": "February 15, 2018",
+  "Spectrum 2 Case": "September 14, 2017",
+  "Operation Hydra Case": "May 23, 2017",
+  "Spectrum Case": "March 15, 2017",
+  "Glove Case": "November 28, 2016",
+  "Gamma 2 Case": "August 18, 2016",
+  "Gamma Case": "June 15, 2016",
+  "Chroma 3 Case": "April 27, 2016",
+  "Operation Wildfire Case": "February 17, 2016",
+  "Revolver Case": "December 8, 2015",
+  "Shadow Case": "September 17, 2015",
+  "Falchion Case": "May 26, 2015",
+  "Chroma 2 Case": "April 15, 2015",
+  "Chroma Case": "January 8, 2015",
+  "Operation Vanguard Weapon Case": "November 11, 2014",
+  "Operation Breakout Weapon Case": "July 1, 2014",
+  "Huntsman Weapon Case": "May 1, 2014",
+  "Operation Phoenix Weapon Case": "February 20, 2014",
+  "Winter Offensive Weapon Case": "December 18, 2013",
+  "Operation Bravo Case": "September 19, 2013",
+  "CS:GO Weapon Case": "August 14, 2013",
+};
+
+const PRO_PLAYERS_MAP: Record<string, string> = {
+  "AWP": "s1mple, m0NESY, ZywOo, dev1ce, and kennyS",
+  "AK-47": "NiKo, b1t, Ax1Le, electroNic, and Twistzz",
+  "M4A1-S": "blameF, ropz, frozen, and EliGE",
+  "M4A4": "ZywOo, rain, Twistzz, and cadiaN",
+  "Desert Eagle": "NiKo, donk, Twistzz, and broky",
+  "USP-S": "broky, ropz, blameF, and Perfecto",
+  "Glock-18": "donk, ZywOo, electroNic, and apEX",
+  "MP9": "donk, b1t, jks, and frozen",
+  "MAC-10": "arT, blameF, stavn, and jabbi",
+  "Galil AR": "b1t, frozen, ropz, and flameZ",
+  "FAMAS": "ZywOo, rain, spinx, and NiKo",
+  "SSG 08": "m0NESY, s1mple, hallzerk, and dev1ce",
+};
+
+function getCsgoskinsSlug(weapon: string, skin: string): string {
+  const cleanWeapon = weapon.replace(/[★™]/g, "").trim().toLowerCase().replace(/\s+/g, "-");
+  const cleanSkin = skin.replace(/[★™]/g, "").trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  return `${cleanWeapon}-${cleanSkin}`;
+}
 
 export const SkinDetailOverview: FC<Props> = ({
   skin,
@@ -38,109 +100,147 @@ export const SkinDetailOverview: FC<Props> = ({
   onSelectSkin,
   allSkins = [],
 }) => {
-  const [activeVariant, setActiveVariant] = useState<"normal" | "stattrak" | "souvenir">("normal");
-  const [selectedWear, setSelectedWear] = useState<"FN" | "MW" | "FT" | "WW" | "BS">(skin.wearTier || "FN");
+  const minFloat = skin.minFloat !== undefined ? skin.minFloat : 0.00;
+  const maxFloat = skin.maxFloat !== undefined ? skin.maxFloat : 1.00;
+
+  // Active Variant: normal, stattrak, souvenir
+  const [activeVariant, setActiveVariant] = useState<"normal" | "stattrak" | "souvenir">(
+    skin.isStatTrak ? "stattrak" : skin.isSouvenir ? "souvenir" : "normal"
+  );
+
+  // Initial wear tier: find the best valid tier
+  const initialTier = useMemo<"FN" | "MW" | "FT" | "WW" | "BS">(() => {
+    for (const t of ALL_WEAR_TIERS) {
+      if (t.max > minFloat && t.min < maxFloat) return t.tier;
+    }
+    return "FN";
+  }, [minFloat, maxFloat]);
+
+  const [selectedWear, setSelectedWear] = useState<"FN" | "MW" | "FT" | "WW" | "BS">(initialTier);
+
+  // Float value for the scrubber studio
+  const initialFloat = useMemo(() => {
+    const tierDef = ALL_WEAR_TIERS.find((w) => w.tier === initialTier);
+    if (!tierDef) return Math.max(minFloat, 0.03);
+    return Math.min(Math.max(tierDef.defaultFloat, minFloat), maxFloat);
+  }, [initialTier, minFloat, maxFloat]);
+
+  const [customFloat, setCustomFloat] = useState<number>(initialFloat);
+
   const [offersTab, setOffersTab] = useState<"BUY" | "SELL" | "TRADE">("BUY");
   const [activeTimeframe, setActiveTimeframe] = useState<string>("30d");
-  const [customFloat, setCustomFloat] = useState<number>(skin.floatValue || 0.15);
   const [studioMode, setStudioMode] = useState<"wear" | "3d">("wear");
   const [userRating, setUserRating] = useState<number>(5);
 
+  // Webm Video Engine from csgoskins.gg
+  const [videoAvailable, setVideoAvailable] = useState<boolean>(true);
+  const [videoLoaded, setVideoLoaded] = useState<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoSlug = useMemo(() => getCsgoskinsSlug(skin.weaponName, skin.skinName), [skin.weaponName, skin.skinName]);
+  const videoUrl = `https://cdn.csgoskins.gg/public/videos/floats/v3/embedding/${videoSlug}.webm`;
+
   const money = (usd: number) => formatPrice(usd, currency);
 
-  // Variant multiplier
-  const variantMultiplier = activeVariant === "stattrak" ? 1.45 : activeVariant === "souvenir" ? 1.6 : 1.0;
+  // Sync customFloat with video current frame
+  useEffect(() => {
+    if (videoRef.current && videoLoaded && videoRef.current.duration) {
+      const dur = videoRef.current.duration;
+      const targetTime = Math.min(Math.max(0, customFloat * dur), dur - 0.05);
+      videoRef.current.currentTime = targetTime;
+    }
+  }, [customFloat, videoLoaded]);
 
-  // Selected wear multiplier
-  const currentWearInfo = WEAR_TIERS.find((w) => w.tier === selectedWear) || WEAR_TIERS[0];
-  const activeBasePrice = skin.priceUsd * currentWearInfo.multiplier * variantMultiplier;
+  // Variant Multiplier
+  const variantMultiplier = activeVariant === "stattrak" ? 1.55 : activeVariant === "souvenir" ? 1.70 : 1.0;
 
-  // Case & Collection Info
+  // Selected wear tier definition
+  const currentWearDef = ALL_WEAR_TIERS.find((w) => w.tier === selectedWear) || ALL_WEAR_TIERS[0];
+  const activeBasePrice = skin.priceUsd * currentWearDef.multiplier * variantMultiplier;
+
+  // Case details
   const caseDetails = useMemo(() => getCaseDetails(skin), [skin]);
+  const primaryCrate = skin.crateName || (skin.crates && skin.crates[0]?.name) || caseDetails?.caseName || "CS2 Weapon Case";
+  const primaryCollection = skin.collectionName || (skin.collections && skin.collections[0]?.name) || "The CS2 Armory & Major Collections";
 
-  // Dynamic wear table prices
-  const wearPrices = useMemo(() => {
-    return WEAR_TIERS.map((tier) => {
+  const releaseDate = useMemo(() => {
+    if (CRATE_RELEASE_DATES[primaryCrate]) return CRATE_RELEASE_DATES[primaryCrate];
+    if (caseDetails?.releaseDate) return caseDetails.releaseDate;
+    return "March 22, 2023";
+  }, [primaryCrate, caseDetails]);
+
+  // Dynamic wear degradation CSS filter
+  const wearFilter = useMemo(() => {
+    const f = Math.min(1.0, Math.max(0.0, customFloat));
+    const brightness = Math.round((1.0 - f * 0.22) * 100);
+    const contrast = Math.round((1.0 + f * 0.16) * 100);
+    const saturate = Math.round((1.0 - f * 0.28) * 100);
+    const sepia = Math.round(f * 20);
+    return `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturate}%) sepia(${sepia}%) drop-shadow(0 12px 24px rgba(0, 0, 0, 0.85))`;
+  }, [customFloat]);
+
+  // Dynamic wear table prices and validity
+  const wearTable = useMemo(() => {
+    return ALL_WEAR_TIERS.map((tier) => {
+      const isSupported = tier.max > minFloat && tier.min < maxFloat;
       const explicit = skin.wearPrices?.find((wp) => wp.wear === tier.tier);
       const base = explicit ? explicit.price : skin.priceUsd * tier.multiplier;
       const price = base * variantMultiplier;
       return {
         ...tier,
+        isSupported,
         price,
       };
     });
-  }, [skin, variantMultiplier]);
+  }, [skin, minFloat, maxFloat, variantMultiplier]);
 
-  // Market offers based on active wear and variant
-  const marketOffers = useMemo(() => {
-    const isSlate = skin.skinName === "Slate";
-    const isFN = selectedWear === "FN";
-    const isNormal = activeVariant === "normal";
+  // Derive wear tier label from custom float
+  const currentFloatTier = useMemo(() => {
+    if (customFloat < 0.07) return { label: "Factory New", badge: "FN" as const };
+    if (customFloat < 0.15) return { label: "Minimal Wear", badge: "MW" as const };
+    if (customFloat < 0.38) return { label: "Field-Tested", badge: "FT" as const };
+    if (customFloat < 0.45) return { label: "Well-Worn", badge: "WW" as const };
+    return { label: "Battle-Scarred", badge: "BS" as const };
+  }, [customFloat]);
 
-    if (isSlate && isFN && isNormal) {
-      return [
-        {
-          id: "csmoney",
-          market: "CS.MONEY",
-          rating: 4.7,
-          reviews: "9.2K reviews",
-          activeOffers: "416",
-          price: 12.13,
-          promoted: true,
-          logoBg: "#ec4899",
-        },
-        {
-          id: "dmarket",
-          market: "DMarket",
-          rating: 3.9,
-          reviews: "22.2K reviews",
-          activeOffers: "283",
-          price: 11.74,
-          promoted: false,
-          logoBg: "#10b981",
-        },
-        {
-          id: "ntskins",
-          market: "NTSkins",
-          rating: 3.8,
-          reviews: "15 reviews",
-          activeOffers: "1.5K",
-          price: 11.82,
-          promoted: false,
-          logoBg: "#8b5cf6",
-        },
-        {
-          id: "csfloat",
-          market: "CSFloat",
-          rating: 4.8,
-          reviews: "9.9K reviews",
-          activeOffers: "1.1K",
-          price: 12.04,
-          bestValue: true,
-          promoted: false,
-          logoBg: "#3b82f6",
-        },
-        {
-          id: "skinvault",
-          market: "Skinvault",
-          rating: 4.2,
-          reviews: "213 reviews",
-          activeOffers: "203",
-          price: 12.10,
-          promoted: false,
-          logoBg: "#f59e0b",
-        },
-      ];
+  // Update selected wear tier when scrubbing float
+  const handleScrubberChange = (val: number) => {
+    setCustomFloat(val);
+    let matchedTier: "FN" | "MW" | "FT" | "WW" | "BS" = "FN";
+    if (val < 0.07) matchedTier = "FN";
+    else if (val < 0.15) matchedTier = "MW";
+    else if (val < 0.38) matchedTier = "FT";
+    else if (val < 0.45) matchedTier = "WW";
+    else matchedTier = "BS";
+
+    const isSupported = matchedTier !== "FN" || (0.07 > minFloat && 0.00 < maxFloat);
+    if (isSupported) {
+      setSelectedWear(matchedTier);
     }
+  };
 
-    const currentWearPrice = wearPrices.find((w) => w.tier === selectedWear)?.price || activeBasePrice;
+  // When clicking a wear row, update float and wear
+  const handleSelectWearRow = (tier: WearTierDef, isSupported: boolean) => {
+    if (!isSupported) {
+      notify(`${skin.skinName} does not exist in ${tier.name} condition (Float range: ${minFloat.toFixed(2)} – ${maxFloat.toFixed(2)})`);
+      return;
+    }
+    setSelectedWear(tier.tier);
+    const targetFloat = Math.min(Math.max(tier.defaultFloat, minFloat), maxFloat);
+    setCustomFloat(targetFloat);
+  };
+
+  // Dynamic live market offers calculated for this skin and chosen wear
+  const marketOffers = useMemo(() => {
+    const currentWearPrice = wearTable.find((w) => w.tier === selectedWear)?.price || activeBasePrice;
+    const seed = skin.paintSeed || skin.finishCatalog || 100;
+
     return [
       {
         id: "csmoney",
         market: "CS.MONEY",
         rating: 4.7,
         reviews: "9.2K reviews",
-        activeOffers: `${Math.floor((skin.paintSeed % 300) + 250)}`,
+        activeOffers: `${Math.floor((seed % 280) + 180)}`,
         price: currentWearPrice * 1.033,
         promoted: true,
         logoBg: "#ec4899",
@@ -150,8 +250,9 @@ export const SkinDetailOverview: FC<Props> = ({
         market: "DMarket",
         rating: 3.9,
         reviews: "22.2K reviews",
-        activeOffers: `${Math.floor((skin.paintSeed % 200) + 180)}`,
-        price: currentWearPrice * 1.00,
+        activeOffers: `${Math.floor((seed % 190) + 120)}`,
+        price: currentWearPrice * 0.985,
+        bestValue: true,
         promoted: false,
         logoBg: "#10b981",
       },
@@ -160,8 +261,8 @@ export const SkinDetailOverview: FC<Props> = ({
         market: "NTSkins",
         rating: 3.8,
         reviews: "15 reviews",
-        activeOffers: "1.5K",
-        price: currentWearPrice * 1.007,
+        activeOffers: `${Math.floor((seed % 150) + 90)}`,
+        price: currentWearPrice * 0.995,
         promoted: false,
         logoBg: "#8b5cf6",
       },
@@ -170,9 +271,8 @@ export const SkinDetailOverview: FC<Props> = ({
         market: "CSFloat",
         rating: 4.8,
         reviews: "9.9K reviews",
-        activeOffers: "1.1K",
-        price: currentWearPrice * 1.025,
-        bestValue: true,
+        activeOffers: `${Math.floor((seed % 350) + 210)}`,
+        price: currentWearPrice * 1.01,
         promoted: false,
         logoBg: "#3b82f6",
       },
@@ -181,13 +281,27 @@ export const SkinDetailOverview: FC<Props> = ({
         market: "Skinvault",
         rating: 4.2,
         reviews: "213 reviews",
-        activeOffers: `${Math.floor((skin.paintSeed % 120) + 90)}`,
-        price: currentWearPrice * 1.03,
+        activeOffers: `${Math.floor((seed % 110) + 60)}`,
+        price: currentWearPrice * 1.02,
         promoted: false,
         logoBg: "#f59e0b",
       },
     ];
-  }, [skin, activeBasePrice, selectedWear, activeVariant, wearPrices]);
+  }, [skin, activeBasePrice, selectedWear, wearTable]);
+
+  // Dominant palette colors
+  const paletteColors = useMemo(() => {
+    if (skin.primaryColors && skin.primaryColors.length > 0) return skin.primaryColors;
+    const name = skin.skinName.toLowerCase();
+    if (name.includes("slate") || name.includes("black") || name.includes("dark")) return ["#111111", "#222222", "#3a3a3a"];
+    if (name.includes("asiimov") || name.includes("blaze") || name.includes("tiger")) return ["#ff6600", "#ffffff", "#1e1e1e"];
+    if (name.includes("fade") || name.includes("disco") || name.includes("neon")) return ["#a855f7", "#ec4899", "#eab308"];
+    if (name.includes("bloodsport") || name.includes("redline") || name.includes("crimson")) return ["#dc2626", "#111111", "#f8fafc"];
+    if (name.includes("emerald") || name.includes("green") || name.includes("moss")) return ["#10b981", "#065f46", "#bef264"];
+    if (name.includes("blue") || name.includes("phosphor") || name.includes("vulcan") || name.includes("cobalt")) return ["#3b82f6", "#1e3a8a", "#93c5fd"];
+    if (name.includes("gold") || name.includes("brass") || name.includes("lore")) return ["#eab308", "#854d0e", "#fef08a"];
+    return ["#64748b", "#334155", "#0f172a"];
+  }, [skin]);
 
   // Similar skins for the same weapon
   const similarSkins = useMemo(() => {
@@ -196,7 +310,7 @@ export const SkinDetailOverview: FC<Props> = ({
       .slice(0, 6);
   }, [allSkins, skin]);
 
-  // Recommended stickers for this skin
+  // Recommended stickers
   const recommendedStickers = useMemo(() => {
     return [
       {
@@ -222,10 +336,30 @@ export const SkinDetailOverview: FC<Props> = ({
     ];
   }, []);
 
+  // Drop Chance Funnel calculation
+  const rarityOdds = useMemo(() => {
+    const r = (skin.rarity || "").toLowerCase();
+    if (r.includes("covert")) return { tier: "Covert Tier: 0.64%", item: `${skin.skinName}: ~0.32% (1 in 312)` };
+    if (r.includes("extraordinary")) return { tier: "Special Rare Tier: 0.26%", item: `${skin.skinName}: ~0.08% (1 in 1,250)` };
+    if (r.includes("classified")) return { tier: "Classified Tier: 3.20%", item: `${skin.skinName}: ~1.06% (1 in 94)` };
+    if (r.includes("restricted")) return { tier: "Restricted Tier: 15.98%", item: `${skin.skinName}: ~3.20% (1 in 31)` };
+    return { tier: "Mil-Spec Tier: 79.92%", item: `${skin.skinName}: ~11.41% (1 in 9)` };
+  }, [skin]);
+
+  // Pro ownership text
+  const proPlayersText = useMemo(() => {
+    for (const [wep, pros] of Object.entries(PRO_PLAYERS_MAP)) {
+      if (skin.weaponName.toLowerCase().includes(wep.toLowerCase())) return pros;
+    }
+    if (skin.category === "KNIVES") return "m0NESY, s1mple, NiKo, ropz, and dev1ce";
+    if (skin.category === "GLOVES") return "donk, m0NESY, s1mple, and ZywOo";
+    return "tier-1 Valve Major professionals and Premier 20k+ competitors";
+  }, [skin]);
+
   const handleCopyInspect = () => {
     const url =
       skin.inspectLink ||
-      `steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20S76561198000000000A${skin.paintSeed}D0`;
+      `steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20S76561198000000000A${skin.paintSeed || 100}D0`;
     navigator.clipboard.writeText(url).catch(() => {});
     notify(`CS2 inspect command copied! Launching game client...`);
     window.location.href = url;
@@ -243,19 +377,10 @@ export const SkinDetailOverview: FC<Props> = ({
   };
 
   const handleCopyGenCode = () => {
-    const genCode = `!gen 730 ${skin.weaponName} ${skin.finishCatalog ?? 1035} ${skin.paintSeed} ${customFloat.toFixed(8)}`;
+    const genCode = `!gen 730 ${skin.weaponName} ${skin.finishCatalog ?? 100} ${skin.paintSeed || 100} ${customFloat.toFixed(8)}`;
     navigator.clipboard.writeText(genCode).catch(() => {});
     notify(`CS2 inspect gen-code copied: ${genCode}`);
   };
-
-  // Derive wear tier label from custom float
-  const currentFloatTier = useMemo(() => {
-    if (customFloat < 0.07) return { label: "Factory New", badge: "FN" };
-    if (customFloat < 0.15) return { label: "Minimal Wear", badge: "MW" };
-    if (customFloat < 0.38) return { label: "Field-Tested", badge: "FT" };
-    if (customFloat < 0.45) return { label: "Well-Worn", badge: "WW" };
-    return { label: "Battle-Scarred", badge: "BS" };
-  }, [customFloat]);
 
   return (
     <section className="clutch-skin-detail-section">
@@ -272,13 +397,13 @@ export const SkinDetailOverview: FC<Props> = ({
               {skin.rarity} {skin.category.replace(/S$/, "")}
             </span>
             <span className="clutch-case-pill">
-              📦 {skin.collectionName || caseDetails?.caseName || "Weapon Case"}
+              📦 {primaryCrate}
             </span>
             <span className="clutch-meta-pill">
               Quality: {activeVariant === "stattrak" ? "StatTrak™" : activeVariant === "souvenir" ? "Souvenir" : "Normal"}
             </span>
             <span className="clutch-meta-pill">
-              Paint #{skin.finishCatalog ?? 1035} · Float: {skin.minFloat ?? 0.00} – {skin.maxFloat ?? 1.00}
+              Paint #{skin.finishCatalog ?? skin.paintSeed ?? 100} · Float: {minFloat.toFixed(2)} – {maxFloat.toFixed(2)}
             </span>
           </div>
         </div>
@@ -341,14 +466,44 @@ export const SkinDetailOverview: FC<Props> = ({
             </button>
           </div>
 
-          {/* Large Skin Render Stage */}
+          {/* Large Skin Render Stage with Dynamic Visual Wear Engine */}
           <div className="clutch-skin-stage">
-            <img
-              src={skin.imageUrl}
-              alt={skin.marketHashName}
-              className="clutch-skin-big-img"
-              loading="eager"
-            />
+            {videoAvailable ? (
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                playsInline
+                muted
+                preload="auto"
+                className="clutch-skin-video-frame"
+                style={{
+                  filter: wearFilter,
+                }}
+                onError={() => setVideoAvailable(false)}
+                onLoadedMetadata={() => setVideoLoaded(true)}
+              />
+            ) : (
+              <img
+                src={skin.imageUrl}
+                alt={skin.marketHashName}
+                className="clutch-skin-big-img"
+                style={{
+                  filter: wearFilter,
+                }}
+                loading="eager"
+              />
+            )}
+
+            {/* Abrasive Scratches & Oxidation Overlay */}
+            {customFloat > 0.08 && (
+              <div
+                className="clutch-wear-abrasion-overlay"
+                style={{
+                  opacity: Math.min(0.72, (customFloat - 0.08) * 0.85),
+                }}
+              />
+            )}
+
             {skin.fadePercentage !== undefined && (
               <div className="clutch-fade-tag">{skin.fadePercentage}% Fade</div>
             )}
@@ -358,6 +513,14 @@ export const SkinDetailOverview: FC<Props> = ({
             {activeVariant === "souvenir" && (
               <div className="clutch-souvenir-tag">Souvenir</div>
             )}
+
+            {/* Float badge indicator on stage */}
+            <div className="clutch-stage-wear-badge">
+              <span className={`wear-pill wear-${currentFloatTier.badge.toLowerCase()}`}>
+                {currentFloatTier.badge}
+              </span>
+              <span>Float: {customFloat.toFixed(4)}</span>
+            </div>
           </div>
 
           {/* Variant Selector Tabs */}
@@ -387,14 +550,15 @@ export const SkinDetailOverview: FC<Props> = ({
 
           {/* Wear & Float Pricing Breakdown Table */}
           <div className="clutch-wear-table">
-            {wearPrices.map((tier) => {
+            {wearTable.map((tier) => {
               const isSelected = selectedWear === tier.tier;
 
               return (
                 <div
                   key={tier.tier}
-                  className={`clutch-wear-row ${isSelected ? "active" : ""}`}
-                  onClick={() => setSelectedWear(tier.tier)}
+                  className={`clutch-wear-row ${isSelected ? "active" : ""} ${!tier.isSupported ? "disabled" : ""}`}
+                  onClick={() => handleSelectWearRow(tier, tier.isSupported)}
+                  title={tier.isSupported ? `Select ${tier.name}` : `Not available on ${skin.skinName}`}
                 >
                   <div className="clutch-wear-left">
                     <span className={`clutch-wear-badge wear-${tier.tier.toLowerCase()}`}>
@@ -405,7 +569,9 @@ export const SkinDetailOverview: FC<Props> = ({
                       <span className="clutch-wear-float">{tier.floatRange}</span>
                     </div>
                   </div>
-                  <div className="clutch-wear-price">{money(tier.price)}</div>
+                  <div className="clutch-wear-price">
+                    {tier.isSupported ? money(tier.price) : <span style={{ color: "#64748b", fontSize: 11 }}>N/A</span>}
+                  </div>
                 </div>
               );
             })}
@@ -417,7 +583,15 @@ export const SkinDetailOverview: FC<Props> = ({
             <div className="clutch-meta-kv-grid">
               <div className="clutch-meta-kv-row">
                 <span className="kv-label">Category</span>
-                <span className="kv-val">Weapon Skins</span>
+                <span className="kv-val">
+                  {skin.category === "KNIVES"
+                    ? "Knife"
+                    : skin.category === "GLOVES"
+                    ? "Gloves"
+                    : skin.category === "CASES"
+                    ? "Container"
+                    : "Weapon Skins"}
+                </span>
               </div>
               <div className="clutch-meta-kv-row">
                 <span className="kv-label">Weapon</span>
@@ -429,19 +603,25 @@ export const SkinDetailOverview: FC<Props> = ({
               </div>
               <div className="clutch-meta-kv-row">
                 <span className="kv-label">Finish Style</span>
-                <span className="kv-val">{skin.finishStyle || "Gunsmith"}</span>
+                <span className="kv-val">{skin.finishStyle || "Custom Paint Job"}</span>
               </div>
               <div className="clutch-meta-kv-row">
                 <span className="kv-label">Released</span>
-                <span className="kv-val">{caseDetails?.releaseDate || "May 3, 2021"}</span>
+                <span className="kv-val">{releaseDate}</span>
               </div>
               <div className="clutch-meta-kv-row">
                 <span className="kv-label">Finish Catalog</span>
-                <span className="kv-val">#{skin.finishCatalog ?? 1035}</span>
+                <span className="kv-val">#{skin.finishCatalog ?? skin.paintSeed ?? 100}</span>
               </div>
               <div className="clutch-meta-kv-row">
                 <span className="kv-label">Popularity</span>
-                <span className="kv-val" style={{ color: "#bef264", fontWeight: 800 }}>100% (High Demand)</span>
+                <span className="kv-val" style={{ color: "#bef264", fontWeight: 800 }}>
+                  {skin.rarity === "Covert" || skin.rarity === "Extraordinary"
+                    ? "98% (Extremely High)"
+                    : skin.rarity === "Classified"
+                    ? "88% (High Demand)"
+                    : "75% (Moderate Demand)"}
+                </span>
               </div>
             </div>
           </div>
@@ -450,17 +630,37 @@ export const SkinDetailOverview: FC<Props> = ({
           <div className="clutch-meta-card">
             <div className="clutch-meta-card-title">Container & Collection</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div className="clutch-container-row-item">
-                <span style={{ fontSize: 24 }}>📦</span>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#f8fafc" }}>
-                    {skin.collectionName || caseDetails?.caseName || "Snakebite Case"}
+              {skin.crates && skin.crates.length > 0 ? (
+                skin.crates.map((cr: any, cIdx: number) => (
+                  <div key={cIdx} className="clutch-container-row-item">
+                    {cr.image ? (
+                      <img src={cr.image} alt={cr.name} style={{ width: 36, height: 36, objectFit: "contain" }} />
+                    ) : (
+                      <span style={{ fontSize: 24 }}>📦</span>
+                    )}
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: "#f8fafc" }}>
+                        {cr.name}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                        Official CS2 Weapon Container · Requires Standard Key
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                    Case Price: {money(caseDetails?.casePriceUsd || 0.85)} · Key: {money(caseDetails?.keyPriceUsd || 2.49)}
+                ))
+              ) : (
+                <div className="clutch-container-row-item">
+                  <span style={{ fontSize: 24 }}>📦</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#f8fafc" }}>
+                      {primaryCrate}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                      Collection: {primaryCollection}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -469,18 +669,28 @@ export const SkinDetailOverview: FC<Props> = ({
             <div className="clutch-meta-card-title">Color Palette & Liquidity</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
               <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700 }}>Dominant Colors:</span>
-              <span className="clutch-palette-circle" style={{ backgroundColor: "#1e1e1e" }} title="Matte Black" />
-              <span className="clutch-palette-circle" style={{ backgroundColor: "#2e2e2e" }} title="Dark Charcoal" />
-              <span className="clutch-palette-circle" style={{ backgroundColor: "#404040" }} title="Slate Gray" />
+              {paletteColors.map((col, cIdx) => (
+                <span
+                  key={cIdx}
+                  className="clutch-palette-circle"
+                  style={{ backgroundColor: col }}
+                  title={`Color: ${col}`}
+                />
+              ))}
             </div>
 
             <div className="clutch-liquidity-bar-wrap">
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
                 <span style={{ color: "#94a3b8", fontWeight: 700 }}>Liquidity Rating:</span>
-                <strong style={{ color: "#bef264" }}>93% (Very High)</strong>
+                <strong style={{ color: "#bef264" }}>
+                  {skin.rarity === "Covert" || skin.rarity === "Extraordinary" ? "95% (Very High)" : "82% (High)"}
+                </strong>
               </div>
               <div className="clutch-liquidity-track">
-                <div className="clutch-liquidity-fill" style={{ width: "93%" }} />
+                <div
+                  className="clutch-liquidity-fill"
+                  style={{ width: skin.rarity === "Covert" || skin.rarity === "Extraordinary" ? "95%" : "82%" }}
+                />
               </div>
             </div>
           </div>
@@ -495,11 +705,11 @@ export const SkinDetailOverview: FC<Props> = ({
               </div>
               <div className="funnel-step">
                 <span className="funnel-dot" />
-                <span className="funnel-label">{skin.rarity} Tier: 15.98%</span>
+                <span className="funnel-label">{rarityOdds.tier}</span>
               </div>
               <div className="funnel-step">
                 <span className="funnel-dot active" />
-                <span className="funnel-label active">{skin.skinName}: ~3.20% (1 in 31)</span>
+                <span className="funnel-label active">{rarityOdds.item}</span>
               </div>
             </div>
           </div>
@@ -512,7 +722,9 @@ export const SkinDetailOverview: FC<Props> = ({
                 <div style={{ fontSize: 24, fontWeight: 900, color: "#f8fafc" }}>
                   4.8 <span style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>/ 5.0</span>
                 </div>
-                <div style={{ fontSize: 11, color: "#64748b" }}>Based on 1,742 verified community reviews</div>
+                <div style={{ fontSize: 11, color: "#64748b" }}>
+                  Based on {Math.floor((skin.paintSeed || 100) * 3 + 850)} verified community reviews
+                </div>
               </div>
               <div className="clutch-star-widget">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -655,22 +867,25 @@ export const SkinDetailOverview: FC<Props> = ({
 
             <div style={{ padding: "16px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 8, color: "#94a3b8" }}>
-                <span>Float Scrubber (0.00 Factory New to 1.00 Battle-Scarred)</span>
+                <span>
+                  Float Scrubber ({minFloat.toFixed(2)} {currentFloatTier.label} to {maxFloat.toFixed(2)} Battle-Scarred)
+                </span>
                 <strong style={{ color: "#bef264" }}>{currentFloatTier.label}</strong>
               </div>
               <input
                 type="range"
-                min="0.00"
-                max="1.00"
+                min={minFloat.toString()}
+                max={maxFloat.toString()}
                 step="0.005"
                 value={customFloat}
-                onChange={(e) => setCustomFloat(parseFloat(e.target.value))}
+                onChange={(e) => handleScrubberChange(parseFloat(e.target.value))}
                 className="clutch-float-range-slider"
               />
 
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, gap: 10 }}>
                 <div style={{ fontSize: 12, color: "#64748b" }}>
-                  Seed: <strong style={{ color: "#cbd5e1" }}>{skin.paintSeed}</strong>
+                  Seed: <strong style={{ color: "#cbd5e1" }}>{skin.paintSeed || 100}</strong> · Paint Catalog:{" "}
+                  <strong style={{ color: "#cbd5e1" }}>#{skin.finishCatalog ?? 100}</strong>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
@@ -790,25 +1005,33 @@ export const SkinDetailOverview: FC<Props> = ({
             </h4>
             <p className="clutch-trivia-desc">
               {skin.description ||
-                "It has been custom painted with a matte black finish. Call it whatever you want, as long as it's black."}
+                `Powerful and reliable, the ${skin.weaponName} is one of the most iconic weapons in Counter-Strike 2. This finish features a custom application of ${skin.skinName}.`}
             </p>
 
             <div className="clutch-facts-grid">
               <div className="clutch-fact-box">
                 <strong>Origin & History</strong>
-                <span>Released on May 3rd, 2021 as part of the Snakebite Case alongside Operation Broken Fang.</span>
+                <span>
+                  First released on {releaseDate} as part of {primaryCrate} ({primaryCollection}).
+                </span>
               </div>
               <div className="clutch-fact-box">
                 <strong>Finish Style</strong>
-                <span>Gunsmith matte finish. At higher float values, the patina darkens without peeling off paint.</span>
+                <span>
+                  {skin.finishStyle || "Custom Paint Job"} finish. Float spectrum is strictly bounded between {minFloat.toFixed(2)} and {maxFloat.toFixed(2)}.
+                </span>
               </div>
               <div className="clutch-fact-box">
                 <strong>Rarity & Odds</strong>
-                <span>Restricted classification with an estimated 3.20% drop probability per case unboxing.</span>
+                <span>
+                  {skin.rarity} tier item with an unboxing probability of {rarityOdds.tier.split(":")[1] || "3.20%"}.
+                </span>
               </div>
               <div className="clutch-fact-box">
                 <strong>Pro Ownership</strong>
-                <span>Owned and actively fielded in tier-1 Valve majors by pro riflers s1mple, NiKo, and m0NESY.</span>
+                <span>
+                  Favored and actively fielded in Valve tier-1 tournaments by {proPlayersText}.
+                </span>
               </div>
             </div>
           </div>

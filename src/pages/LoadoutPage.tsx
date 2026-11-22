@@ -193,7 +193,18 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
       result = result.filter((i) => {
         const itemWep = i.weaponName.replace(/[★™\s]/g, "").toLowerCase();
         const itemHash = i.marketHashName.replace(/[★™\s]/g, "").toLowerCase();
-        return itemWep === wepClean || itemWep.includes(wepClean) || itemHash.startsWith(wepClean);
+        const itemSkin = (i.skinName || "").replace(/[★™\s]/g, "").toLowerCase();
+        const itemCrate = (i.crateName || "").replace(/[★™\s]/g, "").toLowerCase();
+        const inCrates = i.crates && i.crates.some((c: any) => c.name && c.name.replace(/[★™\s]/g, "").toLowerCase().includes(wepClean));
+        return (
+          itemWep === wepClean ||
+          itemWep.includes(wepClean) ||
+          itemSkin.includes(wepClean) ||
+          itemHash.startsWith(wepClean) ||
+          itemHash.includes(wepClean) ||
+          itemCrate.includes(wepClean) ||
+          inCrates
+        );
       });
     } else if (activeMegaCategory) {
       const cat = activeMegaCategory.toLowerCase();
@@ -299,16 +310,23 @@ export default function LoadoutPage({ budget: _budget, setBudget: _setBudget, no
   }, [displayedSkins, currentPage]);
 
   // Hero Section Dynamic Information (Matching Photo 2)
+  const isCaseCategory = activeMegaCategory === "Containers" || activeMegaCategory === "Cases";
   const activeHeroTitle =
     selectedSubWeapon !== "All"
-      ? `${selectedSubWeapon} Skins`
+      ? selectedSubWeapon.includes("Case") || selectedSubWeapon.includes("Package") || selectedSubWeapon.includes("Capsule")
+        ? selectedSubWeapon
+        : `${selectedSubWeapon} Skins`
+      : isCaseCategory
+      ? "CS2 Weapon Cases & Containers"
       : activeMegaCategory
       ? `${activeMegaCategory} Skins`
       : "All CS2 Skins";
 
   const activeHeroDescription =
     selectedSubWeapon !== "All"
-      ? `Buy, sell & trade all ${selectedSubWeapon} skins for CS2. Compare real-time market offers, wear float spectrums, and pattern variations across 7 top marketplaces.`
+      ? `Buy, sell & trade all ${selectedSubWeapon} items for CS2. Compare real-time market offers, wear float spectrums, and pattern variations across 7 top marketplaces.`
+      : isCaseCategory
+      ? "Explore all 480+ official CS2 weapon cases, souvenir packages, sticker capsules, and containers with live market prices and contained skin drops."
       : activeMegaCategory
       ? `Explore all CS2 ${activeMegaCategory} finishes, Doppler phases, wear spectrums, and live price comparisons.`
       : "Browse every CS2 skin, glove, knife, and case with verified market quotes from CSFloat, Skinport, BUFF163, and Steam Market.";

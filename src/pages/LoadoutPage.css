@@ -1881,6 +1881,68 @@
   transform: scale(1.05);
 }
 
+.clutch-skin-video-frame {
+  max-width: 90%;
+  max-height: 220px;
+  object-fit: contain;
+  pointer-events: none;
+  transition: filter 0.15s ease;
+}
+
+.clutch-wear-abrasion-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 20% 40%, rgba(20, 20, 20, 0.7) 0%, transparent 40%),
+    radial-gradient(circle at 75% 60%, rgba(30, 25, 20, 0.6) 0%, transparent 45%),
+    repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0, 0, 0, 0.4) 3px, rgba(0, 0, 0, 0.4) 4px),
+    repeating-linear-gradient(-35deg, transparent, transparent 6px, rgba(255, 255, 255, 0.15) 6px, rgba(255, 255, 255, 0.15) 7px);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  border-radius: 12px;
+}
+
+.clutch-stage-wear-badge {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(13, 15, 15, 0.85);
+  border: 1px solid #2b302f;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f1f3ec;
+  backdrop-filter: blur(6px);
+  z-index: 5;
+}
+
+.clutch-stage-wear-badge .wear-pill {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.clutch-stage-wear-badge .wear-pill.wear-fn { background: #22c55e; color: #000; }
+.clutch-stage-wear-badge .wear-pill.wear-mw { background: #84cc16; color: #000; }
+.clutch-stage-wear-badge .wear-pill.wear-ft { background: #eab308; color: #000; }
+.clutch-stage-wear-badge .wear-pill.wear-ww { background: #f97316; color: #fff; }
+.clutch-stage-wear-badge .wear-pill.wear-bs { background: #ef4444; color: #fff; }
+
+.clutch-wear-row.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+.clutch-wear-row.disabled:hover {
+  background: transparent !important;
+  border-color: #2b302f !important;
+}
+
 .clutch-fade-tag,
 .clutch-stattrak-tag,
 .clutch-souvenir-tag {

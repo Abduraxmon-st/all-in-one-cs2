@@ -1,4 +1,5 @@
 import allCs2Skins from "./allCs2Skins.json";
+import allCs2Cases from "./allCs2Cases.json";
 
 export interface MarketOffer {
   market: string;
@@ -75,8 +76,8 @@ export interface CSFloatItem {
   marketHashName: string;
   weaponName: string;
   skinName: string;
-  category: "KNIVES" | "GLOVES" | "RIFLES" | "PISTOLS" | "SMGS" | "HEAVY" | "CASES" | "STICKERS" | "MUSIC_KITS";
-  rarity: "Covert" | "Classified" | "Restricted" | "Mil-Spec Grade" | "Extraordinary" | "Contraband" | "Base Grade";
+  category: "KNIVES" | "GLOVES" | "RIFLES" | "PISTOLS" | "SMGS" | "HEAVY" | "CASES" | "STICKERS" | "MUSIC_KITS" | string;
+  rarity: "Covert" | "Classified" | "Restricted" | "Mil-Spec Grade" | "Extraordinary" | "Contraband" | "Base Grade" | string;
   wearTier: "FN" | "MW" | "FT" | "WW" | "BS";
   wearName: string;
   floatValue: number;
@@ -94,7 +95,13 @@ export interface CSFloatItem {
   stickers: CSFloatSticker[];
   teamSide: "CT" | "T" | "BOTH";
   inspectLink?: string;
-  primaryColor: string;
+  primaryColor?: string;
+  primaryColors?: string[];
+  crateName?: string;
+  crates?: any[];
+  collections?: any[];
+  contains?: any[];
+  rarityColor?: string;
   minFloat?: number;
   maxFloat?: number;
   finishStyle?: string;
@@ -2174,17 +2181,42 @@ export function simulateCaseOpening(details: CaseDetails): {
   };
 }
 
-export function enrichItemWithCSGOSkins(item: CSFloatItem): CSFloatItem {
-  if (item.marketPrices && item.marketPrices.length > 0) return item;
+export function enrichItemWithCSGOSkins(item: any): CSFloatItem {
+  const seed = item.paintSeed ?? item.finishCatalog ?? 100;
+  const floatVal = item.floatValue ?? (item.minFloat !== undefined ? item.minFloat + 0.01 : 0.035);
+  const wear = (item.wearTier || "FN") as "FN" | "MW" | "FT" | "WW" | "BS";
+  const base = item.priceUsd || 1.00;
+  const discount = item.discountPercent ?? -15;
 
-  const base = item.priceUsd;
+  if (item.marketPrices && item.marketPrices.length > 0) {
+    return {
+      ...item,
+      wearTier: wear,
+      wearName: item.wearName || "Factory New",
+      floatValue: floatVal,
+      floatFormatted: item.floatFormatted || floatVal.toFixed(6),
+      paintSeed: seed,
+      discountPercent: discount,
+      deliveryType: item.deliveryType || "INSTANT",
+      expiresIn: item.expiresIn || "24:00:00",
+      stickers: item.stickers || [],
+      teamSide: item.teamSide || "BOTH",
+      primaryColor: item.primaryColor || (item.primaryColors && item.primaryColors[0] ? item.primaryColors[0] : "GRAY"),
+      minFloat: item.minFloat ?? 0.00,
+      maxFloat: item.maxFloat ?? 1.00,
+      finishStyle: item.finishStyle ?? (item.category === "KNIVES" ? "Anodized Airbrushed" : item.category === "CASES" ? "Container" : "Custom Paint Job"),
+      finishCatalog: item.finishCatalog ?? seed,
+      collectionName: item.collectionName ?? "The CS2 Armory & Major Collections",
+    };
+  }
+
   const marketPrices: MarketOffer[] = [
     {
       market: "CSFloat",
       price: Math.round(base * 0.96 * 100) / 100,
-      discount: Math.round(Math.abs(item.discountPercent || 22)),
+      discount: Math.round(Math.abs(discount)),
       url: "https://csfloat.com",
-      offersCount: Math.floor(180 + (item.paintSeed % 150)),
+      offersCount: Math.floor(180 + (seed % 150)),
       rating: 4.8,
       reviews: "9.8K",
       best: true,
@@ -2192,45 +2224,45 @@ export function enrichItemWithCSGOSkins(item: CSFloatItem): CSFloatItem {
     {
       market: "BUFF163",
       price: Math.round(base * 0.94 * 100) / 100,
-      discount: Math.round(Math.abs(item.discountPercent || 22) + 2.5),
+      discount: Math.round(Math.abs(discount) + 2.5),
       url: "https://buff.163.com",
-      offersCount: Math.floor(450 + (item.paintSeed % 300)),
+      offersCount: Math.floor(450 + (seed % 300)),
       rating: 4.5,
       reviews: "1.2K",
     },
     {
       market: "Skinport",
       price: Math.round(base * 0.98 * 100) / 100,
-      discount: Math.round(Math.abs(item.discountPercent || 22) - 2),
+      discount: Math.round(Math.abs(discount) - 2),
       url: "https://skinport.com",
-      offersCount: Math.floor(95 + (item.paintSeed % 80)),
+      offersCount: Math.floor(95 + (seed % 80)),
       rating: 4.9,
       reviews: "28.5K",
     },
     {
       market: "DMarket",
       price: Math.round(base * 0.97 * 100) / 100,
-      discount: Math.round(Math.abs(item.discountPercent || 22) - 1),
+      discount: Math.round(Math.abs(discount) - 1),
       url: "https://dmarket.com",
-      offersCount: Math.floor(120 + (item.paintSeed % 100)),
+      offersCount: Math.floor(120 + (seed % 100)),
       rating: 4.6,
       reviews: "14.2K",
     },
     {
       market: "Tradeit.gg",
       price: Math.round(base * 0.99 * 100) / 100,
-      discount: Math.round(Math.abs(item.discountPercent || 22) - 3),
+      discount: Math.round(Math.abs(discount) - 3),
       url: "https://tradeit.gg",
-      offersCount: Math.floor(45 + (item.paintSeed % 40)),
+      offersCount: Math.floor(45 + (seed % 40)),
       rating: 4.6,
       reviews: "21.8K",
     },
     {
       market: "CS.MONEY",
       price: Math.round(base * 1.03 * 100) / 100,
-      discount: Math.round(Math.max(5, Math.abs(item.discountPercent || 22) - 6)),
+      discount: Math.round(Math.max(5, Math.abs(discount) - 6)),
       url: "https://cs.money",
-      offersCount: Math.floor(35 + (item.paintSeed % 30)),
+      offersCount: Math.floor(35 + (seed % 30)),
       rating: 4.7,
       reviews: "9.2K",
     },
@@ -2239,7 +2271,7 @@ export function enrichItemWithCSGOSkins(item: CSFloatItem): CSFloatItem {
       price: Math.round(base * 1.15 * 100) / 100,
       discount: 0,
       url: "https://steamcommunity.com/market",
-      offersCount: Math.floor(80 + (item.paintSeed % 90)),
+      offersCount: Math.floor(80 + (seed % 90)),
       rating: 5.0,
       reviews: "Valve Reference",
     },
@@ -2255,10 +2287,23 @@ export function enrichItemWithCSGOSkins(item: CSFloatItem): CSFloatItem {
 
   return {
     ...item,
+    wearTier: wear,
+    wearName: item.wearName || "Factory New",
+    floatValue: floatVal,
+    floatFormatted: item.floatFormatted || floatVal.toFixed(6),
+    paintSeed: seed,
+    discountPercent: discount,
+    isStatTrak: !!item.isStatTrak,
+    isSouvenir: !!item.isSouvenir,
+    deliveryType: item.deliveryType || "INSTANT",
+    expiresIn: item.expiresIn || "24:00:00",
+    stickers: item.stickers || [],
+    teamSide: item.teamSide || "BOTH",
+    primaryColor: item.primaryColor || (item.primaryColors && item.primaryColors[0] ? item.primaryColors[0] : "GRAY"),
     minFloat: item.minFloat ?? 0.00,
     maxFloat: item.maxFloat ?? (item.skinName.includes("Asiimov") ? 1.00 : item.skinName.includes("Fade") ? 0.08 : 0.80),
-    finishStyle: item.finishStyle ?? (item.category === "KNIVES" ? "Anodized Airbrushed" : "Custom Paint Job"),
-    finishCatalog: item.finishCatalog ?? (item.paintSeed || 445),
+    finishStyle: item.finishStyle ?? (item.category === "KNIVES" ? "Anodized Airbrushed" : item.category === "CASES" ? "Container" : "Custom Paint Job"),
+    finishCatalog: item.finishCatalog ?? seed,
     collectionName: item.collectionName ?? "The CS2 Armory & Major Collections",
     marketPrices: item.marketPrices ?? marketPrices,
     wearPrices: item.wearPrices ?? wearPrices,
@@ -2269,6 +2314,9 @@ const RAW_AND_ALL_DATA: any[] = [
   ...RAW_CATALOG_DATA,
   ...(allCs2Skins as any[]).filter(
     (s) => !RAW_CATALOG_DATA.some((r) => r.marketHashName.toLowerCase() === s.marketHashName.toLowerCase())
+  ),
+  ...(allCs2Cases as any[]).filter(
+    (c) => !RAW_CATALOG_DATA.some((r) => r.marketHashName.toLowerCase() === c.marketHashName.toLowerCase())
   ),
 ];
 
