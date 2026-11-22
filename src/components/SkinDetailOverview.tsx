@@ -468,31 +468,15 @@ export const SkinDetailOverview: FC<Props> = ({
 
           {/* Large Skin Render Stage with Dynamic Visual Wear Engine */}
           <div className="clutch-skin-stage">
-            {videoAvailable ? (
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                playsInline
-                muted
-                preload="auto"
-                className="clutch-skin-video-frame"
-                style={{
-                  filter: wearFilter,
-                }}
-                onError={() => setVideoAvailable(false)}
-                onLoadedMetadata={() => setVideoLoaded(true)}
-              />
-            ) : (
-              <img
-                src={skin.imageUrl}
-                alt={skin.marketHashName}
-                className="clutch-skin-big-img"
-                style={{
-                  filter: wearFilter,
-                }}
-                loading="eager"
-              />
-            )}
+            <img
+              src={skin.imageUrl}
+              alt={skin.marketHashName}
+              className="clutch-skin-big-img"
+              style={{
+                filter: wearFilter,
+              }}
+              loading="eager"
+            />
 
             {/* Abrasive Scratches & Oxidation Overlay */}
             {customFloat > 0.08 && (
